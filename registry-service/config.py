@@ -1,0 +1,1 @@
+IMAGE_STORAGE_PATH = 'images'
