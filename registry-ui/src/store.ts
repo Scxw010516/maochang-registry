@@ -14,12 +14,15 @@ export interface State {
   hasLoggedIn: boolean;
   // 登录仓库
   warehouse: number | null;
+  // 检索镜架信息方式
+  skuormodeltype: number | null;
   //输入sku时，sku已存在
   searchSku: string;
   //基础参数 下拉列表
   options: {
     brand_options: Option[];
     model_type_options: Option[];
+    skuormodeltype_options: SelectProps["options"];
     warehouse_options: SelectProps["options"];
     material_options: SelectProps["options"];
     color_options: SelectProps["options"];
@@ -34,7 +37,8 @@ export const store = createStore<State>({
   state: {
     username: "",
     hasLoggedIn: false,
-    warehouse: null,
+    warehouse: 1,
+    skuormodeltype: 1,
     searchSku: "",
     options: {
       brand_options: [{ value: "" }],
@@ -47,6 +51,16 @@ export const store = createStore<State>({
         {
           value: null,
           label: "",
+        },
+      ],
+      skuormodeltype_options: [
+        {
+          value: 1,
+          label: "型号",
+        },
+        {
+          value: 2,
+          label: "SKU",
         },
       ],
       warehouse_options: [

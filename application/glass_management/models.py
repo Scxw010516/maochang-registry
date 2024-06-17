@@ -33,6 +33,7 @@ class EyeglassFrameShapeType(BaseModel):
 """
 class EyeglassFrameEntry(BaseModel):
     sku = models.CharField(unique=True, blank=False, null=False, max_length=255, verbose_name="镜架SKU")
+    # 镜架基本信息参数
     brand = models.CharField(unique=False, blank=False, null=False, max_length=255, verbose_name="镜架品牌")
     model_type = models.CharField(unique=False, blank=False, null=False, max_length=255, verbose_name="镜架型号")
     price = models.DecimalField(max_digits=15, decimal_places=2, unique=False, blank=False, null=False, verbose_name="售价")
@@ -40,7 +41,12 @@ class EyeglassFrameEntry(BaseModel):
     color = models.ForeignKey(EyeglassFrameColorType, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架颜色")
     shape = models.ForeignKey(EyeglassFrameShapeType, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架形状")
     isnosepad = models.BooleanField(unique=False, blank=False, null=False, verbose_name="是否带鼻托")
+    # 镜架尺寸参数
     lens_radian = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="撑片弧度")
+    lens_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜圈宽度")
+    bridge_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="鼻梁宽度")
+    temple_length_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜腿长度")
+    # 镜架库存参数
     stock = models.IntegerField(unique=False, blank=True, null=True, verbose_name="库存")
     warehouse = models.ForeignKey(Warehouse, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="所属仓库")
 
@@ -116,3 +122,27 @@ class EyeglassFrameDetectionResult(BaseModel):
     pile_distance = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="桩头距离")
     # 镜架重量参数
     weight = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="重量")
+
+
+"""
+镜架导入数据表
+"""
+class EyeglassFrameDataFromExcel(models.Model):
+    id = models.AutoField(auto_created=True, primary_key=True, verbose_name="ID")
+    sku = models.CharField(unique=True, blank=False, null=False, max_length=100, verbose_name="镜架SKU")
+    brand = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架品牌")
+    model_type = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架型号")
+    price = models.DecimalField(max_digits=10, decimal_places=2, unique=False, blank=True, null=True, verbose_name="售价")
+    material = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架材质")
+    color = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架颜色")
+    shape = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架形状")
+    stock = models.IntegerField(unique=False, blank=True, null=True, verbose_name="库存")
+    lens_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜圈宽度")
+    bridge_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="鼻梁宽度")
+    temple_length_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜腿长度")
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['sku']),  # 为sku字段添加索引
+            models.Index(fields=['model_type']),  # 为model_type字段添加索引
+        ]

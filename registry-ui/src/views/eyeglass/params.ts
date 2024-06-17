@@ -1,3 +1,16 @@
+// 数据参数接口：镜架检索选项
+export interface searchOption {
+  sku: string;
+  brand: string;
+  model_type: string;
+  price: number | null;
+  stock: number | null;
+  lens_width_st: number | null;
+  bridge_width_st: number | null;
+  temple_length_st: number | null;
+  value: string;
+  [key: string]: any;
+}
 // 数据参数接口: 镜架基础参数
 export interface EyeGlassBasicForm {
   sku: string;
@@ -10,6 +23,9 @@ export interface EyeGlassBasicForm {
   isnosepad: number | null;
   stock: number | null;
   lens_radian: number | null;
+  lens_width_st: number | null;
+  bridge_width_st: number | null;
+  temple_length_st: number | null;
   [key: string]: any;
 }
 export const EyeGlassBasicFormLabel = {
@@ -23,6 +39,9 @@ export const EyeGlassBasicFormLabel = {
   isnosepad: "鼻托",
   stock: "库存",
   lens_radian: "撑片弧度",
+  lens_width_st: "镜片宽度",
+  bridge_width_st: "鼻梁宽度",
+  temple_length_st: "镜腿长度",
 };
 export const EyeGlassBasicFormUnit = {
   sku: "",
@@ -35,6 +54,9 @@ export const EyeGlassBasicFormUnit = {
   isnosepad: "",
   stock: "",
   lens_radian: "°",
+  lens_width_st: "mm",
+  bridge_width_st: "mm",
+  temple_length_st: "mm",
 };
 
 // 数据参数接口: 镜架风格参数

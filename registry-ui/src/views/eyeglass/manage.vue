@@ -166,13 +166,15 @@
                   border-radius: 8px;
                 "
                 @click="onClickReset"
-                >重置</a-button
+              >重置
+              </a-button
               >
               <a-button
                 type="primary"
                 style="background-color: #8675ff; border-radius: 8px"
                 @click="onClickSearch"
-                >查询</a-button
+              >查询
+              </a-button
               >
             </a-col>
           </a-row>
@@ -188,7 +190,7 @@
           :disabled="!hasSelected"
           danger
           @click="onClickDeleteAllSelected"
-          >全部删除</a-button
+        >全部删除</a-button
         >
       </template>
     </span>
@@ -213,10 +215,10 @@
             <span>
               <a-space>
                 <a-button type="primary" @click="onClickEditModal(record.id)"
-                  >修改</a-button
+                >修改</a-button
                 >
                 <a-button danger @click="onClickDelete(record.id)"
-                  >删除</a-button
+                >删除</a-button
                 >
               </a-space>
             </span>
@@ -265,7 +267,8 @@
                       editModalState.modalDetailsType = 'basic';
                     }
                   "
-                  >基础信息</a-button
+                >基础信息
+                </a-button
                 >
               </a-col>
               <a-col
@@ -282,7 +285,8 @@
                       editModalState.modalDetailsType = 'explicit';
                     }
                   "
-                  >详细信息</a-button
+                >详细信息
+                </a-button
                 >
               </a-col>
             </a-row>
@@ -309,12 +313,12 @@
             >
               <template #prevArrow>
                 <div class="custom-slick-arrow" style="left: -60px; z-index: 1">
-                  <left-circle-outlined />
+                  <left-circle-outlined/>
                 </div>
               </template>
               <template #nextArrow>
                 <div class="custom-slick-arrow" style="right: -60px">
-                  <right-circle-outlined />
+                  <right-circle-outlined/>
                 </div>
               </template>
               <a-image
@@ -469,7 +473,7 @@
                         border-top-left-radius: 9px;
                         border-bottom-left-radius: 9px;
                       "
-                      >有
+                    >有
                     </a-radio-button>
                     <a-radio-button
                       :value="0"
@@ -477,7 +481,7 @@
                         border-top-right-radius: 9px;
                         border-bottom-right-radius: 9px;
                       "
-                      >无
+                    >无
                     </a-radio-button>
                   </a-radio-group>
                 </a-form-item>
@@ -509,6 +513,51 @@
                 >
                   <a-input-number
                     v-model:value="EyeGlassBasicFormState.lens_radian"
+                    :controls="false"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col style="height: 30px" :span="12">
+                <a-form-item
+                  label="镜片宽度"
+                  name="lens_width_st"
+                  :labelCol="{ span: 6 }"
+                  :wrapperCol="{ span: 18 }"
+                  labelAlign="left"
+                  class="modal-basic-item"
+                >
+                  <a-input-number
+                    v-model:value="EyeGlassBasicFormState.lens_width_st"
+                    :controls="false"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col style="height: 30px" :span="12">
+                <a-form-item
+                  label="鼻梁宽度"
+                  name="bridge_width_st"
+                  :labelCol="{ span: 6 }"
+                  :wrapperCol="{ span: 18 }"
+                  labelAlign="left"
+                  class="modal-basic-item"
+                >
+                  <a-input-number
+                    v-model:value="EyeGlassBasicFormState.bridge_width_st"
+                    :controls="false"
+                  />
+                </a-form-item>
+              </a-col>
+              <a-col style="height: 30px" :span="12">
+                <a-form-item
+                  label="镜腿长度"
+                  name="temple_length_st"
+                  :labelCol="{ span: 6 }"
+                  :wrapperCol="{ span: 18 }"
+                  labelAlign="left"
+                  class="modal-basic-item"
+                >
+                  <a-input-number
+                    v-model:value="EyeGlassBasicFormState.temple_length_st"
                     :controls="false"
                   />
                 </a-form-item>
@@ -639,18 +688,18 @@ import {
   UnwrapRef,
   createVNode,
 } from "vue";
-import { message, Modal } from "ant-design-vue";
+import {message, Modal} from "ant-design-vue";
 import {
   ExclamationCircleOutlined,
   LeftCircleOutlined,
   RightCircleOutlined,
 } from "@ant-design/icons-vue";
 // import { useRouter } from "vue-router";
-import { useStore } from "../../store";
+import {useStore} from "../../store";
 import axios from "@/config/axios-config";
-import { usePagination } from "vue-request";
-import { Key } from "ant-design-vue/lib/_util/type";
-import type { Rule } from "ant-design-vue/es/form"; // 引入表单验证规则Rule组件
+import {usePagination} from "vue-request";
+import {Key} from "ant-design-vue/lib/_util/type";
+import type {Rule} from "ant-design-vue/es/form"; // 引入表单验证规则Rule组件
 import {
   EyeGlassBasicForm, // 镜架基础参数接口
   // EyeGlassBasicFormLabel, // 镜架基础参数标签
@@ -671,7 +720,7 @@ import {
   // EyeGlassCalculateParamsLabel, // 镜架计算参数标签
   // EyeGlassCalculateParamsExample, // 镜架计算参数示例
 } from "./params";
-import { initFormOptions } from "./utils";
+import {initFormOptions} from "./utils";
 
 //#########################################参数初始化###########################################
 // const router = useRouter();
@@ -748,6 +797,7 @@ type getAllEyeglassFrameEntryAPIResult = {
 };
 // 镜架查询表单实例
 const searchFormRef = ref();
+
 // 定义SearchForm接口
 interface searchForm {
   sku?: string;
@@ -757,6 +807,7 @@ interface searchForm {
   searchMaxPrice?: number | undefined;
   material?: number[];
 }
+
 // 镜架搜索数据表单数据
 const searchFormState = reactive<searchForm>({
   sku: "",
@@ -795,6 +846,9 @@ const EyeGlassBasicFormInitState: UnwrapRef<EyeGlassBasicForm> = reactive({
   isnosepad: null,
   stock: null,
   lens_radian: null,
+  lens_width_st: null,
+  bridge_width_st: null,
+  temple_length_st: null,
 });
 // 镜架基础参数表单数据
 const EyeGlassBasicFormState: UnwrapRef<EyeGlassBasicForm> = reactive({
@@ -808,17 +862,20 @@ const EyeGlassBasicFormState: UnwrapRef<EyeGlassBasicForm> = reactive({
   isnosepad: null,
   stock: null,
   lens_radian: null,
+  lens_width_st: null,
+  bridge_width_st: null,
+  temple_length_st: null,
 });
 // 镜架基础参数表单校验规则
 const EyeGlassBasicFormRules: Record<string, Rule[]> = {
   sku: [
-    { required: true, message: "请输入镜框SKU", trigger: ["blur", "change"] },
+    {required: true, message: "请输入镜框SKU", trigger: ["blur", "change"]},
   ],
   brand: [
-    { required: true, message: "请输入镜框品牌", trigger: ["blur", "change"] },
+    {required: true, message: "请输入镜框品牌", trigger: ["blur", "change"]},
   ],
   model_type: [
-    { required: true, message: "请输入镜框型号", trigger: ["blur", "change"] },
+    {required: true, message: "请输入镜框型号", trigger: ["blur", "change"]},
   ],
   price: [
     {
@@ -835,13 +892,13 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
     },
   ],
   material: [
-    { required: true, message: "请选择镜框材质", trigger: ["blur", "change"] },
+    {required: true, message: "请选择镜框材质", trigger: ["blur", "change"]},
   ],
   color: [
-    { required: true, message: "请选择镜框颜色", trigger: ["blur", "change"] },
+    {required: true, message: "请选择镜框颜色", trigger: ["blur", "change"]},
   ],
   shape: [
-    { required: true, message: "请选择镜框形状", trigger: ["blur", "change"] },
+    {required: true, message: "请选择镜框形状", trigger: ["blur", "change"]},
   ],
   isnosepad: [
     {
@@ -865,12 +922,54 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
     },
   ],
   lens_radian: [
-    { required: true, message: "请输入撑片弧度", trigger: ["blur", "change"] },
+    {required: true, message: "请输入撑片弧度", trigger: ["blur", "change"]},
     {
       type: "number",
       min: -9999999999.9999,
       max: 9999999999.9999,
       message: "弧度格式错误",
+      trigger: ["blur", "change"],
+    },
+  ],
+  lens_width_st: [
+    {
+      required: false,
+      message: "请输入镜片宽度",
+      trigger: ["blur", "change"],
+    },
+    {
+      message: "宽度格式错误",
+      type: "number",
+      max: 9999999999.9999,
+      min: 0,
+      trigger: ["blur", "change"],
+    },
+  ],
+  bridge_width_st: [
+    {
+      required: false,
+      message: "请输入鼻梁宽度",
+      trigger: ["blur", "change"],
+    },
+    {
+      message: "宽度格式错误",
+      type: "number",
+      max: 9999999999.9999,
+      min: 0,
+      trigger: ["blur", "change"],
+    },
+  ],
+  temple_length_st: [
+    {
+      required: false,
+      message: "请输入镜腿长度",
+      trigger: ["blur", "change"],
+    },
+    {
+      message: "长度格式错误",
+      type: "number",
+      max: 9999999999.9999,
+      min: 0,
       trigger: ["blur", "change"],
     },
   ],
@@ -888,7 +987,7 @@ const EyeGlassStyleFormState: UnwrapRef<EyeGlassStyleForm> = reactive({
 // 镜架风格参数表单校验规则
 const EyeGlassStyleFormRules: Record<string, Rule[]> = {
   style: [
-    { required: true, message: "请选择镜框风格", trigger: ["blur", "change"] },
+    {required: true, message: "请选择镜框风格", trigger: ["blur", "change"]},
   ],
 };
 // 镜架详细参数表单实例
@@ -963,11 +1062,11 @@ const EyeGlassDetailFormState: UnwrapRef<EyeGlassDetailForm> = reactive({
 });
 // 镜架详细参数表单校验规则
 const EyeGlassDetailFormRules: Record<string, Rule[]> = {
-  frame_height: [{ required: true, trigger: ["blur", "change"] }],
-  frame_width: [{ required: true, trigger: ["blur", "change"] }],
-  pile_height_left: [{ required: true, trigger: ["blur", "change"] }],
-  pile_height_right: [{ required: true, trigger: ["blur", "change"] }],
-  frame_top_width: [{ required: true, trigger: ["blur", "change"] }],
+  frame_height: [{required: true, trigger: ["blur", "change"]}],
+  frame_width: [{required: true, trigger: ["blur", "change"]}],
+  pile_height_left: [{required: true, trigger: ["blur", "change"]}],
+  pile_height_right: [{required: true, trigger: ["blur", "change"]}],
+  frame_top_width: [{required: true, trigger: ["blur", "change"]}],
   top_points: [
     {
       required: true,
@@ -1138,7 +1237,7 @@ const EyeGlassWeightFormState: UnwrapRef<EyeGlassWeightForm> = reactive({
 // 镜架重量参数表单校验规则
 const EyeGlassWeightFormRules: Record<string, Rule[]> = {
   weight: [
-    { required: true, message: "请记录镜框重量", trigger: ["blur", "change"] },
+    {required: true, message: "请记录镜框重量", trigger: ["blur", "change"]},
   ],
 };
 // 镜架图像参数表单初始化数据
@@ -1217,7 +1316,7 @@ const getTableData = (params: getAllEyeglassFrameEntryAPIParams) => {
   return axios
     .get<getAllEyeglassFrameEntryAPIResult>(
       "/glassmanagement/api/get-all-eyeglassframes_entrys",
-      { params },
+      {params},
     )
     .catch((error) => {
       console.log(error);
@@ -1379,6 +1478,15 @@ const formatEyeGlassFormState = () => {
   EyeGlassBasicFormState.lens_radian = Number(
     EyeGlassBasicFormState.lens_radian,
   );
+  EyeGlassBasicFormState.lens_width_st = Number(
+    EyeGlassBasicFormState.lens_width_st,
+  );
+  EyeGlassBasicFormState.bridge_width_st = Number(
+    EyeGlassBasicFormState.bridge_width_st,
+  );
+  EyeGlassBasicFormState.temple_length_st = Number(
+    EyeGlassBasicFormState.temple_length_st,
+  );
   // 将EyeGlassStyleFormState表单数据类型转换为对应的类型
   EyeGlassStyleFormState.style = EyeGlassStyleFormState.style.map((item) =>
     Number(item),
@@ -1466,21 +1574,27 @@ const saveEditEyeglassFrame = async () => {
   formData.append("model_type", EyeGlassBasicFormState.model_type);
   formData.append(
     "price",
-    EyeGlassBasicFormState.price ? EyeGlassBasicFormState.price.toString() : "",
+    EyeGlassBasicFormState.price !== null
+      ? EyeGlassBasicFormState.price.toString()
+      : "",
   );
   formData.append(
     "material",
-    EyeGlassBasicFormState.material
+    EyeGlassBasicFormState.material !== null
       ? EyeGlassBasicFormState.material.toString()
       : "",
   );
   formData.append(
     "color",
-    EyeGlassBasicFormState.color ? EyeGlassBasicFormState.color.toString() : "",
+    EyeGlassBasicFormState.color !== null
+      ? EyeGlassBasicFormState.color.toString()
+      : "",
   );
   formData.append(
     "shape",
-    EyeGlassBasicFormState.shape ? EyeGlassBasicFormState.shape.toString() : "",
+    EyeGlassBasicFormState.shape !== null
+      ? EyeGlassBasicFormState.shape.toString()
+      : "",
   );
   formData.append(
     "isnosepad",
@@ -1490,16 +1604,36 @@ const saveEditEyeglassFrame = async () => {
   );
   formData.append(
     "stock",
-    EyeGlassBasicFormState.stock ? EyeGlassBasicFormState.stock.toString() : "",
+    EyeGlassBasicFormState.stock !== null
+      ? EyeGlassBasicFormState.stock.toString()
+      : "",
   );
   formData.append(
     "warehouse",
-    store.state.warehouse ? store.state.warehouse.toString() : "",
+    store.state.warehouse !== null ? store.state.warehouse.toString() : "",
   );
   formData.append(
     "lens_radian",
-    EyeGlassBasicFormState.lens_radian
+    EyeGlassBasicFormState.lens_radian !== null
       ? EyeGlassBasicFormState.lens_radian.toString()
+      : "",
+  );
+  formData.append(
+    "lens_width_st",
+    EyeGlassBasicFormState.lens_width_st !== null
+      ? EyeGlassBasicFormState.lens_width_st.toString()
+      : "",
+  );
+  formData.append(
+    "bridge_width_st",
+    EyeGlassBasicFormState.bridge_width_st !== null
+      ? EyeGlassBasicFormState.bridge_width_st.toString()
+      : "",
+  );
+  formData.append(
+    "temple_length_st",
+    EyeGlassBasicFormState.temple_length_st !== null
+      ? EyeGlassBasicFormState.temple_length_st.toString()
       : "",
   );
   // 将镜架风格信息添加到FormData对象
@@ -1693,9 +1827,11 @@ const onClickDelete = async (id: number) => {
 .full-height-row {
   height: 100vh;
 }
+
 .title {
   text-align: center;
 }
+
 /* 搜索栏 */
 .search-form >>> .ant-select-selector {
   width: 100%;
@@ -1728,6 +1864,7 @@ const onClickDelete = async (id: number) => {
   align-items: center;
   justify-content: center;
 }
+
 :deep(.slick-arrow.custom-slick-arrow) {
   width: 30px;
   height: 30px;
@@ -1735,6 +1872,7 @@ const onClickDelete = async (id: number) => {
   color: #8675ff;
   z-index: 1;
 }
+
 :deep(.slick-arrow.custom-slick-arrow:before) {
   display: none;
 }
@@ -1742,6 +1880,7 @@ const onClickDelete = async (id: number) => {
 :deep(.slick-dots li button) {
   background-color: #8675ff !important;
 }
+
 /* 修改modal baisc */
 .modal-basic-item >>> .ant-select-selector,
 .ant-input,
@@ -1781,6 +1920,7 @@ const onClickDelete = async (id: number) => {
   color: #8675ff;
   font-size: 18px;
 }
+
 .detailTypeUnchosen >>> .ant-btn-text {
   width: 163.9px;
   height: 49px;
@@ -1790,11 +1930,13 @@ const onClickDelete = async (id: number) => {
   color: #ffffff;
   font-size: 18px;
 }
+
 /* 去除a-image预览字样 */
 .custom-a-image >>> .ant-image-mask-info {
   visibility: hidden;
   font-size: 0;
 }
+
 .custom-a-image >>> .ant-image-mask-info span {
   visibility: visible;
   font-size: 20;

@@ -290,12 +290,16 @@ def test_recommend(request):
 """
 查询镜架SKU
 """
+class SearchModeltypeOrSKUView(View):
+	def post(self, request: HttpRequest):
+		# 调用查询镜架方法
+		result = services.SearchModeltypeOrSKU(request)
+		# 返回结果
+		return result
 class SearchSKUView(View):
 	def get(self, request: HttpRequest):
-		# 获取镜架SKU
-		sku = request.GET.get('sku', "")
 		# 调用查询镜架方法
-		result = services.SearchSKU(request, sku)
+		result = services.SearchSKU(request)
 		# 返回结果
 		return result
 
