@@ -22,6 +22,7 @@ urlpatterns = [
     path('api/test_recommend', views.test_recommend),
     
     ###################镜架采集与管理####################
+    path('api/search-modeltype-sku', views.SearchModeltypeOrSKUView.as_view()), # post: 查询型号SKU
     path('api/search-sku', views.SearchSKUView.as_view()), # get: 查询镜架SKU
     path('api/delete-eyeglassframes', views.DeleteEyeglassFrameEntrysView.as_view()), # get: 删除镜架SKU
     path('api/save-new-eyeglassframe', views.SaveNewEyeglassFrameView.as_view()), # post: 添加新镜架
