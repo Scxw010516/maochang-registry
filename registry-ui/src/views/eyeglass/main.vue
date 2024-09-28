@@ -597,8 +597,7 @@
                       :wrapperCol="{ span: 14 }" labelAlign="left">
                       <a-form-item class="calculate-item" label="风格" name="style">
                         <a-select v-model:value="EyeGlassStyleFormState.style" mode="multiple" placeholder="选择风格（多选）"
-                          :max-tag-count="1" :max-tag-text-length="5" :maxTagTextLength="2"
-                          :options="store.state.options.style_options" />
+                          :max-tag-count="1" :maxTagTextLength="2" :options="store.state.options.style_options" />
                       </a-form-item>
                     </a-form>
                   </a-col>
@@ -777,7 +776,7 @@
   const selectedMenuItem = ref<string[]>(["1"]); // 选中的菜单项
 
   // 镜架检索信息
-  const searchString = ref<string>(""); // 镜架检索信息
+  const searchString = ref(""); // 镜架检索信息
   const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
 
   const imgCameraUrl = ref<string>(""); // 拍摄过程中的当前页面的图像缓存
@@ -1984,27 +1983,27 @@
   };
 
   // 镜架信息检索搜索按钮点击事件
-  const onSearchModeltypeOrSKU = async () => {
+  const onSearchModeltypeOrSKU = async (value: string) => {
     // 清空searchOptions
     searchOptions.value = [];
     // 判断检索类型，并判断输入参数是否为空
     if (store.state.skuormodeltype == 1) {
-      if (searchString.value == "") {
+      if (value == "") {
         message.warning("请输入镜框型号");
         return;
       }
-      EyeGlassBasicFormState.model_type = searchString.value;
+      EyeGlassBasicFormState.model_type = value;
     } else if (store.state.skuormodeltype == 2) {
-      if (searchString.value == "") {
+      if (value == "") {
         message.warning("请输入镜框SKU");
         return;
       }
-      EyeGlassBasicFormState.sku = searchString.value;
+      EyeGlassBasicFormState.sku = value;
     }
     // 若不为空，则进行FormData构造，并请求检索
     const formData = new FormData();
     formData.append("skuormodeltype", String(store.state.skuormodeltype));
-    formData.append("searchString", searchString.value);
+    formData.append("searchString", value);
     await axios
       .post(`/glassmanagement/api/search-modeltype-sku`, formData)
       .then((response) => {
@@ -2023,6 +2022,47 @@
         console.log(error);
       });
   };
+
+  // // 镜架信息检索搜索按钮点击事件
+  // const onSearchModeltypeOrSKU = async () => {
+  //   // 清空searchOptions
+  //   searchOptions.value = [];
+  //   // 判断检索类型，并判断输入参数是否为空
+  //   if (store.state.skuormodeltype == 1) {
+  //     if (searchString.value == "") {
+  //       message.warning("请输入镜框型号");
+  //       return;
+  //     }
+  //     EyeGlassBasicFormState.model_type = searchString.value;
+  //   } else if (store.state.skuormodeltype == 2) {
+  //     if (searchString.value == "") {
+  //       message.warning("请输入镜框SKU");
+  //       return;
+  //     }
+  //     EyeGlassBasicFormState.sku = searchString.value;
+  //   }
+  //   // 若不为空，则进行FormData构造，并请求检索
+  //   const formData = new FormData();
+  //   formData.append("skuormodeltype", String(store.state.skuormodeltype));
+  //   formData.append("searchString", searchString.value);
+  //   await axios
+  //     .post(`/glassmanagement/api/search-modeltype-sku`, formData)
+  //     .then((response) => {
+  //       // 判断返回的code值,若为-1则提示参数为空
+  //       if (response.data["code"] == 0) {
+  //         if (response.data["data"]) {
+  //           // 将查询到的信息赋值给searchOptions
+  //           searchOptions.value = response.data["data"];
+  //         } else {
+  //           // 重置searchOptions
+  //           searchOptions.value = [];
+  //         }
+  //       }
+  //     })
+  //     .catch((error) => {
+  //       console.log(error);
+  //     });
+  // };
 
   // 镜架信息检索选择点击事件
   const onSelectModeltypeOrSKU = (value: string, option: searchOption) => {

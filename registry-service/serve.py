@@ -287,7 +287,7 @@ async def init_camera_usb(websocket):
     indices = [camera[0] for camera in cameras if camera[1] in support_device_names]
     # （去除内部摄像头设备）
     if len(indices) == 3:
-        devices_actual = tuple(i + indices[0] for i in devices)
+        devices_actual = tuple(indices[i] for i in devices)
     else:
         print("摄像头设备数量不足")
         await websocket.send(

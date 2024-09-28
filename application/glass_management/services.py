@@ -35,7 +35,7 @@ def SearchModeltypeOrSKU(request: HttpRequest):
     if searchtype == "1":
         entrys = models.EyeglassFrameDataFromExcel.objects.filter(model_type__icontains=searchstring)
     elif searchtype == "2":
-        entrys = models.EyeglassFrameDataFromExcel.objects.filter(sku__icontains=searchstring)    
+        entrys = models.EyeglassFrameDataFromExcel.objects.filter(sku__icontains=searchstring)
     
     # 通过sku字段，过滤已经存在于EyeglassFrameEntry表中的数据
     entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.all()])
@@ -47,21 +47,50 @@ def SearchModeltypeOrSKU(request: HttpRequest):
     if not entrys:
         return R.ok(msg="未找到该镜架型号或SKU")
     
-    # 构建查询结果
-    search_result = [
-        {
-            "sku": entry.sku,  # 镜架SKU，唯一
-            "brand": entry.brand,
-            "model_type": entry.model_type,
-            "price": entry.price,
-            "stock": entry.stock,
-            "lens_width_st": entry.lens_width_st,
-            "bridge_width_st": entry.bridge_width_st,
-            "temple_length_st": entry.temple_length_st,
-            "value": entry.model_type if searchtype == "1" else entry.sku,
-        }
+    # 先将字典列表转换为元组列表，便于去重
+    tuple_search_result = [
+        (
+            entry.sku, entry.brand, entry.model_type, 
+            entry.price, entry.lens_width_st, 
+            entry.bridge_width_st, entry.temple_length_st, 
+            entry.model_type if searchtype == "1" else entry.sku,
+        )
         for entry in entrys
     ]
+
+    # 去重
+    tuple_search_result = list(set(tuple_search_result))
+
+    # 再将元组列表转换为字典列表
+    search_result = [
+        {
+            "sku": entry[0],  # 镜架SKU，唯一
+            "brand": entry[1],
+            "model_type": entry[2],
+            "price": entry[3],
+            "lens_width_st": entry[4],
+            "bridge_width_st": entry[5],
+            "temple_length_st": entry[6],
+            "value": entry[7],
+        }
+        for entry in tuple_search_result
+    ]
+
+    # # 构建查询结果
+    # search_result = [
+    #     {
+    #         "sku": entry.sku,  # 镜架SKU，唯一
+    #         "brand": entry.brand,
+    #         "model_type": entry.model_type,
+    #         "price": entry.price,
+    #         "stock": entry.stock,
+    #         "lens_width_st": entry.lens_width_st,
+    #         "bridge_width_st": entry.bridge_width_st,
+    #         "temple_length_st": entry.temple_length_st,
+    #         "value": entry.model_type if searchtype == "1" else entry.sku,
+    #     }
+    #     for entry in entrys
+    # ]
 
     # 返回查询结果
     return R.ok(data=search_result)

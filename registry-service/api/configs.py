@@ -30,7 +30,7 @@ measure = {
 }
 
 server = {
-    "auto_order":1,
+    "auto_order":0,
     "support_device_names": ["MagicView-UVC800", "16MP USB Camera"],
     "devices": (0, 1, 2),
     "rotates": (2, 2, 2),
