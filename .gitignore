@@ -24,7 +24,6 @@ node_modules/
 **/*.cpython-39.pyc
 /registry-service/size_detect/front_view/EfficientSAM/weights/efficient_sam_vits.pt
 /config/env.py
-/registry-ui/package.json
 /registry-service/size_detect/front_view/efficient_sam_vits.onnx
 /registry-service/api/efficient_sam_vits.onnx
 /public/uploads/images/eyeglassframe/
