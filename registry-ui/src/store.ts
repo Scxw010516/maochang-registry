@@ -4,6 +4,10 @@ import getters from "./store/getters";
 import user from "./store/modules/user";
 import theme from "./store/modules/theme";
 import type { SelectProps } from "ant-design-vue"; // 引入下拉框SelectProps组件
+import {
+  Camera, //摄像头参数和对象字典
+} from "@/interfaces/camera";
+
 interface Option {
   value: string;
 }
@@ -19,6 +23,10 @@ export interface State {
   //输入sku时，sku已存在
   searchSku: string;
   //基础参数 下拉列表
+  cameraState: {
+    cameraInitState: boolean; // 摄像头初始化状态
+    cameraList: Camera[]; // 摄像头列表
+  };
   options: {
     brand_options: Option[];
     model_type_options: Option[];
@@ -40,6 +48,10 @@ export const store = createStore<State>({
     warehouse: 1,
     skuormodeltype: 1,
     searchSku: "",
+    cameraState: {
+      cameraInitState: false, // 摄像头初始化状态
+      cameraList: [], // 摄像头列表
+    },
     options: {
       brand_options: [{ value: "" }],
       model_type_options: [

@@ -254,17 +254,17 @@ def SaveNewEyeglassFrame(request: HttpRequest):
                     sideview = request.FILES.get("sideview")
                     topview = request.FILES.get("topview")
                     # 获取三视图图片背景文件
-                    frontview_bg = request.FILES.get("frontview_bg")
-                    sideview_bg = request.FILES.get("sideview_bg")
-                    topview_bg = request.FILES.get("topview_bg")
+                    # frontview_bg = request.FILES.get("frontview_bg")
+                    # sideview_bg = request.FILES.get("sideview_bg")
+                    # topview_bg = request.FILES.get("topview_bg")
                     # 获取三视图图片错误处理
                     if (
                         not frontview
                         or not sideview
                         or not topview
-                        or not frontview_bg
-                        or not sideview_bg
-                        or not topview_bg
+                        # or not frontview_bg
+                        # or not sideview_bg
+                        # or not topview_bg
                     ):
                         # 抛出异常
                         raise ValueError("三视图图片不能为空")
@@ -272,10 +272,10 @@ def SaveNewEyeglassFrame(request: HttpRequest):
                     EyeglassFrameDetectionResult_instance.frontview = frontview
                     EyeglassFrameDetectionResult_instance.sideview = sideview
                     EyeglassFrameDetectionResult_instance.topview = topview
-                    # 保存三视图图片背景文件
-                    EyeglassFrameDetectionResult_instance.frontview_bg = frontview_bg
-                    EyeglassFrameDetectionResult_instance.sideview_bg = sideview_bg
-                    EyeglassFrameDetectionResult_instance.topview_bg = topview_bg
+                    # # 保存三视图图片背景文件
+                    # EyeglassFrameDetectionResult_instance.frontview_bg = frontview_bg
+                    # EyeglassFrameDetectionResult_instance.sideview_bg = sideview_bg
+                    # EyeglassFrameDetectionResult_instance.topview_bg = topview_bg
                     # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
                     EyeglassFrameDetectionResult_instance.save()
                 else:

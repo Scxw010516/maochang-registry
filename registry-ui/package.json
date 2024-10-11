@@ -40,7 +40,8 @@
     "vuedraggable": "~4.0.3",
     "vuex": "~4.0.2",
     "xgplayer-vue": "~1.1.5",
-    "xlsx": "~0.17.0"
+    "xlsx": "~0.17.0",
+    "yarn": "^1.22.22"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^4.18.0",
