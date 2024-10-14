@@ -574,7 +574,7 @@
         >
           <a-col :span="8" class="capture-box-2">
             <video
-              ref="TopVideo"
+              ref="TopVideoRef"
               class="capture-frame"
               name="TopVideo"
               style="transform: scale(-1, 1)"
@@ -582,7 +582,7 @@
           </a-col>
           <a-col :span="8" class="capture-box-2">
             <video
-              ref="FrontVideo"
+              ref="FrontVideoRef"
               class="capture-frame"
               name="FrontVideo"
               style="transform: scale(-1, 1)"
@@ -590,7 +590,7 @@
           </a-col>
           <a-col :span="8" class="capture-box-2">
             <video
-              ref="SideVideo"
+              ref="SideVideoRef"
               class="capture-frame"
               name="SideVideo"
               style="transform: scale(-1, 1)"
@@ -1153,15 +1153,6 @@
           justify="end"
           style="background-color: #ffffff; border-bottom-left-radius: 12px"
         >
-          <div
-            v-show="isCaptureStart"
-            style="margin-left: 80px; margin-right: auto"
-          >
-            <a-button style="margin-right: 40px" @click="onClickLightup">
-              增加亮度
-            </a-button>
-            <a-button @click="onClickLightdown"> 降低亮度 </a-button>
-          </div>
           <a-button class="operation-button" @click="onClickReturnOrRedo"
             >{{
               currentStage.startsWith("preview") ||
@@ -1287,7 +1278,7 @@ const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
 
 // 镜架拍摄html信息接口
 interface CaptureItem {
-  videoElement: HTMLVideoElement; //预览时的html视频元素
+  videoElement: HTMLVideoElement | null; //预览时的html视频元素
   imgurl: string; //拍摄结果
   imgBlob: Blob | null; //拍摄结果
 }
@@ -1314,6 +1305,21 @@ const captureItems = ref<CaptureItem[]>([
     imgurl: "",
     imgBlob: null,
   },
+  // {
+  //   videoElement: TopVideoRef.value,
+  //   imgurl: "",
+  //   imgBlob: null,
+  // },
+  // {
+  //   videoElement: FrontVideoRef.value,
+  //   imgurl: "",
+  //   imgBlob: null,
+  // },
+  // {
+  //   videoElement: SideVideoRef.value,
+  //   imgurl: "",
+  //   imgBlob: null,
+  // },
 ]);
 
 // const warehouse = ref<string>("上海奉贤海湾镇海思路999号店"); //采集点
@@ -1891,6 +1897,7 @@ onMounted(() => {
   //     storage.setItem("warehouse", "");
   //   }
   // }
+  console.log(captureItems.value);
 });
 
 // #########################################静态功能函数定义############################################
@@ -2409,7 +2416,7 @@ async function initCamera(): Promise<boolean> {
           });
         } else if (
           device.kind === "videoinput" &&
-          device.label.includes("16MP USB Camera (32e4:0002)")
+          device.label.includes("16MP USB Camera (32e4:0007)")
         ) {
           // 添加设备到设备列表
           store.state.cameraState.cameraList.push({
@@ -2421,7 +2428,7 @@ async function initCamera(): Promise<boolean> {
           });
         } else if (
           device.kind === "videoinput" &&
-          device.label.includes("16MP USB Camera (32e4:0001)")
+          device.label.includes("16MP USB Camera (32e4:0004)")
         ) {
           // 添加设备到设备列表
           store.state.cameraState.cameraList.push({
@@ -2485,6 +2492,7 @@ async function initCameraDeviceState(): Promise<void> {
 async function startCameraStream(): Promise<void> {
   // 遍历摄像头列表，获取摄像头流
   store.state.cameraState.cameraList.forEach((camera) => {
+    console.log(camera);
     navigator.mediaDevices
       .getUserMedia({
         // 设置摄像头参数
@@ -2502,14 +2510,15 @@ async function startCameraStream(): Promise<void> {
         camera.mediaStream = stream;
         // 根据摄像头索引，将流对象赋值给对应的video元素
         const video = captureItems.value[camera.index].videoElement;
+        console.log(captureItems.value[camera.index]);
         if (video) {
           // 将流对象赋值给video元素
           video.srcObject = stream;
+          // 监听视频流元数据加载完成后，播放视频
+          video.onloadedmetadata = function () {
+            video.play();
+          };
         }
-        // 监听视频流元数据加载完成后，播放视频
-        video.onloadedmetadata = function () {
-          video.play();
-        };
       })
       .catch(function (err) {
         console.log(err.name + ": " + err.message);
@@ -2534,7 +2543,7 @@ async function stopCameraStream(): Promise<void> {
         let blob: Blob | null = null;
         const captureItem = captureItems.value[camera.index];
         ctx?.drawImage(
-          captureItem.videoElement,
+          captureItem.videoElement as HTMLVideoElement,
           0,
           0,
           canvas.width,
@@ -3190,70 +3199,6 @@ const onClickWeightStateErrorOk = () => {
   weightStateErrorModalLoading.value = true;
   // 初始化电子秤串口
   initWeight();
-};
-
-// 增加亮度
-const onClickLightup = () => {
-  // let cam_id = 0;
-  // switch (currentStage.value) {
-  //   case "preview-0":
-  //     cam_id = 0;
-  //     break;
-  //   case "preview-1":
-  //     cam_id = 1;
-  //     break;
-  //   case "preview-2":
-  //     cam_id = 2;
-  //     break;
-  //   default:
-  //     return;
-  // }
-  // // 使用WebSocket请求增加亮度
-  // const ws = new WebSocket(`ws://localhost:8765/light-up/${cam_id}`);
-  // ws.addEventListener("message", (event) => {
-  //   const result = JSON.parse(event.data as string);
-  //   if (result.code == "0") {
-  //     message.success("亮度调节完成", 3);
-  //   }
-  //   ws.close();
-  // });
-  // // 监听错误事件
-  // ws.addEventListener("error", () => {
-  //   message.error("亮度未能正常调节，请检查设备连接", 10);
-  //   ws.close();
-  // });
-};
-// 降低亮度
-const onClickLightdown = () => {
-  // let cam_id = 0;
-  // switch (currentStage.value) {
-  //   case "preview-0":
-  //     cam_id = 0;
-  //     break;
-  //   case "preview-1":
-  //     cam_id = 1;
-  //     break;
-  //   case "preview-2":
-  //     cam_id = 2;
-  //     break;
-  //   default:
-  //     return;
-  // }
-  // // 使用WebSocket请求清零称重，即去皮
-  // const ws = new WebSocket(`ws://localhost:8765/light-down/${cam_id}`);
-  // ws.addEventListener("message", (event) => {
-  //   const result = JSON.parse(event.data as string);
-  //   if (result.code == "0") {
-  //     console.log("亮度调节提示");
-  //     message.success("亮度调节完成", 3);
-  //   }
-  //   ws.close();
-  // });
-  // // 监听错误事件
-  // ws.addEventListener("error", () => {
-  //   message.error("亮度未能正常调节，请检查设备连接", 10);
-  //   ws.close();
-  // });
 };
 </script>
 
