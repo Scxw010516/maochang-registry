@@ -9,6 +9,7 @@ from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpR
 from application.glass_management import models
 from application.glass_management import forms
 
+
 # 镜架采集端
 def SearchModeltypeOrSKU(request: HttpRequest):
     """
@@ -33,26 +34,36 @@ def SearchModeltypeOrSKU(request: HttpRequest):
 
     # 查询镜架型号或SKU是否存在，其中sku是唯一的
     if searchtype == "1":
-        entrys = models.EyeglassFrameDataFromExcel.objects.filter(model_type__icontains=searchstring)
+        entrys = models.EyeglassFrameDataFromExcel.objects.filter(
+            model_type__icontains=searchstring
+        )
     elif searchtype == "2":
-        entrys = models.EyeglassFrameDataFromExcel.objects.filter(sku__icontains=searchstring)
-    
+        entrys = models.EyeglassFrameDataFromExcel.objects.filter(
+            sku__icontains=searchstring
+        )
+
     # 通过sku字段，过滤已经存在于EyeglassFrameEntry表中的数据
-    entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.all()])
-    
+    entrys = entrys.exclude(
+        sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.all()]
+    )
+
     # 限制返回结果数量最多为50条
     entrys = entrys[:50]
-    
+
     # 判断查询结果是否为空
     if not entrys:
         return R.ok(msg="未找到该镜架型号或SKU")
-    
+
     # 先将字典列表转换为元组列表，便于去重
     tuple_search_result = [
         (
-            entry.sku, entry.brand, entry.model_type, 
-            entry.price, entry.lens_width_st, 
-            entry.bridge_width_st, entry.temple_length_st, 
+            entry.sku,
+            entry.brand,
+            entry.model_type,
+            entry.price,
+            entry.lens_width_st,
+            entry.bridge_width_st,
+            entry.temple_length_st,
             entry.model_type if searchtype == "1" else entry.sku,
         )
         for entry in entrys
@@ -94,7 +105,7 @@ def SearchModeltypeOrSKU(request: HttpRequest):
 
     # 返回查询结果
     return R.ok(data=search_result)
-    
+
 
 def SearchSKU(request: HttpRequest):
     """

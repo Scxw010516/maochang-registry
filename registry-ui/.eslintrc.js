@@ -11,7 +11,10 @@ module.exports = {
     parser: "@typescript-eslint/parser",
   },
 
-  rules: {},
+  rules: {
+    // 关闭未使用的变量检查
+    "no-unused-vars": "off",
+  },
 
   extends: [
     "plugin:vue/vue3-essential",
