@@ -1,27 +1,27 @@
 <template>
   <a-row
-    v-if="!store.state.hasLoggedIn"
+    v-show="!store.state.hasLoggedIn"
     class="full-height-row"
     type="flex"
     align="middle"
     justify="center"
   >
     <!-- 登录 输入仓库地址 -->
-    <a-form v-if="inputAddress" class="login-form-card">
+    <a-form v-show="inputAddress" class="login-form-card">
       <LeftOutlined @click="inputAddress = false" />
       <a-select
         v-model:value="store.state.warehouse"
         placeholder="选择仓库地址"
         style="width: 100%"
         show-search
-        defaultOpen
+        :defaultOpen="true"
         :options="store.state.options.warehouse_options"
         :filter-option="filterOptionbyLabel"
         @select="inputAddress = false"
       ></a-select>
     </a-form>
     <!-- 登录 输入员工号 -->
-    <a-form v-else class="login-form-card">
+    <a-form v-show="!inputAddress" class="login-form-card">
       <img src="@/assets/logo.png" alt="logo" />
       <a-form-item
         name="username"
@@ -79,7 +79,7 @@
       </a-form-item>
     </a-form>
   </a-row>
-  <a-layout v-if="store.state.hasLoggedIn" class="full-height-row">
+  <a-layout v-show="store.state.hasLoggedIn" class="full-height-row">
     <!-- 侧边导航 -->
     <a-layout-sider style="background-color: #8675ff" width="230px">
       <!-- admin -->
@@ -149,7 +149,7 @@
         >
           <template #icon>
             <svg
-              v-if="selectedMenuItem.includes(item.key)"
+              v-show="selectedMenuItem.includes(item.key)"
               width="20"
               height="20"
               viewBox="0 0 20 20"
@@ -162,7 +162,7 @@
               />
             </svg>
             <svg
-              v-else
+              v-show="!selectedMenuItem.includes(item.key)"
               width="20"
               height="20"
               viewBox="0 0 20 20"
@@ -176,17 +176,22 @@
             </svg>
           </template>
           <span>
-            <div v-if="selectedMenuItem.includes(item.key)" style="color: #000">
+            <div
+              v-show="selectedMenuItem.includes(item.key)"
+              style="color: #000"
+            >
               {{ item.label }}
             </div>
-            <div v-else>{{ item.label }}</div>
+            <div v-show="!selectedMenuItem.includes(item.key)">
+              {{ item.label }}
+            </div>
           </span>
         </a-menu-item>
       </a-menu>
     </a-layout-sider>
     <!-- 输入SKU 输入基础信息 -->
     <a-layout
-      v-if="
+      v-show="
         Array.isArray(selectedMenuItem) &&
         selectedMenuItem.includes('1') &&
         (currentStage === 'input-sku' || currentStage === 'input-basic-params')
@@ -196,7 +201,7 @@
       <a-layout-content>
         <!-- 输入SKU -->
         <a-row
-          v-if="currentStage === 'input-sku'"
+          v-show="currentStage === 'input-sku'"
           style="
             height: 100vh;
             width: 100%;
@@ -282,7 +287,7 @@
                 @search="onSearchModeltypeOrSKU"
               >
                 <template #option="item">
-                  <div v-if="store.state.skuormodeltype == 1">
+                  <div v-show="store.state.skuormodeltype == 1">
                     <a-row :gutter="2">
                       <a-col :span="9" class="wrap-content"
                         >型号：{{ item.model_type }}</a-col
@@ -295,7 +300,7 @@
                       >
                     </a-row>
                   </div>
-                  <div v-else-if="store.state.skuormodeltype == 2">
+                  <div v-show="store.state.skuormodeltype == 2">
                     <a-row :gutter="2">
                       <a-col :span="9" class="wrap-content"
                         >SKU：{{ item.sku }}</a-col
@@ -346,7 +351,7 @@
         </a-row>
         <!-- 输入基础信息 -->
         <a-row
-          v-else
+          v-show="currentStage !== 'input-sku'"
           align="middle"
           justify="center"
           style="
@@ -553,7 +558,7 @@
     </a-layout>
     <!-- 拍摄 计算 -->
     <a-layout
-      v-if="
+      v-show="
         selectedMenuItem.includes('1') &&
         currentStage !== 'input-sku' &&
         currentStage !== 'input-basic-params'
@@ -565,7 +570,7 @@
       >
         <!-- 拍摄 -->
         <a-row
-          v-if="currentStage == 'preview'"
+          v-show="currentStage == 'preview'"
           class="registry-preview"
           :gutter="[48, 0]"
           justify="center"
@@ -599,7 +604,7 @@
         </a-row>
         <!-- 确认 -->
         <a-row
-          v-if="currentStage == 'confirm'"
+          v-show="currentStage == 'confirm'"
           class="registry-preview"
           :gutter="[48, 0]"
           justify="center"
@@ -618,7 +623,7 @@
         </a-row>
         <!-- 计算参数 -->
         <a-row
-          v-else-if="currentStage == 'input-params'"
+          v-show="currentStage == 'input-params'"
           class="registry-preview"
           type="flex"
           align="middle"
@@ -631,19 +636,19 @@
               <a-col :span="8">
                 <img
                   class="registry-preview-sub-image"
-                  :src="captureItems[0].imgurl"
+                  :src="TopCapture.imgurl"
                 />
               </a-col>
               <a-col :span="8">
                 <img
                   class="registry-preview-sub-image"
-                  :src="captureItems[1].imgurl"
+                  :src="FrontCapture.imgurl"
                 />
               </a-col>
               <a-col :span="8">
                 <img
                   class="registry-preview-sub-image"
-                  :src="captureItems[2].imgurl"
+                  :src="SideCapture.imgurl"
                 />
               </a-col>
             </a-row>
@@ -991,10 +996,16 @@
                     >
                       去皮
                     </a-button>
-                    <a-button v-if="!hasWeightLoged" @click="onClickLogWeight">
+                    <a-button
+                      v-show="!hasWeightLoged"
+                      @click="onClickLogWeight"
+                    >
                       称重
                     </a-button>
-                    <a-button v-else @click="onClickCancelLogWeight">
+                    <a-button
+                      v-show="hasWeightLoged"
+                      @click="onClickCancelLogWeight"
+                    >
                       重新称重
                     </a-button>
                   </a-col>
@@ -1174,7 +1185,7 @@
     <!-- 镜框管理 -->
     <a-layout
       class="full-height-row"
-      v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('2')"
+      v-show="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('2')"
     >
       <a-layout-content>
         <ManagePage />
@@ -1183,7 +1194,7 @@
     <!-- 账号中心 -->
     <a-layout
       class="full-height-row"
-      v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('3')"
+      v-show="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('3')"
     >
       <a-layout-content>
         <a-button @click="onClickLogout">退出登录</a-button>
@@ -1222,7 +1233,15 @@
 
 <script lang="ts" setup>
 //#####################################第三方库及定义类初始化#####################################
-import { ref, reactive, onMounted, UnwrapRef, computed } from "vue";
+import {
+  ref,
+  reactive,
+  onMounted,
+  UnwrapRef,
+  computed,
+  onUpdated,
+  watch,
+} from "vue";
 // import { useRouter } from "vue-router";
 import { useStore } from "../../store";
 import ManagePage from "./manage.vue";
@@ -1278,49 +1297,70 @@ const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
 
 // 镜架拍摄html信息接口
 interface CaptureItem {
-  videoElement: HTMLVideoElement | null; //预览时的html视频元素
+  videoElement: HTMLVideoElement; //预览时的html视频元素
   imgurl: string; //拍摄结果
   imgBlob: Blob | null; //拍摄结果
 }
-//镜架拍摄html信息：0 俯视图；1 正视图；2 侧视图
-const captureItems = ref<CaptureItem[]>([
-  {
-    videoElement: document.querySelector(
-      "video[name='TopVideo']",
-    ) as HTMLVideoElement,
-    imgurl: "",
-    imgBlob: null,
-  },
-  {
-    videoElement: document.querySelector(
-      "video[name='FrontVideo']",
-    ) as HTMLVideoElement,
-    imgurl: "",
-    imgBlob: null,
-  },
-  {
-    videoElement: document.querySelector(
-      "video[name='SideVideo']",
-    ) as HTMLVideoElement,
-    imgurl: "",
-    imgBlob: null,
-  },
-  // {
-  //   videoElement: TopVideoRef.value,
-  //   imgurl: "",
-  //   imgBlob: null,
-  // },
-  // {
-  //   videoElement: FrontVideoRef.value,
-  //   imgurl: "",
-  //   imgBlob: null,
-  // },
-  // {
-  //   videoElement: SideVideoRef.value,
-  //   imgurl: "",
-  //   imgBlob: null,
-  // },
-]);
+// 镜架拍摄html信息：0 俯视图；1 正视图；2 侧视图
+const TopCapture = ref<CaptureItem>({
+  videoElement: document.querySelector(
+    "video[name='TopVideo']",
+  ) as HTMLVideoElement,
+  imgurl: "",
+  imgBlob: null,
+});
+const FrontCapture = ref<CaptureItem>({
+  videoElement: document.querySelector(
+    "video[name='FrontVideo']",
+  ) as HTMLVideoElement,
+  imgurl: "",
+  imgBlob: null,
+});
+const SideCapture = ref<CaptureItem>({
+  videoElement: document.querySelector(
+    "video[name='SideVideo']",
+  ) as HTMLVideoElement,
+  imgurl: "",
+  imgBlob: null,
+});
+// const captureItems = ref<CaptureItem[]>([
+//   {
+//     videoElement: document.querySelector(
+//       "video[name='TopVideo']",
+//     ) as HTMLVideoElement,
+//     imgurl: "",
+//     imgBlob: null,
+//   },
+//   {
+//     videoElement: document.querySelector(
+//       "video[name='FrontVideo']",
+//     ) as HTMLVideoElement,
+//     imgurl: "",
+//     imgBlob: null,
+//   },
+//   {
+//     videoElement: document.querySelector(
+//       "video[name='SideVideo']",
+//     ) as HTMLVideoElement,
+//     imgurl: "",
+//     imgBlob: null,
+//   },
+// {
+//   videoElement: TopVideoRef.value,
+//   imgurl: "",
+//   imgBlob: null,
+// },
+// {
+//   videoElement: FrontVideoRef.value,
+//   imgurl: "",
+//   imgBlob: null,
+// },
+// {
+//   videoElement: SideVideoRef.value,
+//   imgurl: "",
+//   imgBlob: null,
+// },
+// ]);
 
 // const warehouse = ref<string>("上海奉贤海湾镇海思路999号店"); //采集点
 
@@ -1885,6 +1925,8 @@ onMounted(() => {
   initCamera();
   // 初始化识别秤串口
   initWeight();
+  // 初始化表单选项
+  initFormOptions();
   // // 加载仓库地址
   // if (!window.localStorage) {
   //   console.log("error");
@@ -1897,7 +1939,16 @@ onMounted(() => {
   //     storage.setItem("warehouse", "");
   //   }
   // }
-  console.log(captureItems.value);
+
+  TopCapture.value.videoElement = document.querySelector(
+    "video[name='TopVideo']",
+  ) as HTMLVideoElement;
+  FrontCapture.value.videoElement = document.querySelector(
+    "video[name='FrontVideo']",
+  ) as HTMLVideoElement;
+  SideCapture.value.videoElement = document.querySelector(
+    "video[name='SideVideo']",
+  ) as HTMLVideoElement;
 });
 
 // #########################################静态功能函数定义############################################
@@ -2509,15 +2560,33 @@ async function startCameraStream(): Promise<void> {
         // 将流对象存入摄像头对象
         camera.mediaStream = stream;
         // 根据摄像头索引，将流对象赋值给对应的video元素
-        const video = captureItems.value[camera.index].videoElement;
-        console.log(captureItems.value[camera.index]);
-        if (video) {
-          // 将流对象赋值给video元素
-          video.srcObject = stream;
-          // 监听视频流元数据加载完成后，播放视频
-          video.onloadedmetadata = function () {
-            video.play();
-          };
+        if (camera.index == 0) {
+          if (TopCapture.value.videoElement) {
+            // 将流对象赋值给video元素
+            TopCapture.value.videoElement.srcObject = stream;
+            // 监听视频流元数据加载完成后，播放视频
+            TopCapture.value.videoElement.onloadedmetadata = function () {
+              TopCapture.value.videoElement.play();
+            };
+          }
+        } else if (camera.index == 1) {
+          if (FrontCapture.value.videoElement) {
+            // 将流对象赋值给video元素
+            FrontCapture.value.videoElement.srcObject = stream;
+            // 监听视频流元数据加载完成后，播放视频
+            FrontCapture.value.videoElement.onloadedmetadata = function () {
+              FrontCapture.value.videoElement.play();
+            };
+          }
+        } else if (camera.index == 2) {
+          if (SideCapture.value.videoElement) {
+            // 将流对象赋值给video元素
+            SideCapture.value.videoElement.srcObject = stream;
+            // 监听视频流元数据加载完成后，播放视频
+            SideCapture.value.videoElement.onloadedmetadata = function () {
+              SideCapture.value.videoElement.play();
+            };
+          }
         }
       })
       .catch(function (err) {
@@ -2528,90 +2597,90 @@ async function startCameraStream(): Promise<void> {
 
 // 功能函数：停止拍摄预览，关闭视频流，释放资源，并进行拍摄，结果存入url,blob和 EyeGlassImageFormState 中
 async function stopCameraStream(): Promise<void> {
-  // 遍历摄像头列表，关闭视频流
-  const promises = store.state.cameraState.cameraList.map(async (camera) => {
-    // 判断是否有视频流
-    if (camera.mediaStream) {
-      // 开启拍摄
-      const canvas = document.createElement("canvas");
-      canvas.width = 3075;
-      canvas.height = 3000;
-      const ctx = canvas.getContext("2d");
-      ctx?.scale(-1, 1);
-      ctx?.translate(-canvas.width, 0);
-      try {
-        let blob: Blob | null = null;
-        const captureItem = captureItems.value[camera.index];
-        ctx?.drawImage(
-          captureItem.videoElement as HTMLVideoElement,
-          0,
-          0,
-          canvas.width,
-          canvas.height,
-        );
-        // 将canvas内容转换为Blob
-        blob = await new Promise<Blob | null>((resolve) =>
-          canvas.toBlob(resolve, "image/jpeg", 0.8),
-        );
-        if (!blob) {
-          console.error("截取视频帧失败");
-          throw new Error("截取视频帧失败");
-        } else {
-          // 将Blob转化为URL，赋值给imgFrontCameraUrl
-          captureItem.imgurl = URL.createObjectURL(blob);
-          // 存储blob在imgFrontCameraBlob中
-          captureItem.imgBlob = blob;
-          // 将Blob转换为File对象
-          if (camera.index == 0) {
-            EyeGlassImageFormState.topview = new File([blob], "0.jpg");
-          } else if (camera.index == 1) {
-            EyeGlassImageFormState.frontview = new File([blob], "1.jpg");
-          } else if (camera.index == 2) {
-            EyeGlassImageFormState.sideview = new File([blob], "2.jpg");
-          }
-        }
-      } catch (error) {
-        // 捕获异常
-        console.log(error);
-        throw new Error("截取视频帧失败");
-      } finally {
-        // 清除创建的canvas
-        canvas.remove();
-      }
-    } else {
-      throw new Error("未获取到视频流");
-    }
-  });
-  // 等待所有摄像头拍摄完成
-  await Promise.all(promises)
-    .then(() => {
-      // 确认拍摄标识符
-      hasCaptured.value = true;
-      // 关闭所有视频流
-      store.state.cameraState.cameraList.forEach((camera) => {
-        if (camera.mediaStream) {
-          camera.mediaStream.getTracks().forEach((track) => {
-            track.stop();
-          });
-          console.log("关闭视频流");
-          camera.mediaStream = null;
-        }
-      });
-    })
-    .catch((error) => {
-      // 一旦发生异常，则清空已经存储的图片
-      captureItems.value.forEach((item) => {
-        item.imgurl = "";
-        item.imgBlob = null;
-      });
-      // 清空store中的图片
-      EyeGlassImageFormState.frontview = null;
-      EyeGlassImageFormState.leftview = null;
-      EyeGlassImageFormState.rightview = null;
-      // 抛出异常
-      console.log(error);
-      throw new Error("拍摄失败");
-    });
+  // // 遍历摄像头列表，关闭视频流
+  // const promises = store.state.cameraState.cameraList.map(async (camera) => {
+  //   // 判断是否有视频流
+  //   if (camera.mediaStream) {
+  //     // 开启拍摄
+  //     const canvas = document.createElement("canvas");
+  //     canvas.width = 3075;
+  //     canvas.height = 3000;
+  //     const ctx = canvas.getContext("2d");
+  //     ctx?.scale(-1, 1);
+  //     ctx?.translate(-canvas.width, 0);
+  //     try {
+  //       let blob: Blob | null = null;
+  //       const captureItem = captureItems.value[camera.index];
+  //       ctx?.drawImage(
+  //         captureItem.videoElement as HTMLVideoElement,
+  //         0,
+  //         0,
+  //         canvas.width,
+  //         canvas.height,
+  //       );
+  //       // 将canvas内容转换为Blob
+  //       blob = await new Promise<Blob | null>((resolve) =>
+  //         canvas.toBlob(resolve, "image/jpeg", 0.8),
+  //       );
+  //       if (!blob) {
+  //         console.error("截取视频帧失败");
+  //         throw new Error("截取视频帧失败");
+  //       } else {
+  //         // 将Blob转化为URL，赋值给imgFrontCameraUrl
+  //         captureItem.imgurl = URL.createObjectURL(blob);
+  //         // 存储blob在imgFrontCameraBlob中
+  //         captureItem.imgBlob = blob;
+  //         // 将Blob转换为File对象
+  //         if (camera.index == 0) {
+  //           EyeGlassImageFormState.topview = new File([blob], "0.jpg");
+  //         } else if (camera.index == 1) {
+  //           EyeGlassImageFormState.frontview = new File([blob], "1.jpg");
+  //         } else if (camera.index == 2) {
+  //           EyeGlassImageFormState.sideview = new File([blob], "2.jpg");
+  //         }
+  //       }
+  //     } catch (error) {
+  //       // 捕获异常
+  //       console.log(error);
+  //       throw new Error("截取视频帧失败");
+  //     } finally {
+  //       // 清除创建的canvas
+  //       canvas.remove();
+  //     }
+  //   } else {
+  //     throw new Error("未获取到视频流");
+  //   }
+  // });
+  // // 等待所有摄像头拍摄完成
+  // await Promise.all(promises)
+  //   .then(() => {
+  //     // 确认拍摄标识符
+  //     hasCaptured.value = true;
+  //     // 关闭所有视频流
+  //     store.state.cameraState.cameraList.forEach((camera) => {
+  //       if (camera.mediaStream) {
+  //         camera.mediaStream.getTracks().forEach((track) => {
+  //           track.stop();
+  //         });
+  //         console.log("关闭视频流");
+  //         camera.mediaStream = null;
+  //       }
+  //     });
+  //   })
+  //   .catch((error) => {
+  //     // 一旦发生异常，则清空已经存储的图片
+  //     captureItems.value.forEach((item) => {
+  //       item.imgurl = "";
+  //       item.imgBlob = null;
+  //     });
+  //     // 清空store中的图片
+  //     EyeGlassImageFormState.frontview = null;
+  //     EyeGlassImageFormState.leftview = null;
+  //     EyeGlassImageFormState.rightview = null;
+  //     // 抛出异常
+  //     console.log(error);
+  //     throw new Error("拍摄失败");
+  //   });
 }
 
 // 功能函数：初始化基础参数表单
