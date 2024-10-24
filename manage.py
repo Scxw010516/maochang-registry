@@ -2,9 +2,11 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-
-
+from application.tasks import test ####celery test
 def main():
+    result = test.delay(1)####celery test
+    print("id:"+result.id)####celery test
+    print("get"+result.get())####celery test
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'application.settings')
     try:
