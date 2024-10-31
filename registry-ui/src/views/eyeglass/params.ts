@@ -21,6 +21,7 @@ export interface EyeGlassBasicForm {
   color: number | null;
   shape: number | null;
   isnosepad: number | null;
+  istransparent: number | null;
   stock: number | null;
   lens_radian: number | null;
   lens_width_st: number | null;
@@ -37,6 +38,7 @@ export const EyeGlassBasicFormLabel = {
   color: "颜色",
   shape: "形状",
   isnosepad: "鼻托",
+  istransparent: "透明",
   stock: "库存",
   lens_radian: "撑片弧度",
   lens_width_st: "镜片宽度",
@@ -52,6 +54,7 @@ export const EyeGlassBasicFormUnit = {
   color: "",
   shape: "",
   isnosepad: "",
+  istransparent: "",
   stock: "",
   lens_radian: "°",
   lens_width_st: "mm",

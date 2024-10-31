@@ -3,7 +3,7 @@
  */
 import axios from "axios";
 import setting from "../../config/setting.js";
-import { formatMenus } from "ele-admin-pro";
+// import { formatMenus } from "ele-admin-pro";
 
 export default {
   namespaced: true,
@@ -106,48 +106,48 @@ export default {
      * @param commit
      * @returns {Promise} {Array}
      */
-    getMenus({ commit }) {
-      return new Promise((resolve, reject) => {
-        if (!setting.menuUrl) {
-          const { menus, homePath } = formatMenus(setting.menus);
-          commit("SET", { key: "menus", value: menus });
-          return resolve({ menus: menus, home: homePath });
-        }
-        // 请求接口获取用户菜单
-        axios
-          .get(setting.menuUrl)
-          .then((res) => {
-            const result =
-              typeof setting.parseMenu === "function"
-                ? setting.parseMenu(res.data)
-                : res.data;
-            // 获取用户的信息、角色、权限
-            if (result.user) {
-              setting.cacheUser(result.user);
-              commit("SET", { key: "user", value: result.user });
-              commit("SET", { key: "roles", value: result.user.roles });
-              commit("SET", {
-                key: "authorities",
-                value: result.user.authorities,
-              });
-            }
-            // 获取用户的菜单
-            if (!result.data) {
-              console.error("get menus error: ", result);
-              return reject(new Error(result.msg));
-            }
-            // 处理菜单数据格式
-            const { menus, homePath } = formatMenus(
-              result.data,
-              setting.parseMenuItem,
-            );
-            commit("SET", { key: "menus", value: menus });
-            resolve({ menus: menus, home: homePath });
-          })
-          .catch((e) => {
-            reject(e);
-          });
-      });
-    },
+    // getMenus({ commit }) {
+    //   return new Promise((resolve, reject) => {
+    //     if (!setting.menuUrl) {
+    //       const { menus, homePath } = formatMenus(setting.menus);
+    //       commit("SET", { key: "menus", value: menus });
+    //       return resolve({ menus: menus, home: homePath });
+    //     }
+    //     // 请求接口获取用户菜单
+    //     axios
+    //       .get(setting.menuUrl)
+    //       .then((res) => {
+    //         const result =
+    //           typeof setting.parseMenu === "function"
+    //             ? setting.parseMenu(res.data)
+    //             : res.data;
+    //         // 获取用户的信息、角色、权限
+    //         if (result.user) {
+    //           setting.cacheUser(result.user);
+    //           commit("SET", { key: "user", value: result.user });
+    //           commit("SET", { key: "roles", value: result.user.roles });
+    //           commit("SET", {
+    //             key: "authorities",
+    //             value: result.user.authorities,
+    //           });
+    //         }
+    //         // 获取用户的菜单
+    //         if (!result.data) {
+    //           console.error("get menus error: ", result);
+    //           return reject(new Error(result.msg));
+    //         }
+    //         // 处理菜单数据格式
+    //         const { menus, homePath } = formatMenus(
+    //           result.data,
+    //           setting.parseMenuItem,
+    //         );
+    //         commit("SET", { key: "menus", value: menus });
+    //         resolve({ menus: menus, home: homePath });
+    //       })
+    //       .catch((e) => {
+    //         reject(e);
+    //       });
+    //   });
+    // },
   },
 };

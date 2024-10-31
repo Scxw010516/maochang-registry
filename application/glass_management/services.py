@@ -136,9 +136,9 @@ def SearchSKU(request: HttpRequest):
                 "model_type": entry_fromexcel.model_type,
                 "price": price,
                 "stock": entry_fromexcel.stock,
-                "lens_width_st": entry_fromexcel.lens_width_st,
-                "bridge_width_st": entry_fromexcel.bridge_width_st,
-                "temple_length_st": entry_fromexcel.temple_length_st,
+                # "lens_width_st": entry_fromexcel.lens_width_st,
+                # "bridge_width_st": entry_fromexcel.bridge_width_st,
+                # "temple_length_st": entry_fromexcel.temple_length_st,
             }
             # 返回查询结果
             return R.ok(msg="镜架信息载入成功", data=search_result)

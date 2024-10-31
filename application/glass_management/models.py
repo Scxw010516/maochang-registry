@@ -41,11 +41,16 @@ class EyeglassFrameEntry(BaseModel):
     color = models.ForeignKey(EyeglassFrameColorType, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架颜色")
     shape = models.ForeignKey(EyeglassFrameShapeType, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架形状")
     isnosepad = models.BooleanField(unique=False, blank=False, null=False, verbose_name="是否带鼻托")
+    IS_TRANSPARENT_CHOICES = (
+        (0, '否'),
+        (1, '是')
+    )
+    is_transparent = models.IntegerField(choices=IS_TRANSPARENT_CHOICES, unique=False, blank=False, null=False, verbose_name="是否透明")
     # 镜架尺寸参数
     lens_radian = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="撑片弧度")
-    lens_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜圈宽度")
-    bridge_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="鼻梁宽度")
-    temple_length_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜腿长度")
+    lens_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜圈宽度")
+    bridge_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="鼻梁宽度")
+    temple_length_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜腿长度")
     # 镜架库存参数
     stock = models.IntegerField(unique=False, blank=True, null=True, verbose_name="库存")
     warehouse = models.ForeignKey(Warehouse, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="所属仓库")

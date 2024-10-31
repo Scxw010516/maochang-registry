@@ -2,7 +2,7 @@ import { InjectionKey } from "vue";
 import { createStore, Store, useStore as baseUseStore } from "vuex";
 import getters from "./store/getters";
 import user from "./store/modules/user";
-import theme from "./store/modules/theme";
+// import theme from "./store/modules/theme";
 import type { SelectProps } from "ant-design-vue"; // 引入下拉框SelectProps组件
 interface Option {
   value: string;
@@ -91,7 +91,7 @@ export const store = createStore<State>({
   },
   modules: {
     user,
-    theme,
+    // theme,
   },
   getters,
 });
