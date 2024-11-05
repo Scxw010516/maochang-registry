@@ -14,6 +14,8 @@ export interface State {
   hasLoggedIn: boolean;
   // 登录仓库
   warehouse: number | null;
+  // 是否允许切换菜单
+  allowMenuSwitch: "allow" | "scaning";
   // 检索镜架信息方式
   skuormodeltype: number | null;
   //输入sku时，sku已存在
@@ -38,6 +40,7 @@ export const store = createStore<State>({
     username: "",
     hasLoggedIn: false,
     warehouse: 1,
+    allowMenuSwitch: "allow",
     skuormodeltype: 1,
     searchSku: "",
     options: {
