@@ -216,7 +216,7 @@ def SaveNewEyeglassFrame(request: HttpRequest):
     返回：
         HttpResponse: JSON格式的响应对象, {code,data,msg}
     """
-    # 接收请求参数
+    # 接收请求参数,前端提交的是formdata，所以从request.POST中获取数据。如果前端提交的是json数据，则从request.body中获取数据。
     if not request.POST:
         return R.failed(msg="参数错误")
 
@@ -287,7 +287,7 @@ def SaveNewEyeglassFrame(request: HttpRequest):
                 """ 
                 镜架风格关联表处理
                 """
-                # 提取镜架风格类型ID列表
+                # 提取镜架风格类型ID列表，没做forms验证
                 style_ids = request.POST.get("style")
                 style_ids = json.loads(style_ids)
                 for style_id in style_ids:

@@ -5,9 +5,6 @@ import sys
 from application.celery_task.tasks import test ####celery test
 
 def main():
-    result = test.delay(1)####celery test
-    print(result.id)####celery test
-    print(result.get())####celery test
     """Run administrative tasks."""
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'application.settings')
     try:

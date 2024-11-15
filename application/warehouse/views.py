@@ -18,6 +18,7 @@ from application.warehouse import services
 查询所有镜架仓库
 """
 class GetAllWarehousesView(View):
+
 	def get(self, request: HttpRequest):
 		# 调用查询镜架仓库方法
 		result = services.GetAllWarehouses(request)

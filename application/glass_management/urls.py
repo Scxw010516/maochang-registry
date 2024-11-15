@@ -1,25 +1,25 @@
 from django.urls import path  # 导入路径相关配置
 
 from application.glass_management import views
-from .data_import import generate_testing_data_for_customer_ui_v2, generate_testing_data_for_registry_ui
+# from .data_import import generate_testing_data_for_customer_ui_v2, generate_testing_data_for_registry_ui
 
 urlpatterns = [
     ###################古老API，待优化####################
     # path('video-feed', video_feed, name='video_feed'),
-    path('api/generate-testing-data-for-customer-ui', views.generate_testing_data_for_customer_ui),
-    path('api/generate-testing-data-for-customer-ui-v2', generate_testing_data_for_customer_ui_v2),
-    path('api/generate-testing-data-for-registry-ui', generate_testing_data_for_registry_ui),
-    path('api/all-brands', views.all_brands),
-	path('api/all-model-types', views.all_model_types),
-	path('api/all-materials', views.all_materials),
-	path('api/all-styles', views.all_styles),
-    path('api/list-all-eyeglass-frames', views.list_all_eyeglass_frames),
-    path('api/filter-by', views.filter_by),
-    path('api/filter-by-v2', views.filter_by_v2),
-    path('api/preview', views.preview),
-    path('api/details', views.details),
-    path('api/get-image-path-by-id', views.get_image_path_by_id),
-    path('api/test_recommend', views.test_recommend),
+    # path('api/generate-testing-data-for-customer-ui', views.generate_testing_data_for_customer_ui),
+    # path('api/generate-testing-data-for-customer-ui-v2', generate_testing_data_for_customer_ui_v2),
+    # path('api/generate-testing-data-for-registry-ui', generate_testing_data_for_registry_ui),
+    # path('api/all-brands', views.all_brands),
+	# path('api/all-model-types', views.all_model_types),
+	# path('api/all-materials', views.all_materials),
+	# path('api/all-styles', views.all_styles),
+    # path('api/list-all-eyeglass-frames', views.list_all_eyeglass_frames),
+    # path('api/filter-by', views.filter_by),
+    # path('api/filter-by-v2', views.filter_by_v2),
+    # path('api/preview', views.preview),
+    # path('api/details', views.details),
+    # path('api/get-image-path-by-id', views.get_image_path_by_id),
+    # path('api/test_recommend', views.test_recommend),
     
     ###################镜架采集与管理####################
     path('api/search-modeltype-sku', views.SearchModeltypeOrSKUView.as_view()), # post: 查询型号SKU
