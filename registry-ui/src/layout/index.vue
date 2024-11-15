@@ -110,7 +110,7 @@ export default {
       // 是否显示主体部分
       showContent: true,
       // 项目名
-      projectName: process.env.VUE_APP_NAME,
+      projectName: import.meta.env.VITE_NAME,
     };
   },
   created() {

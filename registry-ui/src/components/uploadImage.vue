@@ -53,7 +53,7 @@ const getFileAccessHttpUrl = (avatar, subStr) => {
     return avatar;
   } else {
     if (avatar && avatar.length > 0 && avatar.indexOf("[") == -1) {
-      return process.env.VUE_APP_API_BASE_URL + "/uploads/" + avatar;
+      return import.meta.env.VITE_API_BASE_URL + "/uploads/" + avatar;
     }
   }
 };
@@ -76,7 +76,7 @@ export default {
   },
   data() {
     return {
-      uploadAction: process.env.VUE_APP_API_BASE_URL + "/upload/uploadImage",
+      uploadAction: import.meta.env.VITE_API_BASE_URL + "/upload/uploadImage",
       headers: {},
       fileList: [],
       previewImage: "",

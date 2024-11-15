@@ -8,7 +8,7 @@ import setting from "./setting";
 import { Modal, message } from "ant-design-vue";
 
 // 设置统一的url
-axios.defaults.baseURL = process.env.VUE_APP_API_BASE_URL;
+axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
 
 /* 请求拦截器 */
 axios.interceptors.request.use(

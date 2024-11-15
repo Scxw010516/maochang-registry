@@ -76,7 +76,7 @@ export default {
      * 下载模板
      */
     downloadExcel() {
-      // window.location.href = process.env.VUE_APP_API_BASE_URL + "/uploads/level.xlsx";
+      // window.location.href = import.meta.env.VITE_API_BASE_URL + "/uploads/level.xlsx";
       this.$http.get("/level/downloadExcel").then((res) => {
         let data = res.data;
         if (data.code == 0) {

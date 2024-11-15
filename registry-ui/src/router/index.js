@@ -87,7 +87,7 @@ export default router;
 //     if (route && route.meta && route.meta.title) {
 //       names.push(route.meta.title);
 //     }
-//     const appName = process.env.VUE_APP_NAME;
+//     const appName = import.meta.env.VITE_NAME;
 //     if (appName) {
 //       names.push(appName);
 //     }
