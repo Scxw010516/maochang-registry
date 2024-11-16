@@ -59,7 +59,7 @@
                 <a-auto-complete
                   v-model:value="searchFormState.brand"
                   placeholder="请输入品牌"
-                  :options="store.state.options.brand_options"
+                  :options="options.brand_options"
                   :filter-option="filterOption"
                 />
               </a-form-item>
@@ -75,7 +75,7 @@
                 <a-auto-complete
                   v-model:value="searchFormState.model_type"
                   placeholder="请输入型号"
-                  :options="store.state.options.model_type_options"
+                  :options="options.model_type_options"
                   :filter-option="filterOption"
                 />
               </a-form-item>
@@ -154,7 +154,7 @@
                   :max-tag-count="1"
                   :max-tag-text-length="5"
                   placeholder="请选择材质"
-                  :options="store.state.options.material_options"
+                  :options="options.material_options"
                 />
               </a-form-item>
             </a-col>
@@ -365,7 +365,7 @@
                 >
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.brand"
-                    :options="store.state.options.brand_options"
+                    :options="options.brand_options"
                     :filter-option="filterOption"
                   ></a-auto-complete>
                 </a-form-item>
@@ -381,7 +381,7 @@
                 >
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.model_type"
-                    :options="store.state.options.model_type_options"
+                    :options="options.model_type_options"
                     :filter-option="filterOption"
                   ></a-auto-complete>
                 </a-form-item>
@@ -415,7 +415,7 @@
                   <a-select
                     v-model:value="EyeGlassBasicFormState.material"
                     placeholder="选择材质（单选）"
-                    :options="store.state.options.material_options"
+                    :options="options.material_options"
                   ></a-select>
                 </a-form-item>
               </a-col>
@@ -431,7 +431,7 @@
                   <a-select
                     v-model:value="EyeGlassBasicFormState.color"
                     placeholder="选择颜色（单选）"
-                    :options="store.state.options.color_options"
+                    :options="options.color_options"
                   ></a-select>
                 </a-form-item>
               </a-col>
@@ -447,7 +447,7 @@
                   <a-select
                     v-model:value="EyeGlassBasicFormState.shape"
                     placeholder="选择形状（单选）"
-                    :options="store.state.options.shape_options"
+                    :options="options.shape_options"
                   ></a-select>
                 </a-form-item>
               </a-col>
@@ -616,7 +616,7 @@
                     placeholder="选择风格（多选）"
                     :max-tag-count="1"
                     :maxTagTextLength="2"
-                    :options="store.state.options.style_options"
+                    :options="options.style_options"
                   />
                 </a-form-item>
               </a-form>
@@ -690,7 +690,7 @@ import {
   RightCircleOutlined,
 } from "@ant-design/icons-vue";
 // import { useRouter } from "vue-router";
-import { useStore } from "../../store";
+import { useOptionStore, useUserStore, useStateStore } from "@/stores/store";
 import axios from "@/config/axios-config";
 import { usePagination } from "vue-request";
 import { Key } from "ant-design-vue/lib/_util/type";
@@ -719,7 +719,9 @@ import { initFormOptions } from "./utils";
 
 //#########################################参数初始化###########################################
 // const router = useRouter();
-const store = useStore();
+const options = useOptionStore();
+const user = useUserStore();
+const state = useStateStore();
 // 镜架表格栏目
 const columns = [
   {
@@ -1274,11 +1276,11 @@ const modalBodyStyle = reactive({
 // 生命周期钩子：组件挂载完成后执行
 onMounted(async () => {
   // 判断状态管理store中是否有需要查询的sku
-  if (store.state.searchSku) {
+  if (state.searchSku) {
     // 将store中的sku赋值给searchFormState
-    searchFormState.sku = store.state.searchSku;
+    searchFormState.sku = state.searchSku;
     // 清空store中的sku
-    store.state.searchSku = "";
+    state.searchSku = "";
     // 通过searchFormState的sku请求Table
     run({
       page: 1,
@@ -1343,7 +1345,7 @@ const dataSource = computed(() => {
     return data.value?.data.data.map((item) => ({
       ...item,
       material:
-        store.state.options.material_options?.find(
+        options.material_options?.find(
           (option) => option.value === item.material,
         )?.label || item.material,
     }));
@@ -1548,7 +1550,7 @@ const saveEditEyeglassFrame = async () => {
     isFormValid = false;
   });
   // 检查镜架采集仓库地址是否完善
-  if (!store.state.warehouse) {
+  if (!user.warehouse) {
     message.error("请完善镜架采集仓库地址");
     isFormValid = false;
   }
@@ -1605,7 +1607,7 @@ const saveEditEyeglassFrame = async () => {
   );
   formData.append(
     "warehouse",
-    store.state.warehouse !== null ? store.state.warehouse.toString() : "",
+    user.warehouse !== null ? user.warehouse.toString() : "",
   );
   formData.append(
     "lens_radian",

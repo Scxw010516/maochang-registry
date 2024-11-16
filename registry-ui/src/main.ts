@@ -1,13 +1,11 @@
 /** 主入口js */
 import { createApp } from "vue";
 import App from "./App.vue";
-import { store, key } from "./store";
 import router from "./router";
 import axios from "axios";
 import VueAxios from "vue-axios";
 import "./config/axios-config";
-// import permission from "./utils/permission";
-// import "./styles/index.less";
+import { createPinia } from "pinia";
 import AntdVue from "ant-design-vue";
 // import "ant-design-vue/dist/antd.css";
 import "ant-design-vue/dist/reset.css";
@@ -17,10 +15,11 @@ import EleAdminPro from "ele-admin-pro";
 import i18n from "./lang";
 import { setGlobalOptions } from "vue-request";
 
+const pinia = createPinia();
 const app = createApp(App);
-app.use(store, key);
 app.use(router);
 app.use(VueAxios, axios);
+app.use(pinia);
 // app.use(permission);
 app.use(EleAdminPro);
 // app.use(ModalUtil);

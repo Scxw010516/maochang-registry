@@ -2,7 +2,7 @@
  * axios配置
  */
 import axios from "axios";
-import { store } from "../store";
+// import { store } from "../store";
 import router from "../router";
 import setting from "./setting";
 import { Modal, message } from "ant-design-vue";
@@ -62,17 +62,17 @@ axios.interceptors.response.use(
  * 跳转到登录页面
  */
 function goLogin(reload) {
-  store.dispatch("user/removeToken").then(() => {
-    if (reload) {
-      location.replace("/login"); // 这样跳转避免再次登录重复注册动态路由
-    } else {
-      const path = router.currentRoute.path;
-      return router.push({
-        path: "/login",
-        query: path && path !== "/" ? { form: path } : null,
-      });
-    }
-  });
+  // store.dispatch("user/removeToken").then(() => {
+  //   if (reload) {
+  //     location.replace("/login"); // 这样跳转避免再次登录重复注册动态路由
+  //   } else {
+  //     const path = router.currentRoute.path;
+  //     return router.push({
+  //       path: "/login",
+  //       query: path && path !== "/" ? { form: path } : null,
+  //     });
+  //   }
+  // });
 }
 
 export default axios;

@@ -22,11 +22,11 @@
         "
       >
         <a-select
-          v-model:value="store.state.skuormodeltype"
+          v-model:value="skuormodeltype"
           placeholder="选择检索类型"
           placement="topLeft"
           style="width: 70px"
-          :options="store.state.options.skuormodeltype_options"
+          :options="options.skuormodeltype_options"
           @change="onChangeSKUorModeltype"
         />
         <a-auto-complete
@@ -39,7 +39,7 @@
           @search="onSearchModeltypeOrSKU"
         >
           <template #option="item">
-            <div v-if="store.state.skuormodeltype == 1">
+            <div v-if="skuormodeltype == 1">
               <a-row :gutter="2">
                 <a-col :span="9" class="wrap-content"
                   >型号：{{ item.model_type }}</a-col
@@ -52,7 +52,7 @@
                 >
               </a-row>
             </div>
-            <div v-else-if="store.state.skuormodeltype == 2">
+            <div v-else-if="skuormodeltype == 2">
               <a-row :gutter="2">
                 <a-col :span="9" class="wrap-content"
                   >SKU：{{ item.sku }}</a-col
@@ -70,9 +70,7 @@
             v-model:value="searchString"
             allow-clear
             :placeholder="
-              store.state.skuormodeltype === 1
-                ? '请输入镜架型号'
-                : '请输入镜架SKU'
+              skuormodeltype === 1 ? '请输入镜架型号' : '请输入镜架SKU'
             "
             @keyup.enter="onClickEnterSKU"
           />
@@ -121,7 +119,7 @@
           <a-form-item label="品牌" name="brand" class="basic-item">
             <a-auto-complete
               v-model:value="EyeGlassBasicFormState.brand"
-              :options="store.state.options.brand_options"
+              :options="options.brand_options"
               :filter-option="filterOptionbyValue"
               @keyup.enter="onClickEnterBasicParams"
             />
@@ -129,7 +127,7 @@
           <a-form-item label="型号" name="model_type" class="basic-item">
             <a-auto-complete
               v-model:value="EyeGlassBasicFormState.model_type"
-              :options="store.state.options.model_type_options"
+              :options="options.model_type_options"
               :filter-option="filterOptionbyValue"
               @keyup.enter="onClickEnterBasicParams"
             />
@@ -147,7 +145,7 @@
             <a-select
               v-model:value="EyeGlassBasicFormState.material"
               placeholder="选择材质（单选）"
-              :options="store.state.options.material_options"
+              :options="options.material_options"
               @keyup.enter="onClickEnterBasicParams"
             />
           </a-form-item>
@@ -155,7 +153,7 @@
             <a-select
               v-model:value="EyeGlassBasicFormState.color"
               placeholder="选择颜色（单选）"
-              :options="store.state.options.color_options"
+              :options="options.color_options"
               @keyup.enter="onClickEnterBasicParams"
             />
           </a-form-item>
@@ -163,7 +161,7 @@
             <a-select
               v-model:value="EyeGlassBasicFormState.shape"
               placeholder="选择形状（单选）"
-              :options="store.state.options.shape_options"
+              :options="options.shape_options"
               @keyup.enter="onClickEnterBasicParams"
             />
           </a-form-item>
@@ -249,7 +247,7 @@
                   placeholder="选择风格（多选）"
                   :max-tag-count="1"
                   :max-tag-text-length="5"
-                  :options="store.state.options.style_options"
+                  :options="options.style_options"
                   @keyup.enter="onClickEnterBasicParams"
                 />
               </a-form-item> -->
@@ -467,7 +465,7 @@
                 >
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.brand"
-                    :options="store.state.options.brand_options"
+                    :options="options.brand_options"
                     :filter-option="filterOptionbyValue"
                   />
                 </a-form-item>
@@ -483,7 +481,7 @@
                 >
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.model_type"
-                    :options="store.state.options.model_type_options"
+                    :options="options.model_type_options"
                     :filter-option="filterOptionbyValue"
                   />
                 </a-form-item>
@@ -517,7 +515,7 @@
                   <a-select
                     v-model:value="EyeGlassBasicFormState.material"
                     placeholder="选择材质（单选）"
-                    :options="store.state.options.material_options"
+                    :options="options.material_options"
                   />
                 </a-form-item>
               </a-col>
@@ -533,7 +531,7 @@
                   <a-select
                     v-model:value="EyeGlassBasicFormState.color"
                     placeholder="选择颜色（单选）"
-                    :options="store.state.options.color_options"
+                    :options="options.color_options"
                   />
                 </a-form-item>
               </a-col>
@@ -549,7 +547,7 @@
                   <a-select
                     v-model:value="EyeGlassBasicFormState.shape"
                     placeholder="选择形状（单选）"
-                    :options="store.state.options.shape_options"
+                    :options="options.shape_options"
                   />
                 </a-form-item>
               </a-col>
@@ -683,7 +681,7 @@
                           placeholder="选择风格（多选）"
                           :max-tag-count="1"
                           :max-tag-text-length="5"
-                          :options="store.state.options.style_options"
+                          :options="options.style_options"
                         />
                       </a-form-item>
                     </a-col> -->
@@ -783,7 +781,7 @@
                     placeholder="选择风格（多选）"
                     :max-tag-count="1"
                     :maxTagTextLength="2"
-                    :options="store.state.options.style_options"
+                    :options="options.style_options"
                   />
                 </a-form-item>
               </a-form>
@@ -961,7 +959,7 @@
 //#####################################第三方库及定义类初始化#####################################
 import { ref, reactive, onMounted, UnwrapRef, computed, watch } from "vue";
 // import { useRouter } from "vue-router";
-import { useStore } from "../../store";
+import { useOptionStore, useStateStore, useUserStore } from "@/stores/store";
 import { MenuUnfoldOutlined, FormOutlined } from "@ant-design/icons-vue";
 import { StepProps, message, Modal } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form"; // 引入表单验证规则Rule组件
@@ -980,9 +978,12 @@ import {
   EyeGlassImageBackgroundForm, // 镜架图像背景参数接口
 } from "./params";
 import { initFormOptions } from "./utils";
-import { withDefaults, defineProps } from "vue"; // 组件传递参数
 
 //#########################################参数初始化###########################################
+// const router = useRouter();
+const state = useStateStore();
+const options = useOptionStore();
+const user = useUserStore();
 // 父组件传递参数接口
 interface scanPageProps {
   goToManage: () => void; //跳转到镜架管理页面
@@ -1005,12 +1006,10 @@ const currentStage = ref<
   | "input-params"
 >("input-sku");
 
-// const router = useRouter();
-const store = useStore();
-
 // 镜架检索信息
 const searchString = ref(""); // 镜架检索信
 const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
+const skuormodeltype = ref<number>(1);
 
 const imgCameraUrl = ref<string>(""); // 拍摄过程中的当前页面的图像缓存
 const imgCameraPreview0Url = ref<string>(""); // 最后一次性获取的图像,要存储
@@ -1590,9 +1589,9 @@ onMounted(() => {
 // ##############################################监视函数############################################
 watch(currentStage, (currentStage) => {
   if (currentStage !== "input-sku") {
-    store.state.allowMenuSwitch = "scaning"; //正在录入，则不允许切换菜单
+    state.allowMenuSwitch = "scaning"; //正在录入，则不允许切换菜单
   } else {
-    store.state.allowMenuSwitch = "allow";
+    state.allowMenuSwitch = "allow";
   }
 });
 
@@ -1704,7 +1703,7 @@ const saveNewEyeglassFrame = async () => {
     isFormValid = false;
   }
   // 检查镜架采集仓库地址是否完善
-  if (!store.state.warehouse) {
+  if (!user.warehouse) {
     message.error("请完善镜架采集仓库地址");
     isFormValid = false;
   }
@@ -1756,7 +1755,7 @@ const saveNewEyeglassFrame = async () => {
   );
   formData.append(
     "warehouse",
-    store.state.warehouse !== null ? store.state.warehouse.toString() : "",
+    user.warehouse !== null ? user.warehouse.toString() : "",
   );
   formData.append(
     "lens_radian",
@@ -2153,13 +2152,13 @@ const onSearchModeltypeOrSKU = async (value: string) => {
   // 清空searchOptions
   searchOptions.value = [];
   // 判断检索类型，并判断输入参数是否为空
-  if (store.state.skuormodeltype == 1) {
+  if (skuormodeltype.value == 1) {
     if (value == "") {
       message.warning("请输入镜框型号");
       return;
     }
     EyeGlassBasicFormState.model_type = value;
-  } else if (store.state.skuormodeltype == 2) {
+  } else if (skuormodeltype.value == 2) {
     if (value == "") {
       message.warning("请输入镜框SKU");
       return;
@@ -2168,7 +2167,7 @@ const onSearchModeltypeOrSKU = async (value: string) => {
   }
   // 若不为空，则进行FormData构造，并请求检索
   const formData = new FormData();
-  formData.append("skuormodeltype", String(store.state.skuormodeltype));
+  formData.append("skuormodeltype", String(skuormodeltype.value));
   formData.append("searchString", value);
   await axios
     .post(`/glassmanagement/api/search-modeltype-sku`, formData)
@@ -2204,7 +2203,7 @@ const onSelectModeltypeOrSKU = (value: string, option: searchOption) => {
 // 输入SKU确认按钮点击事件
 const onClickEnterSKU = async () => {
   // 判断检索类型是否为SKU
-  if (store.state.skuormodeltype == 2) {
+  if (skuormodeltype.value == 2) {
     EyeGlassBasicFormState.sku = searchString.value;
   }
   // 判断输入参数是否为空
@@ -2233,7 +2232,8 @@ const onClickEnterSKU = async () => {
               },
               onCancel: () => {
                 // 将sku保存在状态管理store中
-                store.state.searchSku = EyeGlassBasicFormState.sku;
+                // provide("searchSku", EyeGlassBasicFormState.sku);
+                state.searchSku = EyeGlassBasicFormState.sku;
                 // 清空当前sku表单信息
                 EyeGlassBasicFormState.sku = "";
                 // 进入镜架查看环节
@@ -2359,7 +2359,7 @@ const onClickCaptureOrConfirm = () => {
           // 初始化表单Options
           initFormOptions();
           // 初始化镜架检索类型和搜索字符串
-          store.state.skuormodeltype = 1;
+          skuormodeltype.value = 1;
           searchString.value = "";
         }
       });

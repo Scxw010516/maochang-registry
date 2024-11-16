@@ -1,7 +1,8 @@
 import axios from "@/config/axios-config";
 import { message } from "ant-design-vue";
-import { store } from "../../store";
+import { useOptionStore } from "@/stores/store";
 
+const options = useOptionStore();
 // 功能函数：初始化表单填写辅助信息
 export const initFormOptions = () => {
   // 获取所有镜架品牌
@@ -29,11 +30,9 @@ export const getAllBrands = async () => {
         return;
       } else {
         // 将返回的品牌列表赋值给brand_options
-        store.state.options.brand_options = response.data.data.map(
-          (item: string) => ({
-            value: item,
-          }),
-        );
+        options.brand_options = response.data.data.map((item: string) => ({
+          value: item,
+        }));
       }
     })
     .catch((error) => {
@@ -52,11 +51,9 @@ export const getAllModeltypes = async () => {
         return;
       } else {
         // 将返回的型号列表赋值给store中的brand_options
-        store.state.options.model_type_options = response.data.data.map(
-          (item: string) => ({
-            value: item,
-          }),
-        );
+        options.model_type_options = response.data.data.map((item: string) => ({
+          value: item,
+        }));
       }
     })
     .catch((error) => {
@@ -75,7 +72,7 @@ export const getAllMaterials = async () => {
         return;
       } else {
         // 将返回的材质列表赋值给store中的material_options
-        store.state.options.material_options = response.data.data.map(
+        options.material_options = response.data.data.map(
           (item: { id: number; material: string }) => ({
             value: item.id,
             label: item.material,
@@ -99,7 +96,7 @@ export const getAllColors = async () => {
         return;
       } else {
         // 将返回的颜色列表赋值给store中的color_options
-        store.state.options.color_options = response.data.data.map(
+        options.color_options = response.data.data.map(
           (item: { id: number; color: string }) => ({
             value: item.id,
             label: item.color,
@@ -123,7 +120,7 @@ export const getAllShapes = async () => {
         return;
       } else {
         // 将返回的形状列表赋值给store中的shape_options
-        store.state.options.shape_options = response.data.data.map(
+        options.shape_options = response.data.data.map(
           (item: { id: number; shape: string }) => ({
             value: item.id,
             label: item.shape,
@@ -147,7 +144,7 @@ export const getAllStyles = async () => {
         return;
       } else {
         // 将返回的材质列表赋值给store中的style_options
-        store.state.options.style_options = response.data.data.map(
+        options.style_options = response.data.data.map(
           (item: { id: number; style: string }) => ({
             value: item.id,
             label: item.style,
@@ -171,7 +168,7 @@ export const getAllWarehouses = async () => {
         return;
       } else {
         // 将返回的仓库列表赋值给store中的warehouse_options
-        store.state.options.warehouse_options = response.data.data.map(
+        options.warehouse_options = response.data.data.map(
           (item: { id: number; warehouse: string }) => ({
             value: item.id,
             label: item.warehouse,

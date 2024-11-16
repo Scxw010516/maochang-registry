@@ -1,6 +1,6 @@
 <template>
   <a-row
-    v-if="!store.state.hasLoggedIn"
+    v-if="!user.hasLoggedIn"
     class="full-height-row"
     type="flex"
     align="middle"
@@ -10,12 +10,12 @@
     <a-form v-if="inputAddress" class="login-form-card">
       <LeftOutlined @click="inputAddress = false" />
       <a-select
-        v-model:value="store.state.warehouse"
+        v-model:value="user.warehouse"
         placeholder="选择仓库地址"
         style="width: 100%"
         show-search
         defaultOpen
-        :options="store.state.options.warehouse_options"
+        :options="options.warehouse_options"
         :filter-option="filterOptionbyLabel"
         @select="inputAddress = false"
       ></a-select>
@@ -31,7 +31,7 @@
           class="login-input"
           allow-clear
           size="large"
-          v-model:value="store.state.username"
+          v-model:value="user.username"
           :placeholder="'请输入员工号'"
         >
         </a-input>
@@ -71,8 +71,8 @@
             />
           </svg>
           <span class="login-address-text">{{
-            store.state.options.warehouse_options?.find(
-              (option) => option.value === store.state.warehouse,
+            options.warehouse_options?.find(
+              (option) => option.value === user.warehouse,
             )?.label
           }}</span>
         </a-button>
@@ -84,13 +84,14 @@
 <script setup lang="ts">
 //##########################################第三方库及定义类初始化######################################
 import { ref, onMounted } from "vue";
-import { useStore } from "../../store";
+import { useOptionStore, useUserStore } from "@/stores/store";
 import { useRouter } from "vue-router";
 import { LeftOutlined } from "@ant-design/icons-vue";
 import { message } from "ant-design-vue";
 import { getAllWarehouses } from "./utils";
 //#############################################参数初始化##############################################
-const store = useStore();
+const user = useUserStore();
+const options = useOptionStore();
 const router = useRouter();
 const inputAddress = ref<boolean>(false);
 
@@ -121,12 +122,12 @@ const filterOptionbyLabel = (input: string, option: Option) => {
 // 登录按钮点击事件
 const onClickLogin = () => {
   // 判断仓库地址是否为空
-  if (!store.state.warehouse) {
+  if (!user.warehouse) {
     message.warning("请选择仓库地址");
     return;
   }
   // 登录成功后，将hasLoggedIn置为true
-  store.state.hasLoggedIn = true;
+  user.hasLoggedIn = true;
   router.push("/main");
 };
 </script>

@@ -60,7 +60,7 @@
         mode="inline"
         theme="dark"
         v-model:selectedKeys="selectedMenuItem"
-        :selectable="store.state.allowMenuSwitch === 'allow'"
+        :selectable="state.allowMenuSwitch === 'allow'"
       >
         <a-menu-item v-for="item in menuItems" :key="item.key" height="60px">
           <template #icon>
@@ -140,11 +140,13 @@
 //#####################################第三方库及定义类初始化#####################################
 import { ref } from "vue";
 import { useRouter } from "vue-router";
-import { useStore } from "../../store";
+import { useStateStore } from "@/stores/store";
 import ManagePage from "./manage.vue";
 import ScanPage from "./scan.vue";
 
 //#########################################参数初始化###########################################
+const router = useRouter();
+const state = useStateStore();
 // 侧边导航栏菜单
 const menuItems = ref([
   { key: "1", label: "镜架采集", title: "镜架采集" },
@@ -152,8 +154,6 @@ const menuItems = ref([
   { key: "3", label: "账号中心", title: "账号中心" },
 ]);
 
-const router = useRouter();
-const store = useStore();
 const selectedMenuItem = ref<string[]>(["1"]); // 选中的菜单项
 
 // ###########################################点击事件定义##############################################
