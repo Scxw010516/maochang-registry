@@ -7,7 +7,7 @@ import axios from "axios";
 import VueAxios from "vue-axios";
 import "./config/axios-config";
 // import permission from "./utils/permission";
-import "./styles/index.less";
+// import "./styles/index.less";
 import AntdVue from "ant-design-vue";
 // import "ant-design-vue/dist/antd.css";
 import "ant-design-vue/dist/reset.css";

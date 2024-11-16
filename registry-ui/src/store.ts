@@ -1,19 +1,10 @@
 import { InjectionKey } from "vue";
 import { createStore, Store, useStore as baseUseStore } from "vuex";
-import getters from "./store/getters";
-import user from "./store/modules/user";
-import theme from "./store/modules/theme";
 import type { SelectProps } from "ant-design-vue"; // 引入下拉框SelectProps组件
 interface Option {
   value: string;
 }
 export interface State {
-  // 登陆用户名
-  username: string;
-  // 登录标识
-  hasLoggedIn: boolean;
-  // 登录仓库
-  warehouse: number | null;
   // 是否允许切换菜单
   allowMenuSwitch: "allow" | "scaning";
   // 检索镜架信息方式
@@ -37,9 +28,6 @@ export const key: InjectionKey<Store<State>> = Symbol();
 // 创建store
 export const store = createStore<State>({
   state: {
-    username: "",
-    hasLoggedIn: false,
-    warehouse: 1,
     allowMenuSwitch: "allow",
     skuormodeltype: 1,
     searchSku: "",
@@ -92,11 +80,7 @@ export const store = createStore<State>({
       ],
     },
   },
-  modules: {
-    user,
-    theme,
-  },
-  getters,
+  modules: {},
 });
 
 export function useStore() {
