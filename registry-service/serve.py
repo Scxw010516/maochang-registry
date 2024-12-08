@@ -152,6 +152,7 @@ async def detect_weight(websocket):
         )
 
 
+# 下面两个函数，算摄像头顺序
 def calculate_phash(img_path):
     """
     计算给定图像的感知哈希值。
@@ -191,6 +192,7 @@ def hamming_distance(hash1, hash2):
     return np.count_nonzero(hash1 != hash2)
 
 
+# 摄像头预览
 async def camera_usb(websocket, cam_id: int):
     global caps
     # 摄像头未打开报错
@@ -226,6 +228,7 @@ async def camera_usb(websocket, cam_id: int):
         await asyncio.sleep(1.0 / 24)
 
 
+# 摄像头拍摄
 async def capture_usb(websocket, cam_id: int):
     global caps
     # 摄像头未打开报错
@@ -249,6 +252,7 @@ async def capture_usb(websocket, cam_id: int):
     await websocket.send(encoded.tobytes())
 
 
+# 摄像头拍摄背景
 async def capture_bg_usb(websocket):
     global caps
     # 摄像头未打开报错
@@ -279,8 +283,9 @@ async def capture_bg_usb(websocket):
         )
 
 
+# 摄像头初始化
 async def init_camera_usb(websocket):
-    global caps, devices, focuses,exposures,rotates,brightnesses
+    global caps, devices, focuses, exposures, rotates, brightnesses
     # 获取所有摄像头设备
     cameras = list_video_devices()
     print(cameras)
@@ -297,7 +302,9 @@ async def init_camera_usb(websocket):
     print("摄像头顺序：", devices_actual)
 
     # 摄像头warm up，防止焦点错误
-    caps, ret = capture.open_capture(devices_actual, focuses, exposures=exposures,brightnesses=brightnesses)
+    caps, ret = capture.open_capture(
+        devices_actual, focuses, exposures=exposures, brightnesses=brightnesses
+    )
     if not ret:
         print("预热-摄像头打开失败")
         await websocket.send(
@@ -318,7 +325,9 @@ async def init_camera_usb(websocket):
     )
 
     # 正式启动
-    caps, ret = capture.open_capture(devices_actual, focuses, exposures=exposures,brightnesses=brightnesses)
+    caps, ret = capture.open_capture(
+        devices_actual, focuses, exposures=exposures, brightnesses=brightnesses
+    )
     if not ret:
         print("预热-摄像头启动失败")
         await websocket.send(
@@ -340,7 +349,7 @@ async def init_camera_usb(websocket):
     )
     capture.get_image(caps, rotates=rotates)
 
-    if auto_order==1:
+    if auto_order == 1:
         # 拍摄背景
         images, ret = capture.get_image(caps, rotates=rotates)
         # 判断获取图像是否成功
@@ -350,19 +359,22 @@ async def init_camera_usb(websocket):
             save_path = f"./temp/background_{i}.jpg"
             _, encoded = cv2.imencode(".jpg", images[i])
             open(save_path, "wb").write(encoded.tobytes())
-        
-        hash_c = [calculate_phash(f'temp/background_{i}.jpg') for i in range(3)]
-        hash_s = [calculate_phash(f'standard/background_{i}.jpg') for i in range(3)]
-        distances = [[hamming_distance(hash_c[i],hash_s[j]) for i in range(3)] for j in range(3)]
 
-        indices = np.argmin(distances,axis=1)
+        hash_c = [calculate_phash(f"temp/background_{i}.jpg") for i in range(3)]
+        hash_s = [calculate_phash(f"standard/background_{i}.jpg") for i in range(3)]
+        distances = [
+            [hamming_distance(hash_c[i], hash_s[j]) for i in range(3)] for j in range(3)
+        ]
+
+        indices = np.argmin(distances, axis=1)
 
         devices_actual = [devices_actual[indices[i]] for i in range(3)]
 
         capture.close_capture(caps)
 
-        
-        caps, ret = capture.open_capture(devices_actual, focuses, exposures=exposures,brightnesses=brightnesses)
+        caps, ret = capture.open_capture(
+            devices_actual, focuses, exposures=exposures, brightnesses=brightnesses
+        )
         if not ret:
             print("预热-摄像头启动失败")
             await websocket.send(
@@ -391,42 +403,50 @@ async def init_camera_usb(websocket):
     print(f"曝光：{exposure_p}")
     brightness_p = [cap.get(cv2.CAP_PROP_BRIGHTNESS) for cap in caps]
     print(f"亮度：{brightness_p}")
-    
 
     await websocket.send(json.dumps({"code": 0, "data": None}, default=default_dump))
 
 
-async def light_up(websocket,cam_id:int):
+# 下面两个调整曝光值的
+async def light_up(websocket, cam_id: int):
     global brightnesses
     try:
         cap = caps[cam_id]
         b = cap.get(cv2.CAP_PROP_BRIGHTNESS)
-        cap.set(cv2.CAP_PROP_BRIGHTNESS,b+10)
+        cap.set(cv2.CAP_PROP_BRIGHTNESS, b + 10)
         print(f"Brightness: {cap.get(cv2.CAP_PROP_BRIGHTNESS)}")
         brightnesses_list = list(brightnesses)
 
         brightnesses_list[cam_id] = cap.get(cv2.CAP_PROP_BRIGHTNESS)
         brightnesses = tuple(brightnesses_list)
-        await websocket.send(json.dumps({"code": 0, "data": None}, default=default_dump))
+        await websocket.send(
+            json.dumps({"code": 0, "data": None}, default=default_dump)
+        )
     except:
-        await websocket.send(json.dumps({"code": -1, "data": None}, default=default_dump))
+        await websocket.send(
+            json.dumps({"code": -1, "data": None}, default=default_dump)
+        )
 
 
-async def light_down(websocket,cam_id:int):
+async def light_down(websocket, cam_id: int):
     global brightnesses
     try:
         cap = caps[cam_id]
         b = cap.get(cv2.CAP_PROP_BRIGHTNESS)
-        cap.set(cv2.CAP_PROP_BRIGHTNESS,b-10)
+        cap.set(cv2.CAP_PROP_BRIGHTNESS, b - 10)
         print(f"Brightness: {cap.get(cv2.CAP_PROP_BRIGHTNESS)}")
         brightnesses_list = list(brightnesses)
 
         brightnesses_list[cam_id] = cap.get(cv2.CAP_PROP_BRIGHTNESS)
         brightnesses = tuple(brightnesses_list)
 
-        await websocket.send(json.dumps({"code": 0, "data": None}, default=default_dump))
+        await websocket.send(
+            json.dumps({"code": 0, "data": None}, default=default_dump)
+        )
     except:
-        await websocket.send(json.dumps({"code": -1, "data": None}, default=default_dump))
+        await websocket.send(
+            json.dumps({"code": -1, "data": None}, default=default_dump)
+        )
 
 
 # 清除摄像头预览缓存
@@ -435,6 +455,7 @@ async def clear_camera_cache():
     capture.get_image(caps, rotates=rotates)
 
 
+# 疑似没用到
 async def load_captured(websocket, cam_id: int):
     img = open(f"./images/capture_{cam_id}.jpg", "rb")
     await websocket.send(img.read())
@@ -445,6 +466,7 @@ async def load_background(websocket, cam_id: int):
     await websocket.send(img.read())
 
 
+# 计算参数的代码
 def calc_frame():
     front_path = "./images/capture_1.jpg"
     up_path = "./images/capture_0.jpg"
@@ -532,6 +554,7 @@ def calc_frame():
     return {"flag": 1 if all(flags) else 0, **front_params, **up_params, **left_params}
 
 
+# 以下是websocket路由配置，和启动命令
 class PathSolver:
     def __init__(self, ws, route_prefix: str, callback):
         self.route_prefix = route_prefix
