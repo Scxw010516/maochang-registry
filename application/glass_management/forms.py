@@ -16,7 +16,8 @@ class EyeglassFrameEntryForm(forms.ModelForm):
 class EyeglassFrameDetectionResultForm(forms.ModelForm):
     class Meta:
         model = models.EyeglassFrameDetectionResult
-        exclude = ['entry','create_user', 'update_user', 'frontview', 'sideview', 'topview', 'frontview_bg', 'sideview_bg', 'topview_bg']
+        # exclude = ['entry','create_user', 'update_user', 'frontview', 'sideview', 'topview', 'frontview_bg', 'sideview_bg', 'topview_bg']
+        exclude = ['entry','create_user', 'update_user', 'frontview', 'sideview', 'topview']
 
 """
 镜架风格关联表

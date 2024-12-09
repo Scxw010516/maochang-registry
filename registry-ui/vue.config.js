@@ -1,6 +1,6 @@
 const CompressionWebpackPlugin = require("compression-webpack-plugin");
-const DynamicAntdLess =
-  require("ele-admin-pro/lib/utils/dynamic-theme").DynamicAntdLess;
+// const DynamicAntdLess =
+//   require("ele-admin-pro/lib/utils/dynamic-theme").DynamicAntdLess;
 
 module.exports = {
   productionSourceMap: false,
@@ -23,11 +23,11 @@ module.exports = {
         lessOptions: {
           javascriptEnabled: true,
           plugins: [
-            new DynamicAntdLess({
-              replaces: {
-                "darken(@shadow-color, 5%)": "@shadow-color",
-              },
-            }),
+            // new DynamicAntdLess({
+            //   replaces: {
+            //     "darken(@shadow-color, 5%)": "@shadow-color",
+            //   },
+            // }),
           ],
         },
       },
