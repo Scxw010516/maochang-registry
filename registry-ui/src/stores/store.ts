@@ -1,5 +1,8 @@
 import { defineStore } from "pinia";
 import type { SelectProps } from "ant-design-vue"; // 引入下拉框SelectProps组件
+import {
+  Camera, //摄像头参数和对象字典
+} from "@/interfaces/camera";
 
 // 选项接口
 interface Option {
@@ -66,6 +69,17 @@ export const useUserStore = defineStore("user", {
       username: "" as string,
       hasLoggedIn: false as boolean,
       warehouse: 1 as number,
+    };
+  },
+});
+
+export const useCameraStore = defineStore("camera", {
+  state: () => {
+    return {
+      cameraState: {
+        cameraInitState: false, // 摄像头初始化状态
+        cameraList: [] as Camera[], // 摄像头列表
+      },
     };
   },
 });

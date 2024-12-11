@@ -289,115 +289,56 @@
   </a-row>
   <!-- 拍摄 -->
   <a-row
-    v-else-if="
-      currentStage.includes('preview') || currentStage.includes('confirm')
-    "
+    v-if="currentStage == 'preview'"
     class="registry-preview"
-    type="flex"
-    align="middle"
+    :gutter="[48, 0]"
     justify="center"
+    align="middle"
+    style="padding: 0 48px"
   >
-    <img class="registry-preview-image" :src="imgCameraUrl" />
-    <!-- 步骤条 逻辑见stepItems定义处-->
-    <div class="steps-line" style="position: absolute; bottom: 140px">
-      <a-steps label-placement="vertical">
-        <a-step
-          v-for="(item, index) in stepItems"
-          :key="item"
-          :title="item.title"
-          :status="
-            index < 2 &&
-            item.status == 'finish' &&
-            stepItems[index + 1].status == 'wait'
-              ? 'process'
-              : item.status
-          "
-          @click="onClickStep(index)"
-        >
-          <template #icon>
-            <!-- 白色 -->
-            <svg
-              v-if="currentStage.includes(index.toString())"
-              width="37"
-              height="37"
-              viewBox="0 0 37 37"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="18.5"
-                cy="18.5"
-                r="9.25"
-                transform="rotate(90 18.5 18.5)"
-                fill="white"
-              />
-              <circle
-                cx="18.5"
-                cy="18.5"
-                r="17.3438"
-                transform="rotate(90 18.5 18.5)"
-                stroke="white"
-                stroke-width="2.3125"
-                stroke-dasharray="4.62 4.62"
-              />
-            </svg>
-            <!-- 紫色 -->
-            <svg
-              v-else-if="item.status === 'finish'"
-              width="37"
-              height="37"
-              viewBox="0 0 37 37"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="18.5"
-                cy="18.5"
-                r="9.25"
-                transform="rotate(90 18.5 18.5)"
-                fill="#8675FF"
-              />
-              <circle
-                cx="18.5"
-                cy="18.5"
-                r="17.3438"
-                transform="rotate(90 18.5 18.5)"
-                stroke="#8675FF"
-                stroke-width="2.3125"
-                stroke-dasharray="4.62 4.62"
-              />
-            </svg>
-
-            <!-- 灰色 -->
-            <svg
-              v-else-if="item.status === 'wait'"
-              width="37"
-              height="37"
-              viewBox="0 0 37 37"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <circle
-                cx="18.5"
-                cy="18.5"
-                r="9.25"
-                transform="rotate(90 18.5 18.5)"
-                fill="#B4B4B4"
-              />
-              <circle
-                cx="18.5"
-                cy="18.5"
-                r="17.3438"
-                transform="rotate(90 18.5 18.5)"
-                stroke="#999999"
-                stroke-width="2.3125"
-                stroke-dasharray="4.62 4.62"
-              />
-            </svg>
-          </template>
-        </a-step>
-      </a-steps>
-    </div>
+    <a-col :span="8" class="capture-box">
+      <video
+        ref="TopVideo"
+        class="capture-frame"
+        name="TopVideo"
+        style="transform: scale(-1, 1)"
+      ></video>
+    </a-col>
+    <a-col :span="8" class="capture-box">
+      <video
+        ref="FrontVideo"
+        class="capture-frame"
+        name="FrontVideo"
+        style="transform: scale(-1, 1)"
+      ></video>
+    </a-col>
+    <a-col :span="8" class="capture-box">
+      <video
+        ref="SideVideo"
+        class="capture-frame"
+        name="SideVideo"
+        style="transform: scale(-1, 1)"
+      ></video>
+    </a-col>
+  </a-row>
+  <!-- 确认 -->
+  <a-row
+    v-if="currentStage == 'confirm'"
+    class="registry-preview"
+    :gutter="[48, 0]"
+    justify="center"
+    align="middle"
+    style="padding: 0 48px"
+  >
+    <a-col :span="8" class="capture-box">
+      <img :src="TopCapture.imgurl" alt="" class="capture-frame" />
+    </a-col>
+    <a-col :span="8" class="capture-box">
+      <img :src="FrontCapture.imgurl" alt="" class="capture-frame" />
+    </a-col>
+    <a-col :span="8" class="capture-box">
+      <img :src="SideCapture.imgurl" alt="" class="capture-frame" />
+    </a-col>
   </a-row>
   <!-- 计算参数 -->
   <a-row
@@ -412,15 +353,16 @@
       <!-- 拍摄预览 -->
       <a-row>
         <a-col :span="8">
-          <img class="registry-preview-sub-image" :src="imgCameraPreview0Url" />
+          <img class="registry-preview-sub-image" :src="TopCapture.imgurl" />
         </a-col>
         <a-col :span="8">
-          <img class="registry-preview-sub-image" :src="imgCameraPreview1Url" />
+          <img class="registry-preview-sub-image" :src="FrontCapture.imgurl" />
         </a-col>
         <a-col :span="8">
-          <img class="registry-preview-sub-image" :src="imgCameraPreview2Url" />
+          <img class="registry-preview-sub-image" :src="SideCapture.imgurl" />
         </a-col>
       </a-row>
+
       <!-- 信息展示 -->
       <a-row style="margin-top: 18px">
         <!-- 基础信息 -->
@@ -904,12 +846,12 @@
     justify="end"
     style="background-color: #ffffff; border-bottom-left-radius: 12px"
   >
-    <div v-show="isCaptureStart" style="margin-left: 80px; margin-right: auto">
+    <!-- <div v-show="isCaptureStart" style="margin-left: 80px; margin-right: auto">
       <a-button style="margin-right: 40px" @click="onClickLightup">
         增加亮度
       </a-button>
       <a-button @click="onClickLightdown"> 降低亮度 </a-button>
-    </div>
+    </div> -->
     <a-button class="operation-button" @click="onClickReturnOrRedo"
       >{{
         currentStage.startsWith("preview") || currentStage === "input-params"
@@ -957,9 +899,22 @@
 
 <script lang="ts" setup>
 //#####################################第三方库及定义类初始化#####################################
-import { ref, reactive, onMounted, UnwrapRef, computed, watch } from "vue";
+import {
+  ref,
+  reactive,
+  onMounted,
+  UnwrapRef,
+  computed,
+  watch,
+  onUpdated,
+} from "vue";
 // import { useRouter } from "vue-router";
-import { useOptionStore, useStateStore, useUserStore } from "@/stores/store";
+import {
+  useOptionStore,
+  useStateStore,
+  useUserStore,
+  useCameraStore,
+} from "@/stores/store";
 import { MenuUnfoldOutlined, FormOutlined } from "@ant-design/icons-vue";
 import { StepProps, message, Modal } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form"; // 引入表单验证规则Rule组件
@@ -984,6 +939,7 @@ import { initFormOptions } from "./utils";
 const state = useStateStore();
 const options = useOptionStore();
 const user = useUserStore();
+const camera = useCameraStore();
 // 父组件传递参数接口
 interface scanPageProps {
   goToManage: () => void; //跳转到镜架管理页面
@@ -995,54 +951,49 @@ const props = withDefaults(defineProps<scanPageProps>(), {
 
 // 主界面状态
 const currentStage = ref<
-  | "input-sku"
-  | "input-basic-params"
-  | "preview-0"
-  | "preview-1"
-  | "preview-2"
-  | "confirm-0"
-  | "confirm-1"
-  | "confirm-2"
-  | "input-params"
+  "input-sku" | "input-basic-params" | "preview" | "confirm" | "input-params"
 >("input-sku");
+const hasCaptured = ref(false); // 是否已经拍摄
 
 // 镜架检索信息
 const searchString = ref(""); // 镜架检索信
 const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
 const skuormodeltype = ref<number>(1);
 
-const imgCameraUrl = ref<string>(""); // 拍摄过程中的当前页面的图像缓存
-const imgCameraPreview0Url = ref<string>(""); // 最后一次性获取的图像,要存储
-const imgCameraPreview1Url = ref<string>(""); // 最后一次性获取的图像,要存储
-const imgCameraPreview2Url = ref<string>(""); // 最后一次性获取的图像,要存储
+// 镜架拍摄html信息接口
+interface CaptureItem {
+  videoElement: HTMLVideoElement; //预览时的html视频元素
+  imgurl: string; //拍摄结果
+  imgBlob: Blob | null; //拍摄结果
+}
+
+// 镜架拍摄html信息：0 俯视图；1 正视图；2 侧视图
+const TopCapture = ref<CaptureItem>({
+  videoElement: document.querySelector(
+    "video[name='TopVideo']",
+  ) as HTMLVideoElement,
+  imgurl: "",
+  imgBlob: null,
+});
+const FrontCapture = ref<CaptureItem>({
+  videoElement: document.querySelector(
+    "video[name='FrontVideo']",
+  ) as HTMLVideoElement,
+  imgurl: "",
+  imgBlob: null,
+});
+const SideCapture = ref<CaptureItem>({
+  videoElement: document.querySelector(
+    "video[name='SideVideo']",
+  ) as HTMLVideoElement,
+  imgurl: "",
+  imgBlob: null,
+});
 
 const enabledSubmitButton = ref<boolean>(false); // 是否可以提交，在input-params阶段，只有所有参数都填写了才能提交
 
 // Websocket连接实例键值对
 const wsMap = ref<Map<string, WebSocket>>(new Map());
-
-// 步骤条相关
-// status：存储的步骤状态，与实际渲染的状态不同，仅使用finish(已拍摄)和wait(未拍摄)
-// icon：currentStage处于当前步骤为白色；finish为紫色 ，wait为灰色
-// tail由 实际渲染步骤状态 控制:
-// 此步骤状态 | 下一步骤状态 | 实际渲染状态 | tail颜色
-// finish    | finish      | finish      | 紫色
-// finish    | wait        | process     | 白色
-// wait      | wait        | wait        | 灰色
-const stepItems = ref<StepProps[]>([
-  {
-    title: "俯视图",
-    status: "wait",
-  },
-  {
-    title: "正视图",
-    status: "wait",
-  },
-  {
-    title: "侧视图",
-    status: "wait",
-  },
-]);
 
 // select和autocompe下拉框选项接口定义
 interface Option {
@@ -1585,6 +1536,33 @@ onMounted(() => {
   initCamera();
   // 初始化识别秤串口
   initWeight();
+  // 初始化摄像头
+  (TopCapture.value.videoElement = document.querySelector(
+    "video[name='TopVideo']",
+  ) as HTMLVideoElement),
+    (FrontCapture.value.videoElement = document.querySelector(
+      "video[name='FrontVideo']",
+    ) as HTMLVideoElement);
+  SideCapture.value.videoElement = document.querySelector(
+    "video[name='SideVideo']",
+  ) as HTMLVideoElement;
+});
+
+// 生命周期钩子：组件因为响应式状态变更而更新其 DOM 树之后调用
+onUpdated(() => {
+  // 在preview页面获取元素
+  if (currentStage.value === "preview") {
+    // 初始化摄像头
+    TopCapture.value.videoElement = document.querySelector(
+      "video[name='TopVideo']",
+    ) as HTMLVideoElement;
+    FrontCapture.value.videoElement = document.querySelector(
+      "video[name='FrontVideo']",
+    ) as HTMLVideoElement;
+    SideCapture.value.videoElement = document.querySelector(
+      "video[name='SideVideo']",
+    ) as HTMLVideoElement;
+  }
 });
 // ##############################################监视函数############################################
 watch(currentStage, (currentStage) => {
@@ -1606,37 +1584,297 @@ const filterOptionbyValue = (input: string, option: Option) => {
   }
 };
 
-// 功能函数：初始化摄像头
-const initCamera = () => {
-  // 发送初始化摄像头请求
-  const ws = new WebSocket(`ws://localhost:8765/init-camera-usb`);
-  // 监听返回消息
-  ws.addEventListener("message", (event) => {
-    const result = JSON.parse(event.data as string);
-    // 判断返回的code值，若为-1则提示摄像头启动失败
-    if (result.code == "-1") {
-      // 设置摄像头状态为false
-      cameraState.value = false;
-      cameraStateErrorModalLoading.value = false;
-      message.error("摄像头启动失败，请检查设备连接", 10);
-    } else {
+/// 功能函数：读取摄像头配置，并初始化摄像头
+async function initCamera(): Promise<boolean> {
+  // 清空设备列表
+  await initCameraDeviceState();
+  // 检查可用的媒体输入和输出设备的列表
+  if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+    // 报告检查错误
+    console.log("浏览器不支持mediaDevices");
+    return false;
+  }
+  // navigator.mediaDevices.getUserMedia({ video: true });
+  // 获取设备列表
+  await navigator.mediaDevices
+    .enumerateDevices()
+    .then(function (devices) {
+      console.log("设备列表", devices);
+      // 解析设备列表
+      devices.forEach(function (device) {
+        // 判断设备类型是否为videoinput，并且设备label拥有相同的设备名和VID
+        if (
+          device.kind === "videoinput" &&
+          device.label.includes("16MP USB Camera (32e4:0002)")
+        ) {
+          // 添加设备到设备列表
+          camera.cameraState.cameraList.push({
+            index: 0,
+            kind: device.kind,
+            label: device.label,
+            deviceId: device.deviceId,
+            mediaStream: null, // 设备流对象
+          });
+        } else if (
+          device.kind === "videoinput" &&
+          device.label.includes("16MP USB Camera (32e4:0001)")
+        ) {
+          // 添加设备到设备列表
+          camera.cameraState.cameraList.push({
+            index: 1,
+            kind: device.kind,
+            label: device.label,
+            deviceId: device.deviceId,
+            mediaStream: null, // 设备流对象
+          });
+        } else if (
+          device.kind === "videoinput" &&
+          device.label.includes("16MP USB Camera (32e4:0009)")
+        ) {
+          // 添加设备到设备列表
+          camera.cameraState.cameraList.push({
+            index: 2,
+            kind: device.kind,
+            label: device.label,
+            deviceId: device.deviceId,
+            mediaStream: null, // 设备流对象
+          });
+        }
+      });
+    })
+    .catch(function (err) {
+      // 报告错误
+      console.log(err.name + ": " + err.message);
+      // 若遇到错误，则重置设备列表
+      initCameraDeviceState();
+      // 返回初始化失败
       // 设置摄像头状态为true
-      cameraState.value = true;
+      // cameraState.value = true;
       // 关闭摄像头状态错误提示框
       showCameraStateErrorModal.value = false;
       // 关闭摄像头状态错误提示框的Loading
       cameraStateErrorModalLoading.value = false;
       // 提示摄像头启动成功
       message.success("摄像头启动成功", 5);
+      return false;
+    });
+  // 判断设备列表是否为空
+  if (camera.cameraState.cameraList.length === 0) {
+    // 报告错误
+    console.log("未找到可用摄像头设备");
+    // 重置设备列表
+    initCameraDeviceState();
+    // message.error("未找到可用摄像头设备");
+    return false;
+  }
+  // 判断设备不足
+  if (camera.cameraState.cameraList.length < 3) {
+    // 报告错误
+    console.log("摄像头设备不足");
+    // 重置设备列表
+    initCameraDeviceState();
+    return false;
+  }
+  // 设置摄像头设备初始化状态
+  camera.cameraState.cameraInitState = true;
+  // 返回初始化成功
+  return true;
+}
+
+// 功能函数，初始化摄像头设备
+async function initCameraDeviceState(): Promise<void> {
+  // 重置摄像头设备初始化状态
+  camera.cameraState.cameraInitState = false;
+  // 重置摄像头设备列表
+  camera.cameraState.cameraList = [];
+}
+
+// 功能函数：开始拍摄预览
+async function startCameraStream(): Promise<void> {
+  // 遍历摄像头列表，获取摄像头流
+  camera.cameraState.cameraList.forEach((camera) => {
+    console.log(camera);
+    navigator.mediaDevices
+      .getUserMedia({
+        // 设置摄像头参数
+        // todo:测试参数
+        video: {
+          deviceId: camera.deviceId,
+          // width: { min: 3500, ideal: 3570, max: 3600 },
+          // height: { min: 3400, ideal: 3496, max: 3500 },
+          // frameRate: { ideal: 25 },
+        },
+      })
+      .then(function (stream) {
+        // 将流对象存入摄像头对象
+        camera.mediaStream = stream;
+        // 根据摄像头索引，将流对象赋值给对应的video元素
+        if (camera.index == 0) {
+          if (TopCapture.value.videoElement) {
+            // 将流对象赋值给video元素
+            TopCapture.value.videoElement.srcObject = stream;
+            // 监听视频流元数据加载完成后，播放视频
+            TopCapture.value.videoElement.onloadedmetadata = function () {
+              TopCapture.value.videoElement.play();
+            };
+          }
+        } else if (camera.index == 1) {
+          if (FrontCapture.value.videoElement) {
+            // 将流对象赋值给video元素
+            FrontCapture.value.videoElement.srcObject = stream;
+            // 监听视频流元数据加载完成后，播放视频
+            FrontCapture.value.videoElement.onloadedmetadata = function () {
+              FrontCapture.value.videoElement.play();
+            };
+          }
+        } else if (camera.index == 2) {
+          if (SideCapture.value.videoElement) {
+            // 将流对象赋值给video元素
+            SideCapture.value.videoElement.srcObject = stream;
+            // 监听视频流元数据加载完成后，播放视频
+            SideCapture.value.videoElement.onloadedmetadata = function () {
+              SideCapture.value.videoElement.play();
+            };
+          }
+        }
+      })
+      .catch(function (err) {
+        console.log(err.name + ": " + err.message);
+      });
+  });
+}
+
+// 功能函数：停止拍摄预览，关闭视频流，释放资源，并进行拍摄，结果存入url,blob和 EyeGlassImageFormState 中
+async function stopCameraStream(): Promise<void> {
+  // 遍历摄像头列表，关闭视频流
+  const promises = camera.cameraState.cameraList.map(async (camera) => {
+    // 判断是否有视频流
+    if (camera.mediaStream) {
+      // 开启拍摄
+      const canvas = document.createElement("canvas");
+      // todo:调整图像大小（和摄像头参数一致）
+      canvas.width = 3075;
+      canvas.height = 3000;
+      const ctx = canvas.getContext("2d");
+      ctx?.scale(-1, 1);
+      ctx?.translate(-canvas.width, 0);
+      try {
+        let blob: Blob | null = null;
+        if (camera.index === 0) {
+          ctx?.drawImage(
+            TopCapture.value.videoElement,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
+          // 将canvas内容转换为Blob
+          blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, "image/jpeg", 0.8),
+          );
+          if (!blob) {
+            console.error("截取视频帧失败");
+            throw new Error("截取视频帧失败");
+          } else {
+            // 将Blob转化为URL，赋值给imgFrontCameraUrl
+            TopCapture.value.imgurl = URL.createObjectURL(blob);
+            // 存储blob在imgFrontCameraBlob中
+            TopCapture.value.imgBlob = blob;
+            // 将Blob转换为File对象
+            EyeGlassImageFormState.topview = new File([blob], "0.jpg");
+          }
+        } else if (camera.index === 1) {
+          ctx?.drawImage(
+            FrontCapture.value.videoElement,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
+          // 将canvas内容转换为Blob
+          blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, "image/jpeg", 0.8),
+          );
+          if (!blob) {
+            console.error("截取视频帧失败");
+            throw new Error("截取视频帧失败");
+          } else {
+            // 将Blob转化为URL，赋值给imgFrontCameraUrl
+            FrontCapture.value.imgurl = URL.createObjectURL(blob);
+            // 存储blob在imgFrontCameraBlob中
+            FrontCapture.value.imgBlob = blob;
+            // 将Blob转换为File对象
+            EyeGlassImageFormState.frontview = new File([blob], "0.jpg");
+          }
+        } else if (camera.index === 2) {
+          ctx?.drawImage(
+            SideCapture.value.videoElement,
+            0,
+            0,
+            canvas.width,
+            canvas.height,
+          );
+          // 将canvas内容转换为Blob
+          blob = await new Promise<Blob | null>((resolve) =>
+            canvas.toBlob(resolve, "image/jpeg", 0.8),
+          );
+          if (!blob) {
+            console.error("截取视频帧失败");
+            throw new Error("截取视频帧失败");
+          } else {
+            // 将Blob转化为URL，赋值给imgFrontCameraUrl
+            SideCapture.value.imgurl = URL.createObjectURL(blob);
+            // 存储blob在imgFrontCameraBlob中
+            SideCapture.value.imgBlob = blob;
+            // 将Blob转换为File对象
+            EyeGlassImageFormState.sideview = new File([blob], "0.jpg");
+          }
+        }
+      } catch (error) {
+        // 捕获异常
+        console.log(error);
+        throw new Error("截取视频帧失败");
+      } finally {
+        // 清除创建的canvas
+        canvas.remove();
+      }
+    } else {
+      throw new Error("未获取到视频流");
     }
-    ws.close();
   });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("摄像头启动失败，请检查设备连接", 10);
-    ws.close();
-  });
-};
+  // 等待所有摄像头拍摄完成
+  await Promise.all(promises)
+    .then(() => {
+      // 确认拍摄标识符
+      hasCaptured.value = true;
+      // 关闭所有视频流
+      camera.cameraState.cameraList.forEach((camera) => {
+        if (camera.mediaStream) {
+          camera.mediaStream.getTracks().forEach((track) => {
+            track.stop();
+          });
+          console.log("关闭视频流");
+          camera.mediaStream = null;
+        }
+      });
+    })
+    .catch((error) => {
+      // 一旦发生异常，则清空已经存储的图片
+      TopCapture.value.imgurl = "";
+      TopCapture.value.imgBlob = null;
+      FrontCapture.value.imgurl = "";
+      FrontCapture.value.imgBlob = null;
+      SideCapture.value.imgurl = "";
+      SideCapture.value.imgBlob = null;
+      // 清空store中的图片
+      EyeGlassImageFormState.frontview = null;
+      EyeGlassImageFormState.leftview = null;
+      EyeGlassImageFormState.rightview = null;
+      // 抛出异常
+      console.log(error);
+      throw new Error("拍摄失败");
+    });
+}
 
 // 功能函数：初始化电子秤
 const initWeight = () => {
@@ -1901,8 +2139,6 @@ const calculateParamsAndStyles = () => {
         calculatingmessage();
         message.success("计算镜架参数成功", 5);
       }
-      // 获取拍摄三视图背景图片
-      captureResultAllBackground();
     }
     ws.close();
   });
@@ -1914,92 +2150,6 @@ const calculateParamsAndStyles = () => {
 
   // 计算镜架风格，todo：未来要用websocket或http请求去计算
   EyeGlassStyleFormState.style = [1];
-};
-
-// 功能函数：访问WebSocket，开始拍摄预览
-const captureStart = (camId: number) => {
-  const ws = new WebSocket(`ws://localhost:8765/camera-usb/${camId}`);
-  ws.addEventListener("message", (event) => {
-    // 判断返回的event.data是string还是bytes
-    if (typeof event.data === "string") {
-      // 显示相机状态错误Modal提示
-      showCameraStateErrorModal.value = true;
-      // 将相机状态置为false
-      cameraState.value = false;
-      ws.close();
-    } else {
-      // 将相机状态置为true
-      cameraState.value = true;
-      // 将拍摄的图像赋值给imgCameraUrl
-      imgCameraUrl.value = URL.createObjectURL(event.data as Blob);
-    }
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("摄像头启动失败，请检查设备连接", 10);
-    ws.close();
-  });
-  // 将WebSocket实例存入wsMap
-  wsMap.value.set(camId.toString(), ws);
-};
-
-// 功能函数：访问WebSocket，拍摄
-const capture = (camId: number) => {
-  const ws = new WebSocket(`ws://localhost:8765/capture-usb/${camId}`);
-  ws.addEventListener("message", (event) => {
-    if (typeof event.data === "string") {
-      // 显示相机状态错误Modal提示
-      showCameraStateErrorModal.value = true;
-      // 将相机状态置为false
-      cameraState.value = false;
-    } else {
-      // 将拍摄的图像赋值给imgCameraUrl
-      imgCameraUrl.value = URL.createObjectURL(event.data as Blob);
-      // 将拍摄的图像赋值给imgCameraPreviewUrl
-      if (camId == 0) {
-        // 拍摄成功提示
-        message.success("俯视图拍摄成功", 5);
-        // 将拍摄的俯视图赋值给URL
-        imgCameraPreview0Url.value = URL.createObjectURL(event.data as Blob);
-        // 将拍摄的俯视图赋值给EyeGlassImageFormState
-        EyeGlassImageFormState.topview = new File(
-          [event.data as Blob],
-          "0.jpg",
-        );
-      } else if (camId == 1) {
-        // 拍摄成功提示
-        message.success("正视图拍摄成功", 5);
-        // 将拍摄的正视图赋值给URL
-        imgCameraPreview1Url.value = URL.createObjectURL(event.data as Blob);
-        // 将拍摄的正视图赋值给EyeGlassImageFormState
-        EyeGlassImageFormState.frontview = new File(
-          [event.data as Blob],
-          "1.jpg",
-        );
-      } else if (camId == 2) {
-        // 拍摄成功提示
-        message.success("侧视图拍摄成功", 5);
-        // 将拍摄的侧视图赋值给URL
-        imgCameraPreview2Url.value = URL.createObjectURL(event.data as Blob);
-        // 将拍摄的侧视图赋值给EyeGlassImageFormState
-        EyeGlassImageFormState.sideview = new File(
-          [event.data as Blob],
-          "2.jpg",
-        );
-      }
-      // 将相机状态置为true
-      cameraState.value = true;
-    }
-    // 收到拍摄完成消息后，关闭WebSocket
-    ws.close();
-    // 拍摄完成后，清除摄像头缓存
-    clearCameraCache();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("拍摄失败，请检查设备连接", 10);
-    ws.close();
-  });
 };
 
 // 功能函数：清楚摄像头缓存
@@ -2016,18 +2166,6 @@ const clearCameraCache = async () => {
   });
 };
 
-// 功能函数：访问WebSocket，读取拍摄图像
-const captureResult = (camId: number) => {
-  // 读取拍摄图像
-  if (camId == 0) {
-    imgCameraUrl.value = imgCameraPreview0Url.value;
-  } else if (camId == 1) {
-    imgCameraUrl.value = imgCameraPreview1Url.value;
-  } else if (camId == 2) {
-    imgCameraUrl.value = imgCameraPreview2Url.value;
-  }
-};
-
 //功能函数：关闭webSocket
 const captureClose = () => {
   //关闭当前页面的WebSocket
@@ -2038,34 +2176,6 @@ const captureClose = () => {
       : "2";
   wsMap.value.get(current)?.close();
   console.log("current:", current);
-};
-
-// 功能函数：在拍摄结束、进入计算参数界面后，访问WebSocket，读取三视图图像背景
-const captureResultAllBackground = () => {
-  const ws0 = new WebSocket(`ws://localhost:8765/load-background/0`);
-  ws0.addEventListener("message", (event) => {
-    EyeGlassImageBackgroundFormState.topview_bg = new File(
-      [event.data as Blob],
-      "0_bg.jpg",
-    );
-    ws0.close();
-  });
-  const ws1 = new WebSocket(`ws://localhost:8765/load-background/1`);
-  ws1.addEventListener("message", (event) => {
-    EyeGlassImageBackgroundFormState.frontview_bg = new File(
-      [event.data as Blob],
-      "1_bg.jpg",
-    );
-    ws1.close();
-  });
-  const ws2 = new WebSocket(`ws://localhost:8765/load-background/2`);
-  ws2.addEventListener("message", (event) => {
-    EyeGlassImageBackgroundFormState.sideview_bg = new File(
-      [event.data as Blob],
-      "2_bg.jpg",
-    );
-    ws2.close();
-  });
 };
 
 // 功能函数：初始化基础参数表单
@@ -2098,14 +2208,6 @@ const initEyeGlassImageFormState = () => {
   Object.assign(EyeGlassImageFormState, EyeGlassImageFormInitState);
 };
 
-// 功能函数：初始化图像URL变量
-const initEyeGlassImageUrlState = () => {
-  imgCameraUrl.value = "";
-  imgCameraPreview0Url.value = "";
-  imgCameraPreview1Url.value = "";
-  imgCameraPreview2Url.value = "";
-};
-
 // 功能函数：初始化所有表单和状态
 const initAll = () => {
   initEyeGlassBasicFormState();
@@ -2113,28 +2215,25 @@ const initAll = () => {
   initEyeGlassDetailFormState();
   initEyeGlassWeightFormState();
   initEyeGlassImageFormState();
-  initEyeGlassImageUrlState();
+  // initEyeGlassImageUrlState();
   hasWeightLoged.value = false;
-  stepItems.value.map((item) => {
-    item.status = "wait";
-  });
   wsMap.value.forEach((ws) => {
     ws?.close();
   });
 };
 
 // 功能函数：计算参数，校验界面是否处于拍摄预览
-const isCaptureStart = computed(() => {
-  if (
-    currentStage.value == "preview-0" ||
-    currentStage.value == "preview-1" ||
-    currentStage.value == "preview-2"
-  ) {
-    return true;
-  } else {
-    return false;
-  }
-});
+// const isCaptureStart = computed(() => {
+//   if (
+//     currentStage.value == "preview-0" ||
+//     currentStage.value == "preview-1" ||
+//     currentStage.value == "preview-2"
+//   ) {
+//     return true;
+//   } else {
+//     return false;
+//   }
+// });
 
 // #########################################OnClick点击事件函数定义#########################################
 
@@ -2287,12 +2386,11 @@ const onClickEnterSKU = async () => {
 // 输入基础信息确认按钮点击事件
 const onClickEnterBasicParams = () => {
   EyeGlassBasicFormRef.value.validate().then(() => {
-    if (stepItems.value[0].status == "finish") {
-      currentStage.value = "confirm-0";
-      captureResult(0);
+    if (hasCaptured.value) {
+      currentStage.value = "confirm";
     } else {
-      currentStage.value = "preview-0";
-      captureStart(0);
+      currentStage.value = "preview";
+      startCameraStream();
     }
   });
 };
@@ -2301,48 +2399,25 @@ const onClickEnterBasicParams = () => {
 const onClickCaptureOrConfirm = () => {
   console.log("enableSubmitButton:", enabledSubmitButton.value);
   switch (currentStage.value) {
-    case "preview-0": // 俯视图预览
-      // 关闭上一个WebSocket
-      wsMap.value.get("0")?.close();
-      capture(0);
-      // 如果摄像头开启，则进入确认状态
-      currentStage.value = "confirm-0";
-      break;
-    case "confirm-0": // 俯视图确认
-      if (stepItems.value[1].status == "finish") {
-        captureResult(1);
-        currentStage.value = "confirm-1";
+    case "preview": //预览
+      if (camera.cameraState.cameraInitState) {
+        // 开启取流，进行预览
+        stopCameraStream()
+          .then(() => {
+            currentStage.value = "confirm";
+          })
+          .catch((error) => {
+            // 打开模态窗，展示错误
+            showCameraStateErrorModal.value = true;
+            cameraStateErrorModalLoading.value = false;
+            console.log(error);
+          });
       } else {
-        captureStart(1);
-        currentStage.value = "preview-1";
+        // 摄像头未初始化，弹出提示框
+        showCameraStateErrorModal.value = true;
       }
-      stepItems.value[0].status = "finish";
       break;
-    case "preview-1": // 正视图预览
-      // 关闭上一个WebSocket
-      wsMap.value.get("1")?.close();
-      capture(1);
-      currentStage.value = "confirm-1";
-      break;
-    case "confirm-1": // 正视图确认
-      if (stepItems.value[2].status == "finish") {
-        captureResult(2);
-        currentStage.value = "confirm-2";
-      } else {
-        captureStart(2);
-        currentStage.value = "preview-2";
-      }
-      stepItems.value[1].status = "finish";
-      break;
-    case "preview-2": // 侧视图预览
-      // 关闭上一个WebSocket
-      wsMap.value.get("2")?.close();
-      capture(2);
-      currentStage.value = "confirm-2";
-      break;
-    case "confirm-2": // 侧视图确认
-      // captureResultAll();
-      stepItems.value[2].status = "finish";
+    case "confirm":
       currentStage.value = "input-params";
       if (!hasWeightLoged.value) {
         readWeight();
@@ -2377,60 +2452,20 @@ const onClickReturnOrRedo = () => {
       // 重置表单
       initEyeGlassBasicFormState();
       break;
-    case "preview-0":
+    case "preview":
       // 关闭上一个WebSocket
-      wsMap.value.get("0")?.close();
+      stopCameraStream();
       currentStage.value = "input-basic-params";
       break;
-    case "confirm-0":
-      captureStart(0);
-      currentStage.value = "preview-0";
-      break;
-    case "confirm-1":
-      captureStart(1);
-      currentStage.value = "preview-1";
-      break;
-    case "confirm-2":
-      captureStart(2);
-      currentStage.value = "preview-2";
-      break;
-    case "preview-1":
-      // 关闭上一个WebSocket
-      wsMap.value.get("1")?.close();
-      captureResult(0);
-      currentStage.value = "confirm-0";
-      break;
-    case "preview-2":
-      // 关闭上一个WebSocket
-      wsMap.value.get("2")?.close();
-      captureResult(1);
-      currentStage.value = "confirm-1";
+    case "confirm":
+      startCameraStream();
+      currentStage.value = "preview";
       break;
     case "input-params":
-      captureResult(2);
       // 关闭read-weight的WebSocket
       wsMap.value.get("weight")?.close(1000, "客户端关闭read-weight");
-      currentStage.value = "confirm-2";
+      currentStage.value = "confirm";
       break;
-  }
-};
-
-// 步骤条点击事件
-const onClickStep = (clickStep: number) => {
-  if (stepItems.value[clickStep].status == "finish") {
-    //关闭原来的WebSocket
-    captureClose();
-    // 跳转至已完成的步骤
-    captureResult(clickStep);
-    currentStage.value =
-      clickStep == 0 ? "confirm-0" : clickStep == 1 ? "confirm-1" : "confirm-2";
-  } else if (stepItems.value[clickStep - 1].status == "finish") {
-    //关闭原来的WebSocket
-    captureClose();
-    // 跳转至即将进行的步骤
-    captureStart(clickStep);
-    currentStage.value =
-      clickStep == 0 ? "preview-0" : clickStep == 1 ? "preview-1" : "preview-2";
   }
 };
 
@@ -2540,66 +2575,42 @@ const onClickWeightStateErrorOk = () => {
 
 // 增加亮度
 const onClickLightup = () => {
-  let cam_id = 0;
-  switch (currentStage.value) {
-    case "preview-0":
-      cam_id = 0;
-      break;
-    case "preview-1":
-      cam_id = 1;
-      break;
-    case "preview-2":
-      cam_id = 2;
-      break;
-    default:
-      return;
+  for (var cam_id = 0; cam_id < 3; cam_id++) {
+    // 使用WebSocket请求增加亮度
+    const ws = new WebSocket(`ws://localhost:8765/light-up/${cam_id}`);
+    ws.addEventListener("message", (event) => {
+      const result = JSON.parse(event.data as string);
+      if (result.code == "0") {
+        message.success("亮度调节完成", 3);
+      }
+      ws.close();
+    });
+    // 监听错误事件
+    ws.addEventListener("error", () => {
+      message.error("亮度未能正常调节，请检查设备连接", 10);
+      ws.close();
+    });
   }
-  // 使用WebSocket请求增加亮度
-  const ws = new WebSocket(`ws://localhost:8765/light-up/${cam_id}`);
-  ws.addEventListener("message", (event) => {
-    const result = JSON.parse(event.data as string);
-    if (result.code == "0") {
-      message.success("亮度调节完成", 3);
-    }
-    ws.close();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("亮度未能正常调节，请检查设备连接", 10);
-    ws.close();
-  });
 };
 // 降低亮度
 const onClickLightdown = () => {
-  let cam_id = 0;
-  switch (currentStage.value) {
-    case "preview-0":
-      cam_id = 0;
-      break;
-    case "preview-1":
-      cam_id = 1;
-      break;
-    case "preview-2":
-      cam_id = 2;
-      break;
-    default:
-      return;
+  for (var cam_id = 0; cam_id < 3; cam_id++) {
+    // 使用WebSocket请求清零称重，即去皮
+    const ws = new WebSocket(`ws://localhost:8765/light-down/${cam_id}`);
+    ws.addEventListener("message", (event) => {
+      const result = JSON.parse(event.data as string);
+      if (result.code == "0") {
+        console.log("亮度调节提示");
+        message.success("亮度调节完成", 3);
+      }
+      ws.close();
+    });
+    // 监听错误事件
+    ws.addEventListener("error", () => {
+      message.error("亮度未能正常调节，请检查设备连接", 10);
+      ws.close();
+    });
   }
-  // 使用WebSocket请求清零称重，即去皮
-  const ws = new WebSocket(`ws://localhost:8765/light-down/${cam_id}`);
-  ws.addEventListener("message", (event) => {
-    const result = JSON.parse(event.data as string);
-    if (result.code == "0") {
-      console.log("亮度调节提示");
-      message.success("亮度调节完成", 3);
-    }
-    ws.close();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("亮度未能正常调节，请检查设备连接", 10);
-    ws.close();
-  });
 };
 </script>
 
@@ -2691,17 +2702,18 @@ const onClickLightdown = () => {
   top: 32px;
 }
 
-/* 拍摄 预览图片 */
-.registry-preview-image {
-  margin-top: 48px;
+/* 拍摄 确认 */
+.capture-box {
   height: calc(100% - 48px);
-  width: calc(100% - 96px);
-  background-color: #ababab;
   border: none;
   border-radius: 12px;
-  object-fit: contain;
 }
 
+.capture-frame {
+  object-fit: contain;
+  width: 100%;
+  height: 100%;
+}
 /* 计算参数 */
 .registry-preview {
   height: calc(100% - 120px);
@@ -2767,38 +2779,6 @@ const onClickLightdown = () => {
 /* 计算参数 取消表单验证提示信息 */
 .calculate-item >>> .ant-form-item-explain-connected {
   display: none;
-}
-
-/* 拍摄 步骤条 */
-.steps-line {
-  width: 603px;
-}
-
-.ant-steps-item-finish >>> .ant-steps-item-tail:after {
-  background-color: transparent !important;
-  width: 100%;
-  height: 2px;
-  background-image: linear-gradient(to right, #8675ff 50%, transparent 50%);
-  background-size: 12px 2px;
-  background-repeat: repeat-x;
-}
-
-.ant-steps-item-process >>> .ant-steps-item-tail:after {
-  background-color: transparent;
-  width: 100%;
-  height: 2px;
-  background-image: linear-gradient(to right, #eeeeee 50%, transparent 50%);
-  background-size: 12px 2px;
-  background-repeat: repeat-x;
-}
-
-.ant-steps-item-wait >>> .ant-steps-item-tail:after {
-  background-color: transparent;
-  width: 100%;
-  height: 2px;
-  background-image: linear-gradient(to right, #999999 50%, transparent 50%);
-  background-size: 12px 2px;
-  background-repeat: repeat-x;
 }
 
 /* 操作按钮 */
