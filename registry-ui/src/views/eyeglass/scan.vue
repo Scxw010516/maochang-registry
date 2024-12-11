@@ -1584,8 +1584,37 @@ const filterOptionbyValue = (input: string, option: Option) => {
   }
 };
 
-/// 功能函数：读取摄像头配置，并初始化摄像头
+/// 功能函数：发送websocket请求，设置摄像头参数；前端读取摄像头配置，并初始化摄像头
 async function initCamera(): Promise<boolean> {
+  // 发送初始化摄像头请求
+  const ws = new WebSocket(`ws://localhost:8765/init-camera-usb`);
+  // 监听返回消息
+  ws.addEventListener("message", (event) => {
+    const result = JSON.parse(event.data as string);
+    // 判断返回的code值，若为-1则提示摄像头启动失败
+    if (result.code == "-1") {
+      // 设置摄像头状态为false
+      cameraState.value = false;
+      cameraStateErrorModalLoading.value = false;
+      message.error("摄像头启动失败，请检查设备连接", 10);
+    } else {
+      // 设置摄像头状态为true
+      cameraState.value = true;
+      // 关闭摄像头状态错误提示框
+      showCameraStateErrorModal.value = false;
+      // 关闭摄像头状态错误提示框的Loading
+      cameraStateErrorModalLoading.value = false;
+      // 提示摄像头启动成功
+      message.success("摄像头启动成功", 5);
+    }
+    ws.close();
+  });
+  // 监听错误事件;
+  ws.addEventListener("error", () => {
+    message.error("摄像头启动失败，请检查设备连接", 10);
+    ws.close();
+    return false;
+  });
   // 清空设备列表
   await initCameraDeviceState();
   // 检查可用的媒体输入和输出设备的列表

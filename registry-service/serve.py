@@ -404,6 +404,9 @@ async def init_camera_usb(websocket):
     brightness_p = [cap.get(cv2.CAP_PROP_BRIGHTNESS) for cap in caps]
     print(f"亮度：{brightness_p}")
 
+    # 释放摄像头
+    capture.close_capture(caps)
+
     await websocket.send(json.dumps({"code": 0, "data": None}, default=default_dump))
 
 
