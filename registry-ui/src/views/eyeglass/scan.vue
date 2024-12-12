@@ -281,7 +281,7 @@
           color: #8675ff;
           font-size: 18px;
         "
-        @click="onClickReturnOrRedo"
+        @click="onClickReturn"
       >
         返回
       </a-button>
@@ -846,25 +846,28 @@
     justify="end"
     style="background-color: #ffffff; border-bottom-left-radius: 12px"
   >
-    <!-- <div v-show="isCaptureStart" style="margin-left: 80px; margin-right: auto">
-      <a-button style="margin-right: 40px" @click="onClickLightup">
+    <div
+      v-if="currentStage === 'preview'"
+      style="margin-left: 80px; margin-right: auto"
+    >
+      <!-- <a-button style="margin-right: 40px" @click="onClickLightup">
         增加亮度
       </a-button>
-      <a-button @click="onClickLightdown"> 降低亮度 </a-button>
-    </div> -->
-    <a-button class="operation-button" @click="onClickReturnOrRedo"
-      >{{
-        currentStage.startsWith("preview") || currentStage === "input-params"
-          ? "返回"
-          : "重拍"
-      }}
+      <a-button @click="onClickLightdown"> 降低亮度 </a-button> -->
+    </div>
+    <a-button
+      v-if="currentStage === 'confirm'"
+      class="operation-button"
+      @click="onClickRedo"
+      >重拍
     </a-button>
+    <a-button class="operation-button" @click="onClickReturn">返回 </a-button>
     <a-button
       class="operation-button-primary"
       @click="onClickCaptureOrConfirm"
       :disabled="currentStage === 'input-params' && !enabledSubmitButton"
     >
-      {{ currentStage.startsWith("preview") ? "拍摄" : "确认" }}
+      {{ currentStage === "preview" ? "拍摄" : "确认" }}
     </a-button>
   </a-row>
   <!-- 摄像头未启动提示Modal -->
@@ -1773,8 +1776,8 @@ async function startCameraStream(): Promise<void> {
   });
 }
 
-// 功能函数：停止拍摄预览，关闭视频流，释放资源，并进行拍摄，结果存入url,blob和 EyeGlassImageFormState 中
-async function stopCameraStream(): Promise<void> {
+// 功能函数：进行拍摄，结果存入url,blob和 EyeGlassImageFormState 中；关闭视频流
+async function CameraCapture(): Promise<void> {
   // 遍历摄像头列表，关闭视频流
   const promises = camera.cameraState.cameraList.map(async (camera) => {
     // 判断是否有视频流
@@ -1782,8 +1785,8 @@ async function stopCameraStream(): Promise<void> {
       // 开启拍摄
       const canvas = document.createElement("canvas");
       // todo:调整图像大小（和摄像头参数一致）
-      canvas.width = 3075;
-      canvas.height = 3000;
+      canvas.width = 4656;
+      canvas.height = 3496;
       const ctx = canvas.getContext("2d");
       ctx?.scale(-1, 1);
       ctx?.translate(-canvas.width, 0);
@@ -1877,15 +1880,7 @@ async function stopCameraStream(): Promise<void> {
       // 确认拍摄标识符
       hasCaptured.value = true;
       // 关闭所有视频流
-      camera.cameraState.cameraList.forEach((camera) => {
-        if (camera.mediaStream) {
-          camera.mediaStream.getTracks().forEach((track) => {
-            track.stop();
-          });
-          console.log("关闭视频流");
-          camera.mediaStream = null;
-        }
-      });
+      stopCameraStream();
     })
     .catch((error) => {
       // 一旦发生异常，则清空已经存储的图片
@@ -1904,6 +1899,20 @@ async function stopCameraStream(): Promise<void> {
       throw new Error("拍摄失败");
     });
 }
+
+// 功能函数：关闭所有摄像头视频流
+const stopCameraStream = () => {
+  // 关闭所有视频流
+  camera.cameraState.cameraList.forEach((camera) => {
+    if (camera.mediaStream) {
+      camera.mediaStream.getTracks().forEach((track) => {
+        track.stop();
+      });
+      console.log("关闭视频流");
+      camera.mediaStream = null;
+    }
+  });
+};
 
 // 功能函数：初始化电子秤
 const initWeight = () => {
@@ -2237,6 +2246,17 @@ const initEyeGlassImageFormState = () => {
   Object.assign(EyeGlassImageFormState, EyeGlassImageFormInitState);
 };
 
+// 功能函数：初始化Capture
+const initCapture = () => {
+  TopCapture.value.imgBlob = null;
+  TopCapture.value.imgurl = "";
+  FrontCapture.value.imgBlob = null;
+  FrontCapture.value.imgurl = "";
+  SideCapture.value.imgBlob = null;
+  SideCapture.value.imgurl = "";
+  hasCaptured.value = false;
+};
+
 // 功能函数：初始化所有表单和状态
 const initAll = () => {
   initEyeGlassBasicFormState();
@@ -2244,6 +2264,7 @@ const initAll = () => {
   initEyeGlassDetailFormState();
   initEyeGlassWeightFormState();
   initEyeGlassImageFormState();
+  initCapture();
   // initEyeGlassImageUrlState();
   hasWeightLoged.value = false;
   wsMap.value.forEach((ws) => {
@@ -2431,7 +2452,7 @@ const onClickCaptureOrConfirm = () => {
     case "preview": //预览
       if (camera.cameraState.cameraInitState) {
         // 开启取流，进行预览
-        stopCameraStream()
+        CameraCapture()
           .then(() => {
             currentStage.value = "confirm";
           })
@@ -2471,8 +2492,8 @@ const onClickCaptureOrConfirm = () => {
   }
 };
 
-// 返回或重拍按钮点击事件
-const onClickReturnOrRedo = () => {
+// 返回按钮点击事件
+const onClickReturn = () => {
   switch (currentStage.value) {
     case "input-basic-params":
       currentStage.value = "input-sku";
@@ -2482,13 +2503,12 @@ const onClickReturnOrRedo = () => {
       initEyeGlassBasicFormState();
       break;
     case "preview":
-      // 关闭上一个WebSocket
+      // 关闭视频流
       stopCameraStream();
       currentStage.value = "input-basic-params";
       break;
     case "confirm":
-      startCameraStream();
-      currentStage.value = "preview";
+      currentStage.value = "input-basic-params";
       break;
     case "input-params":
       // 关闭read-weight的WebSocket
@@ -2496,6 +2516,11 @@ const onClickReturnOrRedo = () => {
       currentStage.value = "confirm";
       break;
   }
+};
+// 重拍按钮点击事件
+const onClickRedo = () => {
+  startCameraStream();
+  currentStage.value = "preview";
 };
 
 // 功能函数：记录称重结果
