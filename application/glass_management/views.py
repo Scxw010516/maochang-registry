@@ -307,7 +307,16 @@ class DeleteEyeglassFrameEntrysView(View):
 		result = services.DeleteEyeglassFrameEntrys(request)
 		# 返回结果
 		return result
-
+	
+"""
+生成计算任务
+"""
+class GenerateCalculateTaskView(View):
+	def post(self, request: HttpRequest):
+		# 调用上传参数方法
+		result = services.GenerateCalculateTask(request)
+		# 返回结果
+		return result
 """
 保存新镜架所有信息
 """

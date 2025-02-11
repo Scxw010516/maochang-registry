@@ -1172,11 +1172,11 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
 const EyeGlassStyleFormRef = ref();
 // 镜架风格参数表单初始化数据
 const EyeGlassStyleFormInitState: UnwrapRef<EyeGlassStyleForm> = reactive({
-  style: [],
+  style: [1],
 });
 // 镜架风格参数表单数据
 const EyeGlassStyleFormState: UnwrapRef<EyeGlassStyleForm> = reactive({
-  style: [],
+  style: [1],
 });
 // 镜架风格参数表单校验规则
 const EyeGlassStyleFormRules: Record<string, Rule[]> = {
@@ -1257,164 +1257,138 @@ const EyeGlassDetailFormState: UnwrapRef<EyeGlassDetailForm> = reactive({
 });
 // 镜架详细参数表单校验规则
 const EyeGlassDetailFormRules: Record<string, Rule[]> = {
-  frame_height: [{ required: true, trigger: ["blur", "change"] }],
-  frame_width: [{ required: true, trigger: ["blur", "change"] }],
-  pile_height_left: [{ required: true, trigger: ["blur", "change"] }],
-  pile_height_right: [{ required: true, trigger: ["blur", "change"] }],
-  frame_top_width: [{ required: true, trigger: ["blur", "change"] }],
+  frame_height: [{ trigger: ["blur", "change"] }],
+  frame_width: [{ trigger: ["blur", "change"] }],
+  pile_height_left: [{ trigger: ["blur", "change"] }],
+  pile_height_right: [{ trigger: ["blur", "change"] }],
+  frame_top_width: [{ trigger: ["blur", "change"] }],
   top_points: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   frame_rects: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_width_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_width_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_height_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_height_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_diagonal_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_diagonal_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_area_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_area_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   bridge_width: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_center_points: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   lens_top_points: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   vertical_angle: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   forward_angle: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   temple_angle: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   drop_length: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   face_angle: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   sagittal_angle_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   sagittal_angle_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   temple_length_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   temple_length_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   temporal_width: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   spread_angle_left: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   spread_angle_right: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
   pile_distance: [
     {
-      required: true,
       trigger: ["blur", "change"],
     },
   ],
@@ -1497,11 +1471,11 @@ const hasWeightLoged = ref<boolean>(false);
 const EyeGlassWeightFormRef = ref();
 // 镜架重量参数表单初始化数据
 const EyeGlassWeightFormInitState: UnwrapRef<EyeGlassWeightForm> = reactive({
-  weight: "",
+  weight: "12",
 });
 // 镜架重量参数表单数据
 const EyeGlassWeightFormState: UnwrapRef<EyeGlassWeightForm> = reactive({
-  weight: "",
+  weight: "12",
 });
 // 镜架重量参数表单校验规则
 const EyeGlassWeightFormRules: Record<string, Rule[]> = {
@@ -1940,6 +1914,165 @@ const initWeight = () => {
   });
 };
 
+// 功能函数：上传新的镜架，并发送计算任务
+const uploadNewEyeglassFrame = () => {
+  // 保存已有的信息
+  // saveNewEyeglassFrame();
+  // 发送计算任务到服务器
+  sendCalcTask();
+};
+
+const sendCalcTask = async () => {
+  // 验证通过标识符
+  let isFormValid = true;
+  // 检查镜架基础信息是否完善
+  await EyeGlassBasicFormRef.value.validate().catch(() => {
+    message.error("请完善镜架基础信息");
+    isFormValid = false;
+  });
+  // 检查镜架风格信息是否完善
+  await EyeGlassStyleFormRef.value.validate().catch(() => {
+    message.error("请完善镜架风格信息");
+    isFormValid = false;
+  });
+  // 检查镜架详细信息是否完善
+  await EyeGlassDetailFormRef.value.validate().catch(() => {
+    message.error("请完善镜架详细信息");
+    isFormValid = false;
+  });
+  // 检查镜架重量信息是否完善
+  await EyeGlassWeightFormRef.value.validate().catch(() => {
+    message.error("请完善镜架重量信息");
+    isFormValid = false;
+  });
+  // // 检查镜架图片信息是否完善
+  // if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
+  //   message.error("镜架三视图信息错误");
+  //   isFormValid = false;
+  // }
+  // // 检查镜架图片背景信息是否完善
+  // if (
+  //   !Object.values(EyeGlassImageBackgroundFormState).every(
+  //     (image) => image !== null,
+  //   )
+  // ) {
+  //   message.error("镜架三视图背景信息错误");
+  //   isFormValid = false;
+  // }
+  // 检查镜架采集仓库地址是否完善
+  if (!user.warehouse) {
+    message.error("请完善镜架采集仓库地址");
+    isFormValid = false;
+  }
+  if (!isFormValid) {
+    return false;
+  }
+  // 构建FormData对象
+  const formData = new FormData();
+  // 将镜架基础信息添加到FormData对象
+  formData.append("sku", EyeGlassBasicFormState.sku);
+  formData.append("brand", EyeGlassBasicFormState.brand);
+  formData.append("model_type", EyeGlassBasicFormState.model_type);
+  formData.append(
+    "price",
+    EyeGlassBasicFormState.price !== null
+      ? EyeGlassBasicFormState.price.toString()
+      : "",
+  );
+  formData.append(
+    "material",
+    EyeGlassBasicFormState.material !== null
+      ? EyeGlassBasicFormState.material.toString()
+      : "",
+  );
+  formData.append(
+    "color",
+    EyeGlassBasicFormState.color !== null
+      ? EyeGlassBasicFormState.color.toString()
+      : "",
+  );
+  formData.append(
+    "shape",
+    EyeGlassBasicFormState.shape !== null
+      ? EyeGlassBasicFormState.shape.toString()
+      : "",
+  );
+  // 数据库字段isnosepad为BooleanField类型，当isnosepad!==null时，后端会同意验证为True。因此，此处做特殊处理
+  formData.append(
+    "isnosepad",
+    EyeGlassBasicFormState.isnosepad
+      ? EyeGlassBasicFormState.isnosepad.toString()
+      : "",
+  );
+  formData.append(
+    "stock",
+    EyeGlassBasicFormState.stock !== null
+      ? EyeGlassBasicFormState.stock.toString()
+      : "",
+  );
+  formData.append(
+    "warehouse",
+    user.warehouse !== null ? user.warehouse.toString() : "",
+  );
+  formData.append(
+    "lens_radian",
+    EyeGlassBasicFormState.lens_radian !== null
+      ? EyeGlassBasicFormState.lens_radian.toString()
+      : "",
+  );
+  formData.append(
+    "lens_width_st",
+    EyeGlassBasicFormState.lens_width_st !== null
+      ? EyeGlassBasicFormState.lens_width_st.toString()
+      : "",
+  );
+  formData.append(
+    "bridge_width_st",
+    EyeGlassBasicFormState.bridge_width_st !== null
+      ? EyeGlassBasicFormState.bridge_width_st.toString()
+      : "",
+  );
+  formData.append(
+    "temple_length_st",
+    EyeGlassBasicFormState.temple_length_st !== null
+      ? EyeGlassBasicFormState.temple_length_st.toString()
+      : "",
+  );
+  // 将镜架风格信息添加到FormData对象
+  formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
+  // 将镜架详细信息添加到FormData对象
+  Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
+    formData.append(key, value); // 将值转换为字符串后添加
+  });
+  // 将镜架重量信息添加到FormData对象
+  formData.append("weight", EyeGlassWeightFormState.weight);
+  // 将镜架图片信息添加到FormData对象
+  // formData.append("frontview", EyeGlassImageFormState.frontview as File);
+  // formData.append("sideview", EyeGlassImageFormState.sideview as File);
+  // formData.append("topview", EyeGlassImageFormState.topview as File);
+  // 将镜架图片背景信息添加到FormData对象
+  // formData.append(
+  //   "frontview_bg",
+  //   EyeGlassImageBackgroundFormState.frontview_bg as File,
+  // );
+  // formData.append(
+  //   "sideview_bg",
+  //   EyeGlassImageBackgroundFormState.sideview_bg as File,
+  // );
+  // formData.append(
+  //   "topview_bg",
+  //   EyeGlassImageBackgroundFormState.topview_bg as File,
+  // );
+  // 提交通过标识符
+  let isSaveSuccess: boolean = false;
+  await axios
+    .post("/glassmanagement/api/generate-calculate-task", formData)
+    .then((response) => {
+      console.log(response);
+    });
+  return isSaveSuccess;
+};
+
 // 功能函数：发送图片、基础参数和详细参数到服务器
 const saveNewEyeglassFrame = async () => {
   // 验证通过标识符
@@ -2204,18 +2337,6 @@ const clearCameraCache = async () => {
   });
 };
 
-//功能函数：关闭webSocket
-const captureClose = () => {
-  //关闭当前页面的WebSocket
-  const current = currentStage.value.includes("0")
-    ? "0"
-    : currentStage.value.includes("1")
-      ? "1"
-      : "2";
-  wsMap.value.get(current)?.close();
-  console.log("current:", current);
-};
-
 // 功能函数：初始化基础参数表单
 const initEyeGlassBasicFormState = () => {
   Object.assign(EyeGlassBasicFormState, EyeGlassBasicFormInitState);
@@ -2450,22 +2571,23 @@ const onClickCaptureOrConfirm = () => {
   console.log("enableSubmitButton:", enabledSubmitButton.value);
   switch (currentStage.value) {
     case "preview": //预览
-      if (camera.cameraState.cameraInitState) {
-        // 开启取流，进行预览
-        CameraCapture()
-          .then(() => {
-            currentStage.value = "confirm";
-          })
-          .catch((error) => {
-            // 打开模态窗，展示错误
-            showCameraStateErrorModal.value = true;
-            cameraStateErrorModalLoading.value = false;
-            console.log(error);
-          });
-      } else {
-        // 摄像头未初始化，弹出提示框
-        showCameraStateErrorModal.value = true;
-      }
+      // if (camera.cameraState.cameraInitState) {
+      //   // 开启取流，进行预览
+      //   CameraCapture()
+      //     .then(() => {
+      //       currentStage.value = "confirm";
+      //     })
+      //     .catch((error) => {
+      //       // 打开模态窗，展示错误
+      //       showCameraStateErrorModal.value = true;
+      //       cameraStateErrorModalLoading.value = false;
+      //       console.log(error);
+      //     });
+      // } else {
+      //   // 摄像头未初始化，弹出提示框
+      //   showCameraStateErrorModal.value = true;
+      // }
+      currentStage.value = "input-params";
       break;
     case "confirm":
       currentStage.value = "input-params";
@@ -2577,7 +2699,8 @@ const onClickResetWeight = () => {
 // 计算参数按钮点击事件
 const onClickCalculateParams = () => {
   // 计算参数
-  calculateParamsAndStyles();
+  // calculateParamsAndStyles();
+  uploadNewEyeglassFrame();
 };
 
 // 详细信息模态窗按钮点击事件

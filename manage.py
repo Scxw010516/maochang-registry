@@ -2,7 +2,7 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
-from application.celery_task.tasks import test ####celery test
+# from application.celery_task.tasks import test ####celery test
 
 def main():
     """Run administrative tasks."""

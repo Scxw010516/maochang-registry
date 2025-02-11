@@ -9,6 +9,8 @@ from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpR
 from application.glass_management import models
 from application.glass_management import forms
 
+from application.celery_task import tasks
+
 
 # 镜架采集端
 def SearchModeltypeOrSKU(request: HttpRequest):
@@ -215,6 +217,63 @@ def DeleteEyeglassFrameEntrys(request: HttpRequest):
 
     # 返回成功信息
     return R.ok(msg="镜架删除成功")
+
+def GenerateCalculateTask(request: HttpRequest):
+    """
+    保存新镜架：基本信息，三视图；生成计算任务
+    
+    参数：
+        request: HttpRequest 请求对象
+
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+
+    """
+    # 接收请求参数,前端提交的是formdata，所以从request.POST中获取数据。如果前端提交的是json数据，则从request.body中获取数据。
+    if not request.POST:
+        return R.failed(msg="参数错误")
+    try:
+        # 数据库事务处理
+        with transaction.atomic():
+            """
+            镜架基本信息表处理
+            """
+            # 验证镜架基本信息表表单
+            form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(request.POST)
+            if form_EyeglassFrameEntry.is_valid():
+                # 保存镜架基本信息表实例
+                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
+
+                print(request.POST)
+                
+                """
+                镜架扫描结果表处理
+                """
+                # # 创建镜架扫描结果表实例
+                # form_EyeglassFrameDetectionResult = (
+                #     forms.EyeglassFrameDetectionResultForm(request.POST)
+                # )
+                # 构建并保存镜架扫描结果表的数据库实例，关联镜架基本信息表外键
+                EyeglassFrameDetectionResult_instance = models.EyeglassFrameDetectionResult.objects.create(entry = EyeglassFrameEntry_instance)
+                # todo:保存图片和重量
+                # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
+                EyeglassFrameDetectionResult_instance.save()
+                # print("GenerateCalculateTask:",id)
+                # 生成celery任务，传递镜架基础信息表的id值
+            sku = request.POST.get("sku")
+            task_id = tasks.calc.delay(sku)
+            return R.ok(msg="生成计算任务成功")
+            # else:
+            #     # 处理镜架基本信息表表单验证失败的情况
+            #     err_msg = regular.get_err(form_EyeglassFrameEntry)
+            #     # 抛出异常
+            #     raise ValueError(err_msg)
+    except ValueError as ve:
+        return R.failed(msg=str(ve))
+    except Exception as e:
+        return R.failed(msg=str(e))
+   
+    
 
 
 def SaveNewEyeglassFrame(request: HttpRequest):
