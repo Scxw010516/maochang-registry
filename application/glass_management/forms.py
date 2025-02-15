@@ -11,21 +11,43 @@ class EyeglassFrameEntryForm(forms.ModelForm):
         exclude = ['create_user', 'update_user']
 
 """
-镜架扫描结果表
+镜架毫米测量数据
 """
-class EyeglassFrameDetectionResultForm(forms.ModelForm):
+class EyeglassFrameMillimeterMeasurementForm(forms.ModelForm):
     class Meta:
-        model = models.EyeglassFrameDetectionResult
-        # exclude = ['entry','create_user', 'update_user', 'frontview', 'sideview', 'topview', 'frontview_bg', 'sideview_bg', 'topview_bg']
-        exclude = ['entry','create_user', 'update_user', 'frontview', 'sideview', 'topview']
+        model = models.EyeglassFrameMillimeterMeasurement
+        exclude = ['entry', 'create_user', 'update_user']
 
 """
-镜架风格关联表
+镜架像素测量数据
 """
-class EyeglassFrameEntryStyleForm(forms.ModelForm):
+class EyeglassFramePixelMeasurementForm(forms.ModelForm):
     class Meta:
-        model = models.EyeglassFrameEntryStyle
-        exclude = ['entry','create_user', 'update_user']
+        model = models.EyeglassFramePixelMeasurement
+        exclude = ['entry', 'create_user', 'update_user']
 
+"""
+镜架计算数据
+"""
+class EyeglassFrameCalulationForm(forms.ModelForm):
+    class Meta:
+        model = models.EyeglassFrameCalulation
+        exclude = ['entry', 'create_user', 'update_user']
+
+"""
+镜架坐标数据
+"""
+class EyeglassFrameCoordinateForm(forms.ModelForm):
+    class Meta:
+        model = models.EyeglassFrameCoordinate
+        exclude = ['entry', 'create_user', 'update_user']
+
+"""
+镜架图片数据
+"""
+class EyeglassFrameImageForm(forms.ModelForm):
+    class Meta:
+        model = models.EyeglassFrameImage
+        exclude = ['entry', 'create_user', 'update_user']
 
 
