@@ -49,6 +49,8 @@ class EyeglassFrameEntry(BaseModel):
     # 镜架库存参数
     stock = models.IntegerField(unique=False, blank=True, null=True, verbose_name="库存")
     warehouse = models.ForeignKey(Warehouse, unique=False, blank=False, null=False, on_delete=models.CASCADE, verbose_name="所属仓库")
+    # 计算任务
+    calc_status = models.CharField(unique=False, blank=True, null=True,  max_length=255, verbose_name="计算任务")
 
 """
 镜架风格类型表
@@ -78,50 +80,50 @@ class EyeglassFrameDetectionResult(BaseModel):
     # 镜架基本信息关联外键
     entry = models.OneToOneField(EyeglassFrameEntry, unique=True, blank=False, null=False, on_delete=models.CASCADE, verbose_name='镜架基本信息')
     # 镜架三视图相对路径
-    frontview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name='正视图')
-    sideview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name='侧视图')
-    topview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name='俯视图')
+    frontview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=True, verbose_name='正视图')
+    sideview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=True, verbose_name='侧视图')
+    topview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=True, verbose_name='俯视图')
     # 镜架三视图背景相对路径
     # frontview_bg = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name='正视图背景')
     # sideview_bg = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name='侧视图背景')
     # topview_bg = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name='俯视图背景')
     # 30个镜架扫描参数
     # 正视图扫描参数
-    frame_height = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜框高度")
-    frame_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜框宽度")
-    pile_height_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左桩头高度")
-    pile_height_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右桩头高度")
-    frame_top_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜框顶部宽度")
-    top_points = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜框左右最高点坐标（两组）")
-    frame_rects = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜框左右矩形坐标及宽高（两组）")
-    lens_width_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈宽度")
-    lens_width_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈宽度")
-    lens_height_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈高度")
-    lens_height_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈高度")
-    lens_diagonal_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈对角线长度")
-    lens_diagonal_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈对角线长度")
-    lens_area_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈面积")
-    lens_area_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈面积")
-    bridge_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="鼻梁宽度")
-    lens_center_points = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜圈中心点坐标（两组）")
-    lens_top_points = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜圈顶部点坐标（两组）")
+    frame_height = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="镜框高度")
+    frame_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="镜框宽度")
+    pile_height_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左桩头高度")
+    pile_height_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右桩头高度")
+    frame_top_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="镜框顶部宽度")
+    top_points = models.CharField(max_length=255, unique=False, blank=False,  null=True, verbose_name="镜框左右最高点坐标（两组）")
+    frame_rects = models.CharField(max_length=255, unique=False, blank=False,  null=True, verbose_name="镜框左右矩形坐标及宽高（两组）")
+    lens_width_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左镜圈宽度")
+    lens_width_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右镜圈宽度")
+    lens_height_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左镜圈高度")
+    lens_height_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右镜圈高度")
+    lens_diagonal_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左镜圈对角线长度")
+    lens_diagonal_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右镜圈对角线长度")
+    lens_area_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左镜圈面积")
+    lens_area_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右镜圈面积")
+    bridge_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="鼻梁宽度")
+    lens_center_points = models.CharField(max_length=255, unique=False, blank=False,  null=True, verbose_name="镜圈中心点坐标（两组）")
+    lens_top_points = models.CharField(max_length=255, unique=False, blank=False,  null=True, verbose_name="镜圈顶部点坐标（两组）")
     # 侧视图扫描参数
-    vertical_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="垂俯角")
-    forward_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="前倾角")
-    temple_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜腿角")
-    drop_length = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="垂长")
+    vertical_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="垂俯角")
+    forward_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="前倾角")
+    temple_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="镜腿角")
+    drop_length = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="垂长")
     # 俯视图扫描参数
-    face_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="面弯")
-    sagittal_angle_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左垂内角")
-    sagittal_angle_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右垂内角")
-    temple_length_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜腿长度")
-    temple_length_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜腿长度")
-    temporal_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="颞距")
-    spread_angle_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜腿外张角")
-    spread_angle_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜腿外张角")
-    pile_distance = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="桩头距离")
+    face_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="面弯")
+    sagittal_angle_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左垂内角")
+    sagittal_angle_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右垂内角")
+    temple_length_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左镜腿长度")
+    temple_length_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右镜腿长度")
+    temporal_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="颞距")
+    spread_angle_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="左镜腿外张角")
+    spread_angle_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="右镜腿外张角")
+    pile_distance = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="桩头距离")
     # 镜架重量参数
-    weight = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="重量")
+    weight = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False,  null=True, verbose_name="重量")
 
 
 """
@@ -140,6 +142,8 @@ class EyeglassFrameDataFromExcel(models.Model):
     lens_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜圈宽度")
     bridge_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="鼻梁宽度")
     temple_length_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜腿长度")
+    # 计算任务
+    calc_status = models.CharField(unique=False, blank=True, null=True,  max_length=255, verbose_name="计算任务")
     
     class Meta:
         indexes = [
