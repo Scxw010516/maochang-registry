@@ -10,7 +10,8 @@ from application.glass_management.models import (
     EyeglassFramePixelMeasurement,
     EyeglassFrameCalulation,
     EyeglassFrameCoordinate,
-    EyeglassFrameImage
+    EyeglassFrameImage,
+    EyeglassFramePreloadData
 )
 
 # admin.site.register(EyeglassFrameMaterialType) # 镜架材质类型表
@@ -23,3 +24,4 @@ admin.site.register(EyeglassFramePixelMeasurement) # 镜架像素测量数据
 admin.site.register(EyeglassFrameCalulation) # 镜架计算数据
 admin.site.register(EyeglassFrameCoordinate) # 镜架坐标数据
 admin.site.register(EyeglassFrameImage) # 镜架图片数据
+admin.site.register(EyeglassFramePreloadData) # 镜架预加载数据

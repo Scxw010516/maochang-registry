@@ -151,7 +151,7 @@ class EyeglassFrameMillimeterMeasurement(EyeglassFrameMeasurement):
 
 
 class EyeglassFrameCalulation(BaseModel):
-    """镜架计算数据"""
+    """镜架计算数据 镜架推荐用"""
     # 镜架基本信息关联外键
     entry = models.OneToOneField(EyeglassFrameEntry, unique=True, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架基本信息")
     # 计算数据，推荐用的二次计算数据
@@ -297,6 +297,66 @@ class EyeglassFrameImage(BaseModel):
 
     class Meta:
         indexes = [models.Index(fields=["entry"])]
+class EyeglassFramePreloadData(BaseModel):
+    """镜架预加载数据 从excel加载"""
+    # 导入信息字段
+    batch_no = models.CharField(unique=False, blank=False, null=False, max_length=255, default=0,verbose_name="Excel导入的批次号",help_text="批次号格式：BATCH_YYYYMMDD_HHMMSS")
+
+    # 镜架基本信息字段
+    sku = models.CharField(unique=False, blank=False, null=False, max_length=255, verbose_name="镜架SKU")
+    brand = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架品牌")
+    model_type = models.CharField(unique=False, blank=True, null=True, max_length=255, verbose_name="镜架型号")
+    price = models.DecimalField(max_digits=15, decimal_places=2, unique=False, blank=True, null=True, verbose_name="售价")
+    MATERIAL_CHOICES = (
+        (0, "天然材料"),
+        (1, "贵金属"),
+        (2, "板材"),
+        (3, "钢材"),
+        (4, "钛材"),
+        (5, "合金"),
+        (6, "其他材料"),
+    )
+    material = models.SmallIntegerField(choices=MATERIAL_CHOICES, unique=False, blank=True, null=True, verbose_name="镜架材质")
+    COLOR_CHOICES = (
+        (0, "玳瑁色"),
+        (1, "双色"),
+        (2, "多彩"),
+        (3, "深色"),
+        (4, "浅色"),
+    )
+    color = models.SmallIntegerField(choices=COLOR_CHOICES, unique=False, blank=True, null=True, verbose_name="镜架颜色")
+    SHAPE_CHOICES = (
+        (0, "飞行员形"),
+        (1, "不规则形"),
+        (2, "圆形"),
+        (3, "偏圆形"),
+        (4, "方形"),
+        (5, "偏方形"),
+    )
+    shape = models.SmallIntegerField(choices=SHAPE_CHOICES, unique=False, blank=True, null=True, verbose_name="镜架形状")
+    isnosepad = models.BooleanField(unique=False, blank=True, null=True, verbose_name="是否带鼻托")
+    IS_TRANSPARENT_CHOICES = (
+        (0, "不透明"),
+        (1, "全透明"),
+        (2, "有色透明")
+    )
+    is_transparent = models.SmallIntegerField(choices=IS_TRANSPARENT_CHOICES, unique=False, blank=True, null=True, verbose_name="透明度")
+    FRAME_TYPE_CHOICES = (
+        (0, "全框"),
+        (1, "半框"),
+        (2, "无框"),
+    )
+    frame_type = models.SmallIntegerField(choices=FRAME_TYPE_CHOICES, unique=False, blank=True, null=True, verbose_name="镜框类型：0-全框 1-半框 2-无框")
+    # 镜架尺寸参数
+    lens_radian = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="撑片弧度")
+    lens_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜圈宽度")
+    bridge_width_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="鼻梁宽度")
+    temple_length_st = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=True, null=True, verbose_name="镜腿长度")
+    # 镜架库存参数
+    stock = models.PositiveIntegerField(unique=False, blank=True, null=True, default=0, verbose_name="库存")
+
+    class Meta:
+        indexes = [models.Index(fields=["batch_no","sku"])]
 
 # def get_upload_eyeglass_view_path_with_type(view_type: int):
 #     """动态获取镜架三视图保存路径"""

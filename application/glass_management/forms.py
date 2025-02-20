@@ -8,7 +8,7 @@ from application.glass_management import models
 class EyeglassFrameEntryForm(forms.ModelForm):
     class Meta:
         model = models.EyeglassFrameEntry
-        exclude = ['create_user', 'update_user']
+        exclude = ['create_user', 'update_user','pixel_measurement_state','millimeter_measurement_state','calculation_state','coordinate_state','image_mask_state','image_seg_state','image_beautify_state']
 
 """
 镜架毫米测量数据
@@ -49,5 +49,14 @@ class EyeglassFrameImageForm(forms.ModelForm):
     class Meta:
         model = models.EyeglassFrameImage
         exclude = ['entry', 'create_user', 'update_user']
+
+"""
+镜架预加载数据
+"""
+class EyeglassFramePreloadDataForm(forms.ModelForm):
+    class Meta:
+        model = models.EyeglassFramePreloadData
+        exclude = ['entry', 'create_user', 'update_user']
+
 
 
