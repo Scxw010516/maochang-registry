@@ -406,14 +406,25 @@ class GetAllShapesView(View):
 		return result
 
 """
-获取所有镜架风格
+获取所有镜架形状
 """
-class GetAllStylesView(View):
+class GetAllIsTransparenrView(View):
 	def get(self, request: HttpRequest):
-		# 调用查询所有镜架风格的服务方法
-		result = services.GetAllStyles(request)
+		# 调用查询所有镜架形状的服务方法
+		result = services.GetAllIsTransparent(request)
 		# 返回结果
 		return result
+
+"""
+获取所有镜框类型
+"""
+class GetAllFrameTypesView(View):
+	def get(self, request: HttpRequest):
+		# 调用查询所有镜架形状的服务方法
+		result = services.GetAllFrameTypes(request)
+		# 返回结果
+		return result
+
 	
 
 	

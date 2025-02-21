@@ -36,11 +36,11 @@ def SearchModeltypeOrSKU(request: HttpRequest):
 
     # 查询镜架型号或SKU是否存在，其中sku是唯一的
     if searchtype == "1":
-        entrys = models.EyeglassFrameDataFromExcel.objects.filter(
+        entrys = models.EyeglassFramePreloadData.objects.filter(
             model_type__icontains=searchstring
         )
     elif searchtype == "2":
-        entrys = models.EyeglassFrameDataFromExcel.objects.filter(
+        entrys = models.EyeglassFramePreloadData.objects.filter(
             sku__icontains=searchstring
         )
 
@@ -123,7 +123,7 @@ def SearchSKU(request: HttpRequest):
 
     # 获取镜架SKU
     sku = request.GET.get("sku", "")
-
+    # print(sku)
     # 参数为空判断
     if not sku:
         return R.failed(msg="请输入镜架SKU")
@@ -134,7 +134,7 @@ def SearchSKU(request: HttpRequest):
     # 判断查询结果是否为空
     if not entry:
         # 从EyeglassFrameDataFromExcel表中查询
-        entry_fromexcel = models.EyeglassFrameDataFromExcel.objects.filter(
+        entry_fromexcel = models.EyeglassFramePreloadData.objects.filter(
             sku=sku
         ).first()
         if entry_fromexcel:
@@ -165,19 +165,13 @@ def SearchSKU(request: HttpRequest):
         "brand": entry.brand,
         "model_type": entry.model_type,
         "price": entry.price,
-        "material": entry.material.id,
-        "color": entry.color.id,
-        "shape": entry.shape.id,
+        "material": entry.get_material_display(),
+        "color": entry.get_color_display(),
+        "shape": entry.get_shape_display(),
         "isnosepad": entry.isnosepad,
         "lens_radian": entry.lens_radian,
         "stock": entry.stock,
         "warehouse": entry.warehouse.id,
-        "style": [
-            style.style.id
-            for style in models.EyeglassFrameEntryStyle.objects.filter(
-                entry=entry
-            ).all()
-        ],  # 镜架风格关联表，多对多关系
         "create_time": entry.create_time.strftime("%Y-%m-%d %H:%M:%S"),
         "update_time": entry.update_time.strftime("%Y-%m-%d %H:%M:%S"),
     }
@@ -238,47 +232,78 @@ def GenerateCalculateTask(request: HttpRequest):
             """
             镜架基本信息表处理
             """
+            # 创建镜架扫描结果表实例
+            form_EyeglassFrameEntry = (
+                forms.EyeglassFrameEntryForm(request.POST)
+            )
             # 验证镜架基本信息表表单
-            form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(request.POST)
             if form_EyeglassFrameEntry.is_valid():
                 # 保存镜架基本信息表实例
-                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
-
-                print(request.POST)
-                
+                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save(commit=False)
+                # 保存镜架计算状态为0待计算
+                EyeglassFrameEntry_instance.pixel_measurement_state = 0
+                EyeglassFrameEntry_instance.millimeter_measurement_state = 0
+                EyeglassFrameEntry_instance.calculation_state = 0
+                EyeglassFrameEntry_instance.coordinate_state = 0
+                EyeglassFrameEntry_instance.image_mask_state = 0
+                EyeglassFrameEntry_instance.image_seg_state = 0
+                EyeglassFrameEntry_instance.image_beautify_state = 0
+                EyeglassFrameEntry_instance.save()
                 """
-                镜架扫描结果表处理
+                镜架图片数据表处理
                 """
                 # # 创建镜架扫描结果表实例
                 # form_EyeglassFrameDetectionResult = (
                 #     forms.EyeglassFrameDetectionResultForm(request.POST)
                 # )
-                # 构建并保存镜架扫描结果表的数据库实例，关联镜架基本信息表外键
-                EyeglassFrameDetectionResult_instance = models.EyeglassFrameDetectionResult.objects.create(entry = EyeglassFrameEntry_instance)
-                # todo:保存图片和重量
-                # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
-                EyeglassFrameDetectionResult_instance.save()
+                # 构建并保存镜架图片数据表的数据库实例，关联镜架基本信息表外键，储存图像
+                # EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(entry = EyeglassFrameEntry_instance)
+                # # 获取三视图图片文件
+                # frontview = request.FILES.get("frontview")
+                # sideview = request.FILES.get("sideview")
+                # topview = request.FILES.get("topview")
+                # # 获取三视图图片背景文件
+                # # frontview_bg = request.FILES.get("frontview_bg")
+                # # sideview_bg = request.FILES.get("sideview_bg")
+                # # topview_bg = request.FILES.get("topview_bg")
+                # # 获取三视图图片错误处理
+                # if (
+                #     not frontview
+                #     or not sideview
+                #     or not topview
+                #     # or not frontview_bg
+                #     # or not sideview_bg
+                #     # or not topview_bg
+                # ):
+                #     # 抛出异常
+                #     raise ValueError("三视图图片不能为空")
+                # # 保存三视图图片文件
+                # EyeglassFrameImage_instance.frontview = frontview
+                # EyeglassFrameImage_instance.sideview = sideview
+                # EyeglassFrameImage_instance.topview = topview
+                # # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
+                # EyeglassFrameImage_instance.save()
                 # print("GenerateCalculateTask:",id)
-                # 生成celery任务，传递镜架基础信息表的id值
-            sku = request.POST.get("sku")
-            task_id = tasks.calc.delay(sku)
-            return R.ok(msg="生成计算任务成功")
-            # else:
-            #     # 处理镜架基本信息表表单验证失败的情况
-            #     err_msg = regular.get_err(form_EyeglassFrameEntry)
-            #     # 抛出异常
-            #     raise ValueError(err_msg)
+                """
+                生成celery计算任务：传递镜架基础信息表的id值
+                """
+                sku = request.POST.get("sku")
+                task_id = tasks.calc.delay(sku)
+                return R.ok(msg="生成计算任务成功："+str(task_id))
+            else:
+                # 处理镜架基本信息表表单验证失败的情况
+                err_msg = regular.get_err(form_EyeglassFrameEntry)
+                # 抛出异常
+                raise ValueError(err_msg)
     except ValueError as ve:
         return R.failed(msg=str(ve))
     except Exception as e:
         return R.failed(msg=str(e))
    
-    
-
-
+#todo:该函数好像没用了，待删除
 def SaveNewEyeglassFrame(request: HttpRequest):
     """
-    保存新镜架，创建新的数据库实例：镜架基本信息表、镜架扫描结果表、镜架风格关联表
+    保存新镜架，创建新的数据库实例：镜架基本信息表、镜架图片数据
 
     参数：
         request: HttpRequest 请求对象
@@ -303,20 +328,20 @@ def SaveNewEyeglassFrame(request: HttpRequest):
                 EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
 
                 """
-                镜架扫描结果表处理
+                镜架图片数据：三视图
                 """
                 # 创建镜架扫描结果表实例
-                form_EyeglassFrameDetectionResult = (
-                    forms.EyeglassFrameDetectionResultForm(request.POST)
+                form_EyeglassFrameImage = (
+                    forms.EyeglassFrameImageForm(request.POST)
                 )
                 # 验证镜架扫描结果表表单
-                if form_EyeglassFrameDetectionResult.is_valid():
+                if form_EyeglassFrameImage.is_valid():
                     # 构建并保存镜架扫描结果表的数据库实例
-                    EyeglassFrameDetectionResult_instance = (
-                        form_EyeglassFrameDetectionResult.save(commit=False)
+                    EyeglassFrameImage_instance = (
+                        form_EyeglassFrameImage.save(commit=False)
                     )
                     # 关联镜架基本信息表外键
-                    EyeglassFrameDetectionResult_instance.entry = (
+                    EyeglassFrameImage_instance.entry = (
                         EyeglassFrameEntry_instance
                     )
                     # 获取三视图图片文件
@@ -339,49 +364,20 @@ def SaveNewEyeglassFrame(request: HttpRequest):
                         # 抛出异常
                         raise ValueError("三视图图片不能为空")
                     # 保存三视图图片文件
-                    EyeglassFrameDetectionResult_instance.frontview = frontview
-                    EyeglassFrameDetectionResult_instance.sideview = sideview
-                    EyeglassFrameDetectionResult_instance.topview = topview
+                    EyeglassFrameImage_instance.frontview = frontview
+                    EyeglassFrameImage_instance.sideview = sideview
+                    EyeglassFrameImage_instance.topview = topview
                     # # 保存三视图图片背景文件
                     # EyeglassFrameDetectionResult_instance.frontview_bg = frontview_bg
                     # EyeglassFrameDetectionResult_instance.sideview_bg = sideview_bg
                     # EyeglassFrameDetectionResult_instance.topview_bg = topview_bg
                     # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
-                    EyeglassFrameDetectionResult_instance.save()
+                    EyeglassFrameImage_instance.save()
                 else:
                     # 处理镜架扫描结果表表单验证失败的情况
-                    err_msg = regular.get_err(form_EyeglassFrameDetectionResult)
+                    err_msg = regular.get_err(form_EyeglassFrameImage)
                     # 抛出异常
                     raise ValueError(err_msg)
-
-                """ 
-                镜架风格关联表处理
-                """
-                # 提取镜架风格类型ID列表，没做forms验证
-                style_ids = request.POST.get("style")
-                style_ids = json.loads(style_ids)
-                for style_id in style_ids:
-                    # 验证镜架风格关联表表单
-                    form_EyeglassFrameEntryStyle = forms.EyeglassFrameEntryStyleForm(
-                        {"entry": EyeglassFrameEntry_instance, "style": style_id}
-                    )
-                    if form_EyeglassFrameEntryStyle.is_valid():
-                        # 构建并保存镜架风格关联表的数据库实例
-                        EyeglassFrameEntryStyle_instance = (
-                            form_EyeglassFrameEntryStyle.save(commit=False)
-                        )
-                        # 关联镜架基本信息表外键
-                        EyeglassFrameEntryStyle_instance.entry = (
-                            EyeglassFrameEntry_instance
-                        )
-                        # 保存镜架风格关联表实例
-                        EyeglassFrameEntryStyle_instance.save()
-                    else:
-                        # 处理镜架风格关联表表单验证失败的情况
-                        err_msg = regular.get_err(form_EyeglassFrameEntryStyle)
-                        # 抛出异常
-                        raise ValueError(err_msg)
-
                 # 返回成功信息
                 return R.ok(msg="新镜架创建成功")
             else:
@@ -394,10 +390,10 @@ def SaveNewEyeglassFrame(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=str(e))
 
-
+#todo： 确认修改内容
 def SaveEditEyeglassFrame(request: HttpRequest):
     """
-    编辑镜架，更新数据库实例：镜架基本信息表、镜架扫描结果表、镜架风格关联表
+    编辑镜架，更新数据库实例：镜架基本信息表、镜架像素测量数据、镜架毫米测量数据、镜架计算数据、镜架坐标数据
 
     参数：
         request: HttpRequest 请求对象
@@ -511,7 +507,7 @@ def SaveEditEyeglassFrame(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=str(e))
 
-
+#todo：确认展示内容
 def GetEyeglassFrameDetail(request: HttpRequest):
     """
     查询镜架详情
@@ -692,19 +688,13 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
                 "brand": entry.brand,
                 "model_type": entry.model_type,
                 "price": entry.price,
-                "material": entry.material.id,
-                "color": entry.color.id,
-                "shape": entry.shape.id,
+                "material": entry.get_material_display(),
+                "color": entry.get_color_display(),
+                "shape": entry.get_shape_display(),
                 "isnosepad": entry.isnosepad,
                 "lens_radian": entry.lens_radian,
                 "stock": entry.stock,
                 "warehouse": entry.warehouse.id,
-                "style": [
-                    style.style.id
-                    for style in models.EyeglassFrameEntryStyle.objects.filter(
-                        entry=entry
-                    ).all()
-                ],  # 镜架风格关联表，多对多关系
                 "create_time": entry.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "update_time": entry.update_time.strftime("%Y-%m-%d %H:%M:%S"),
             }
@@ -777,15 +767,15 @@ def GetAllMaterials(request: HttpRequest):
     """
 
     # 查询所有镜架材质
-    material_types = models.EyeglassFrameMaterialType.objects.all()
-
+    material_types = models.EyeglassFrameEntry.MATERIAL_CHOICES
+   
     # 判断查询结果是否为空
     if not material_types:
         return R.failed(msg="镜架材质为空")
-
+    
     # 构建查询结果
     search_result = [
-        {"id": material_type.id, "material": material_type.material}
+        {"id": material_type[0], "material": material_type[1]}
         for material_type in material_types
     ]
 
@@ -804,7 +794,7 @@ def GetAllColors(request: HttpRequest):
         HttpResponse: JSON格式的响应对象, {code,data,msg}
     """
     # 查询所有镜架颜色
-    color_types = models.EyeglassFrameColorType.objects.all()
+    color_types = models.EyeglassFrameEntry.COLOR_CHOICES
 
     # 判断查询结果是否为空
     if not color_types:
@@ -812,7 +802,7 @@ def GetAllColors(request: HttpRequest):
 
     # 构建查询结果
     search_result = [
-        {"id": color_type.id, "color": color_type.color} for color_type in color_types
+        {"id": color_type[0], "color": color_type[1]} for color_type in color_types
     ]
 
     # 返回查询结果
@@ -831,7 +821,7 @@ def GetAllShapes(request: HttpRequest):
     """
 
     # 查询所有镜架形状
-    shape_types = models.EyeglassFrameShapeType.objects.all()
+    shape_types = models.EyeglassFrameEntry.SHAPE_CHOICES
 
     # 判断查询结果是否为空
     if not shape_types:
@@ -839,16 +829,15 @@ def GetAllShapes(request: HttpRequest):
 
     # 构建查询结果
     search_result = [
-        {"id": shape_type.id, "shape": shape_type.shape} for shape_type in shape_types
+        {"id": shape_type[0], "shape": shape_type[1]} for shape_type in shape_types
     ]
 
     # 返回查询结果
     return R.ok(data=search_result)
 
-
-def GetAllStyles(request: HttpRequest):
+def GetAllIsTransparent(request: HttpRequest):
     """
-    获取所有镜架风格
+    获取所有镜架透明度
 
     参数：
         request: HttpRequest 请求对象
@@ -857,16 +846,42 @@ def GetAllStyles(request: HttpRequest):
         HttpResponse: JSON格式的响应对象, {code,data,msg}
     """
 
-    # 查询所有镜架风格
-    style_types = models.EyeglassFrameStyleType.objects.all()
+    # 查询所有镜架形状
+    is_transparent_types = models.EyeglassFrameEntry.IS_TRANSPARENT_CHOICES
 
     # 判断查询结果是否为空
-    if not style_types:
-        return R.failed(msg="镜架风格为空")
+    if not is_transparent_types:
+        return R.failed(msg="镜架透明度为空")
 
     # 构建查询结果
     search_result = [
-        {"id": style_type.id, "style": style_type.style} for style_type in style_types
+        {"id": is_transparent_type[0], "is_transparent": is_transparent_type[1]} for is_transparent_type in is_transparent_types
+    ]
+
+    # 返回查询结果
+    return R.ok(data=search_result)
+
+def GetAllFrameTypes(request: HttpRequest):
+    """
+    获取所有镜框类型
+
+    参数：
+        request: HttpRequest 请求对象
+
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+    """
+
+    # 查询所有镜架形状
+    frame_types = models.EyeglassFrameEntry.FRAME_TYPE_CHOICES
+
+    # 判断查询结果是否为空
+    if not frame_types:
+        return R.failed(msg="镜架透明度为空")
+
+    # 构建查询结果
+    search_result = [
+        {"id": frame_type[0], "frame_type": frame_type[1]} for frame_type in frame_types
     ]
 
     # 返回查询结果

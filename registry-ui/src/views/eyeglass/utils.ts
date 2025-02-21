@@ -15,8 +15,12 @@ export const initFormOptions = () => {
   getAllColors();
   // 获取所有镜架形状
   getAllShapes();
+  // 获取所有透明度
+  getAllIstransparent();
+  // 获取所有镜框类型
+  getAllFrametypes();
   // 获取所有镜架风格
-  getAllStyles();
+  // getAllStyles();
 };
 
 // 功能函数：获取所有镜架品牌
@@ -72,12 +76,14 @@ export const getAllMaterials = async () => {
         return;
       } else {
         // 将返回的材质列表赋值给store中的material_options
+        console.log(response.data.data);
         options.material_options = response.data.data.map(
           (item: { id: number; material: string }) => ({
             value: item.id,
             label: item.material,
           }),
         );
+        console.log(options.material_options);
       }
     })
     .catch((error) => {
@@ -124,6 +130,54 @@ export const getAllShapes = async () => {
           (item: { id: number; shape: string }) => ({
             value: item.id,
             label: item.shape,
+          }),
+        );
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+};
+
+// 功能函数：获取所有镜架透明度
+export const getAllIstransparent = async () => {
+  await axios
+    .get("/glassmanagement/api/get-all-is-transparent")
+    .then((response) => {
+      // 判断返回的code值，若为-1则提示无镜架信息
+      if (response.data.code === -1) {
+        message.warning("无镜架透明度信息");
+        return;
+      } else {
+        // 将返回的形状列表赋值给store中的is_transparent_options
+        options.is_transparent_options = response.data.data.map(
+          (item: { id: number; is_transparent: string }) => ({
+            value: item.id,
+            label: item.is_transparent,
+          }),
+        );
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+    });
+};
+
+// 功能函数：获取所有镜框类型
+export const getAllFrametypes = async () => {
+  await axios
+    .get("/glassmanagement/api/get-all-frame-types")
+    .then((response) => {
+      // 判断返回的code值，若为-1则提示无镜架信息
+      if (response.data.code === -1) {
+        message.warning("无镜框类型信息");
+        return;
+      } else {
+        // 将返回的形状列表赋值给store中的frame_type_options
+        options.frame_type_options = response.data.data.map(
+          (item: { id: number; frame_type: string }) => ({
+            value: item.id,
+            label: item.frame_type,
           }),
         );
       }

@@ -104,8 +104,8 @@
         :model="EyeGlassBasicFormState"
         :rules="EyeGlassBasicFormRules"
         hideRequiredMark
-        :label-col="{ span: 7 }"
-        :wrapper-col="{ span: 17 }"
+        :label-col="{ span: 6 }"
+        :wrapper-col="{ span: 18 }"
         labelAlign="left"
       >
         <a-form-item name="sku">
@@ -115,131 +115,160 @@
             disabled
           ></a-input>
         </a-form-item>
-        <div style="height: 550px; overflow: auto">
-          <a-form-item label="品牌" name="brand" class="basic-item">
-            <a-auto-complete
-              v-model:value="EyeGlassBasicFormState.brand"
-              :options="options.brand_options"
-              :filter-option="filterOptionbyValue"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="型号" name="model_type" class="basic-item">
-            <a-auto-complete
-              v-model:value="EyeGlassBasicFormState.model_type"
-              :options="options.model_type_options"
-              :filter-option="filterOptionbyValue"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="价格" name="price" class="basic-item">
-            <a-input-number
-              v-model:value="EyeGlassBasicFormState.price"
-              :precision="2"
-              :controls="false"
-              decimalSeparator="."
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="材质" name="material" class="basic-item">
-            <a-select
-              v-model:value="EyeGlassBasicFormState.material"
-              placeholder="选择材质（单选）"
-              :options="options.material_options"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="颜色" name="color" class="basic-item">
-            <a-select
-              v-model:value="EyeGlassBasicFormState.color"
-              placeholder="选择颜色（单选）"
-              :options="options.color_options"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="形状" name="shape" class="basic-item">
-            <a-select
-              v-model:value="EyeGlassBasicFormState.shape"
-              placeholder="选择形状（单选）"
-              :options="options.shape_options"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="鼻托" name="isnosepad" class="basic-item">
-            <a-radio-group
-              v-model:value="EyeGlassBasicFormState.isnosepad"
-              @keyup.enter="onClickEnterBasicParams"
+        <a-row>
+          <a-col :span="12">
+            <a-form-item label="品牌" name="brand" class="basic-item">
+              <a-auto-complete
+                v-model:value="EyeGlassBasicFormState.brand"
+                :options="options.brand_options"
+                :filter-option="filterOptionbyValue"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="型号" name="model_type" class="basic-item">
+              <a-auto-complete
+                v-model:value="EyeGlassBasicFormState.model_type"
+                :options="options.model_type_options"
+                :filter-option="filterOptionbyValue"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="价格" name="price" class="basic-item">
+              <a-input-number
+                v-model:value="EyeGlassBasicFormState.price"
+                :precision="2"
+                :controls="false"
+                decimalSeparator="."
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="材质" name="material" class="basic-item">
+              <a-select
+                v-model:value="EyeGlassBasicFormState.material"
+                placeholder="选择材质（单选）"
+                :options="options.material_options"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="颜色" name="color" class="basic-item">
+              <a-select
+                v-model:value="EyeGlassBasicFormState.color"
+                placeholder="选择颜色（单选）"
+                :options="options.color_options"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="形状" name="shape" class="basic-item">
+              <a-select
+                v-model:value="EyeGlassBasicFormState.shape"
+                placeholder="选择形状（单选）"
+                :options="options.shape_options"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="鼻托" name="isnosepad" class="basic-item">
+              <a-radio-group
+                v-model:value="EyeGlassBasicFormState.isnosepad"
+                @keyup.enter="onClickEnterBasicParams"
+              >
+                <a-radio-button :value="1">有 </a-radio-button>
+                <a-radio-button :value="0">无 </a-radio-button>
+              </a-radio-group>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="透明" name="is_transparent" class="basic-item">
+              <a-radio-group
+                v-model:value="EyeGlassBasicFormState.is_transparent"
+                @keyup.enter="onClickEnterBasicParams"
+                :options="options.is_transparent_options"
+                option-type="button"
+              >
+              </a-radio-group>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="镜框类型" name="frame_type" class="basic-item">
+              <a-radio-group
+                v-model:value="EyeGlassBasicFormState.frame_type"
+                @keyup.enter="onClickEnterBasicParams"
+                :options="options.frame_type_options"
+                option-type="button"
+              >
+              </a-radio-group>
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="库存" name="stock" class="basic-item">
+              <a-input-number
+                v-model:value="EyeGlassBasicFormState.stock"
+                min="0"
+                :controls="false"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item label="撑片弧度" name="lens_radian" class="basic-item">
+              <a-input-number
+                v-model:value="EyeGlassBasicFormState.lens_radian"
+                :controls="false"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item
+              label="镜片宽度"
+              name="lens_width_st"
+              class="basic-item"
             >
-              <a-radio-button
-                :value="1"
-                style="
-                  border-top-left-radius: 9px;
-                  border-bottom-left-radius: 9px;
-                "
-                >有
-              </a-radio-button>
-              <a-radio-button
-                :value="0"
-                style="
-                  border-top-right-radius: 9px;
-                  border-bottom-right-radius: 9px;
-                "
-                >无
-              </a-radio-button>
-            </a-radio-group>
-          </a-form-item>
-          <a-form-item label="库存" name="stock" class="basic-item">
-            <a-input-number
-              v-model:value="EyeGlassBasicFormState.stock"
-              min="0"
-              :controls="false"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item label="撑片弧度" name="lens_radian" class="basic-item">
-            <a-input-number
-              v-model:value="EyeGlassBasicFormState.lens_radian"
-              :controls="false"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item
-            v-show="false"
-            label="镜片宽度"
-            name="lens_width_st"
-            class="basic-item"
-          >
-            <a-input-number
-              v-model:value="EyeGlassBasicFormState.lens_width_st"
-              :controls="false"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item
-            v-show="false"
-            label="鼻梁宽度"
-            name="bridge_width_st"
-            class="basic-item"
-          >
-            <a-input-number
-              v-model:value="EyeGlassBasicFormState.bridge_width_st"
-              :controls="false"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-          <a-form-item
-            v-show="false"
-            label="镜腿长度"
-            name="temple_length_st"
-            class="basic-item"
-          >
-            <a-input-number
-              v-model:value="EyeGlassBasicFormState.temple_length_st"
-              :controls="false"
-              @keyup.enter="onClickEnterBasicParams"
-            />
-          </a-form-item>
-        </div>
+              <a-input-number
+                v-model:value="EyeGlassBasicFormState.lens_width_st"
+                :controls="false"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item
+              label="鼻梁宽度"
+              name="bridge_width_st"
+              class="basic-item"
+            >
+              <a-input-number
+                v-model:value="EyeGlassBasicFormState.bridge_width_st"
+                :controls="false"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+          <a-col :span="12">
+            <a-form-item
+              label="镜腿长度"
+              name="temple_length_st"
+              class="basic-item"
+            >
+              <a-input-number
+                v-model:value="EyeGlassBasicFormState.temple_length_st"
+                :controls="false"
+                @keyup.enter="onClickEnterBasicParams"
+              />
+            </a-form-item>
+          </a-col>
+        </a-row>
         <!-- <a-form-item label="风格" name="style" class="basic-item">
                 <a-select
                   v-model:value="EyeGlassBasicFormState.style"
@@ -254,7 +283,7 @@
       </a-form>
       <a-button
         style="
-          margin-top: 6px;
+          margin: 6px calc(50% - 200px) 0;
           width: 400px;
           height: 56px;
           background-color: #8675ff;
@@ -271,7 +300,7 @@
       </a-button>
       <a-button
         style="
-          margin-top: 28px;
+          margin: 28px calc(50% - 200px) 0;
           width: 400px;
           height: 56px;
           background-color: #ffffff;
@@ -376,20 +405,16 @@
             hideRequiredMark
             layout="inline"
             autocomplete="off"
+            :labelCol="{ span: 6 }"
+            :wrapperCol="{ span: 18 }"
+            labelAlign="left"
           >
             <a-row
-              :gutter="[26, 32]"
+              :gutter="[24, 32]"
               style="margin-left: 40px !important; width: calc(100% - 85px)"
             >
               <a-col :span="6">
-                <a-form-item
-                  class="calculate-item"
-                  label="SKU"
-                  name="sku"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                >
+                <a-form-item class="calculate-item" label="SKU" name="sku">
                   <a-input
                     v-model:value="EyeGlassBasicFormState.sku"
                     disabled
@@ -397,14 +422,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="6">
-                <a-form-item
-                  class="calculate-item"
-                  label="品牌"
-                  name="brand"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                >
+                <a-form-item class="calculate-item" label="品牌" name="brand">
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.brand"
                     :options="options.brand_options"
@@ -417,9 +435,6 @@
                   class="calculate-item"
                   label="型号"
                   name="model_type"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.model_type"
@@ -429,14 +444,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="6">
-                <a-form-item
-                  class="calculate-item"
-                  label="价格"
-                  name="price"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                >
+                <a-form-item class="calculate-item" label="价格" name="price">
                   <a-input-number
                     v-model:value="EyeGlassBasicFormState.price"
                     :precision="2"
@@ -450,9 +458,6 @@
                   class="calculate-item"
                   label="材质"
                   name="material"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-select
                     v-model:value="EyeGlassBasicFormState.material"
@@ -462,14 +467,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="6">
-                <a-form-item
-                  class="calculate-item"
-                  label="颜色"
-                  name="color"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                >
+                <a-form-item class="calculate-item" label="颜色" name="color">
                   <a-select
                     v-model:value="EyeGlassBasicFormState.color"
                     placeholder="选择颜色（单选）"
@@ -478,14 +476,7 @@
                 </a-form-item>
               </a-col>
               <a-col :span="6">
-                <a-form-item
-                  class="calculate-item"
-                  label="形状"
-                  name="shape"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                >
+                <a-form-item class="calculate-item" label="形状" name="shape">
                   <a-select
                     v-model:value="EyeGlassBasicFormState.shape"
                     placeholder="选择形状（单选）"
@@ -498,9 +489,6 @@
                   class="calculate-item"
                   label="鼻托"
                   name="isnosepad"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-radio-group
                     v-model:value="EyeGlassBasicFormState.isnosepad"
@@ -526,13 +514,36 @@
               </a-col>
               <a-col :span="6">
                 <a-form-item
+                  label="透明"
+                  name="is_transparent"
                   class="calculate-item"
-                  label="库存"
-                  name="stock"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
+                  <a-radio-group
+                    v-model:value="EyeGlassBasicFormState.is_transparent"
+                    @keyup.enter="onClickEnterBasicParams"
+                    :options="options.is_transparent_options"
+                    option-type="button"
+                  >
+                  </a-radio-group>
+                </a-form-item>
+              </a-col>
+              <a-col :span="6">
+                <a-form-item
+                  label="镜框类型"
+                  name="frame_type"
+                  class="calculate-item"
+                >
+                  <a-radio-group
+                    v-model:value="EyeGlassBasicFormState.frame_type"
+                    @keyup.enter="onClickEnterBasicParams"
+                    :options="options.frame_type_options"
+                    option-type="button"
+                  >
+                  </a-radio-group>
+                </a-form-item>
+              </a-col>
+              <a-col :span="6">
+                <a-form-item class="calculate-item" label="库存" name="stock">
                   <a-input-number
                     class="calculate-input"
                     v-model:value="EyeGlassBasicFormState.stock"
@@ -546,9 +557,6 @@
                   class="calculate-item"
                   label="撑片弧度"
                   name="lens_radian"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-input-number
                     class="calculate-input"
@@ -559,13 +567,9 @@
               </a-col>
               <a-col :span="6">
                 <a-form-item
-                  v-show="false"
                   class="calculate-item"
                   label="镜片宽度"
                   name="lens_width_st"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-input-number
                     class="calculate-input"
@@ -576,13 +580,9 @@
               </a-col>
               <a-col :span="6">
                 <a-form-item
-                  v-show="false"
                   class="calculate-item"
                   label="鼻梁宽度"
                   name="bridge_width_st"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-input-number
                     class="calculate-input"
@@ -593,13 +593,9 @@
               </a-col>
               <a-col :span="6">
                 <a-form-item
-                  v-show="false"
                   class="calculate-item"
                   label="镜腿长度"
                   name="temple_length_st"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                 >
                   <a-input-number
                     class="calculate-input"
@@ -687,7 +683,6 @@
                   <a-input
                     v-model:value="EyeGlassWeightFormState.weight"
                     :suffix="EyeGlassWeightFormUnit.weight"
-                    disabled
                   ></a-input>
                 </a-form-item>
               </a-form>
@@ -705,7 +700,7 @@
             </a-col>
             <a-col :span="6">
               <!-- 镜架风格参数 -->
-              <a-form
+              <!-- <a-form
                 ref="EyeGlassStyleFormRef"
                 :model="EyeGlassStyleFormState"
                 :rules="EyeGlassStyleFormRules"
@@ -726,7 +721,7 @@
                     :options="options.style_options"
                   />
                 </a-form-item>
-              </a-form>
+              </a-form> -->
             </a-col>
           </a-row>
           <!-- 计算参数：详细信息 -->
@@ -925,7 +920,7 @@ import axios from "@/config/axios-config"; // 引入axios库，用于http请求
 import {
   searchOption, // 镜架检索信息
   EyeGlassBasicForm, // 镜架基础参数接口
-  EyeGlassStyleForm, // 镜架风格参数接口
+  // EyeGlassStyleForm, // 镜架风格参数接口
   EyeGlassDetailForm, // 镜架详细参数接口
   EyeGlassDetailFormLabel, // 镜架详细参数标签
   EyeGlassDetailToviewFormLabel, // 镜架详细参数转视图参数标签
@@ -1033,6 +1028,8 @@ const EyeGlassBasicFormInitState: UnwrapRef<EyeGlassBasicForm> = reactive({
   shape: null,
   isnosepad: null,
   stock: null,
+  is_transparent: null,
+  frame_type: null,
   lens_radian: null,
   lens_width_st: null,
   bridge_width_st: null,
@@ -1050,6 +1047,8 @@ const EyeGlassBasicFormState: UnwrapRef<EyeGlassBasicForm> = reactive({
   shape: null,
   isnosepad: null,
   stock: null,
+  is_transparent: null,
+  frame_type: null,
   lens_radian: null,
   lens_width_st: null,
   bridge_width_st: null,
@@ -1093,6 +1092,20 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
     {
       required: true,
       message: "请选择是否有鼻托",
+      trigger: ["blur", "change"],
+    },
+  ],
+  is_transparent: [
+    {
+      required: true,
+      message: "请选择镜框是否透明",
+      trigger: ["blur", "change"],
+    },
+  ],
+  frame_type: [
+    {
+      required: true,
+      message: "请选择镜框类型",
       trigger: ["blur", "change"],
     },
   ],
@@ -1168,22 +1181,22 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
   ],
 };
 
-// 镜架风格参数表单实例
-const EyeGlassStyleFormRef = ref();
-// 镜架风格参数表单初始化数据
-const EyeGlassStyleFormInitState: UnwrapRef<EyeGlassStyleForm> = reactive({
-  style: [1],
-});
-// 镜架风格参数表单数据
-const EyeGlassStyleFormState: UnwrapRef<EyeGlassStyleForm> = reactive({
-  style: [1],
-});
-// 镜架风格参数表单校验规则
-const EyeGlassStyleFormRules: Record<string, Rule[]> = {
-  style: [
-    { required: true, message: "请选择镜框风格", trigger: ["blur", "change"] },
-  ],
-};
+// // 镜架风格参数表单实例
+// const EyeGlassStyleFormRef = ref();
+// // 镜架风格参数表单初始化数据
+// const EyeGlassStyleFormInitState: UnwrapRef<EyeGlassStyleForm> = reactive({
+//   style: [1],
+// });
+// // 镜架风格参数表单数据
+// const EyeGlassStyleFormState: UnwrapRef<EyeGlassStyleForm> = reactive({
+//   style: [1],
+// });
+// // 镜架风格参数表单校验规则
+// const EyeGlassStyleFormRules: Record<string, Rule[]> = {
+//   style: [
+//     { required: true, message: "请选择镜框风格", trigger: ["blur", "change"] },
+//   ],
+// };
 
 // 镜架详细参数表单实例
 const EyeGlassDetailFormRef = ref();
@@ -1471,11 +1484,11 @@ const hasWeightLoged = ref<boolean>(false);
 const EyeGlassWeightFormRef = ref();
 // 镜架重量参数表单初始化数据
 const EyeGlassWeightFormInitState: UnwrapRef<EyeGlassWeightForm> = reactive({
-  weight: "12",
+  weight: "",
 });
 // 镜架重量参数表单数据
 const EyeGlassWeightFormState: UnwrapRef<EyeGlassWeightForm> = reactive({
-  weight: "12",
+  weight: "",
 });
 // 镜架重量参数表单校验规则
 const EyeGlassWeightFormRules: Record<string, Rule[]> = {
@@ -1931,10 +1944,10 @@ const sendCalcTask = async () => {
     isFormValid = false;
   });
   // 检查镜架风格信息是否完善
-  await EyeGlassStyleFormRef.value.validate().catch(() => {
-    message.error("请完善镜架风格信息");
-    isFormValid = false;
-  });
+  // await EyeGlassStyleFormRef.value.validate().catch(() => {
+  //   message.error("请完善镜架风格信息");
+  //   isFormValid = false;
+  // });
   // 检查镜架详细信息是否完善
   await EyeGlassDetailFormRef.value.validate().catch(() => {
     message.error("请完善镜架详细信息");
@@ -1945,18 +1958,9 @@ const sendCalcTask = async () => {
     message.error("请完善镜架重量信息");
     isFormValid = false;
   });
-  // // 检查镜架图片信息是否完善
+  // 检查镜架图片信息是否完善
   // if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
   //   message.error("镜架三视图信息错误");
-  //   isFormValid = false;
-  // }
-  // // 检查镜架图片背景信息是否完善
-  // if (
-  //   !Object.values(EyeGlassImageBackgroundFormState).every(
-  //     (image) => image !== null,
-  //   )
-  // ) {
-  //   message.error("镜架三视图背景信息错误");
   //   isFormValid = false;
   // }
   // 检查镜架采集仓库地址是否完善
@@ -2004,6 +2008,19 @@ const sendCalcTask = async () => {
       ? EyeGlassBasicFormState.isnosepad.toString()
       : "",
   );
+  console.log(EyeGlassBasicFormState.is_transparent);
+  formData.append(
+    "is_transparent",
+    EyeGlassBasicFormState.is_transparent !== null
+      ? EyeGlassBasicFormState.is_transparent.toString()
+      : "",
+  );
+  formData.append(
+    "frame_type",
+    EyeGlassBasicFormState.frame_type !== null
+      ? EyeGlassBasicFormState.frame_type.toString()
+      : "",
+  );
   formData.append(
     "stock",
     EyeGlassBasicFormState.stock !== null
@@ -2039,30 +2056,17 @@ const sendCalcTask = async () => {
       : "",
   );
   // 将镜架风格信息添加到FormData对象
-  formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
+  // formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
   // 将镜架详细信息添加到FormData对象
-  Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-    formData.append(key, value); // 将值转换为字符串后添加
-  });
+  // Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
+  //   formData.append(key, value); // 将值转换为字符串后添加
+  // });
   // 将镜架重量信息添加到FormData对象
   formData.append("weight", EyeGlassWeightFormState.weight);
   // 将镜架图片信息添加到FormData对象
   // formData.append("frontview", EyeGlassImageFormState.frontview as File);
   // formData.append("sideview", EyeGlassImageFormState.sideview as File);
   // formData.append("topview", EyeGlassImageFormState.topview as File);
-  // 将镜架图片背景信息添加到FormData对象
-  // formData.append(
-  //   "frontview_bg",
-  //   EyeGlassImageBackgroundFormState.frontview_bg as File,
-  // );
-  // formData.append(
-  //   "sideview_bg",
-  //   EyeGlassImageBackgroundFormState.sideview_bg as File,
-  // );
-  // formData.append(
-  //   "topview_bg",
-  //   EyeGlassImageBackgroundFormState.topview_bg as File,
-  // );
   // 提交通过标识符
   let isSaveSuccess: boolean = false;
   await axios
@@ -2083,10 +2087,10 @@ const saveNewEyeglassFrame = async () => {
     isFormValid = false;
   });
   // 检查镜架风格信息是否完善
-  await EyeGlassStyleFormRef.value.validate().catch(() => {
-    message.error("请完善镜架风格信息");
-    isFormValid = false;
-  });
+  // await EyeGlassStyleFormRef.value.validate().catch(() => {
+  //   message.error("请完善镜架风格信息");
+  //   isFormValid = false;
+  // });
   // 检查镜架详细信息是否完善
   await EyeGlassDetailFormRef.value.validate().catch(() => {
     message.error("请完善镜架详细信息");
@@ -2098,10 +2102,10 @@ const saveNewEyeglassFrame = async () => {
     isFormValid = false;
   });
   // 检查镜架图片信息是否完善
-  if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
-    message.error("镜架三视图信息错误");
-    isFormValid = false;
-  }
+  // if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
+  //   message.error("镜架三视图信息错误");
+  //   isFormValid = false;
+  // }
   // 检查镜架图片背景信息是否完善
   if (
     !Object.values(EyeGlassImageBackgroundFormState).every(
@@ -2191,35 +2195,35 @@ const saveNewEyeglassFrame = async () => {
       : "",
   );
   // 将镜架风格信息添加到FormData对象
-  formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
+  // formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
   // 将镜架详细信息添加到FormData对象
-  Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-    formData.append(key, value); // 将值转换为字符串后添加
-  });
+  // Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
+  //   formData.append(key, value); // 将值转换为字符串后添加
+  // });
   // 将镜架重量信息添加到FormData对象
   formData.append("weight", EyeGlassWeightFormState.weight);
   // 将镜架图片信息添加到FormData对象
-  formData.append("frontview", EyeGlassImageFormState.frontview as File);
-  formData.append("sideview", EyeGlassImageFormState.sideview as File);
-  formData.append("topview", EyeGlassImageFormState.topview as File);
+  // formData.append("frontview", EyeGlassImageFormState.frontview as File);
+  // formData.append("sideview", EyeGlassImageFormState.sideview as File);
+  // formData.append("topview", EyeGlassImageFormState.topview as File);
   // 将镜架图片背景信息添加到FormData对象
-  formData.append(
-    "frontview_bg",
-    EyeGlassImageBackgroundFormState.frontview_bg as File,
-  );
-  formData.append(
-    "sideview_bg",
-    EyeGlassImageBackgroundFormState.sideview_bg as File,
-  );
-  formData.append(
-    "topview_bg",
-    EyeGlassImageBackgroundFormState.topview_bg as File,
-  );
+  // formData.append(
+  //   "frontview_bg",
+  //   EyeGlassImageBackgroundFormState.frontview_bg as File,
+  // );
+  // formData.append(
+  //   "sideview_bg",
+  //   EyeGlassImageBackgroundFormState.sideview_bg as File,
+  // );
+  // formData.append(
+  //   "topview_bg",
+  //   EyeGlassImageBackgroundFormState.topview_bg as File,
+  // );
   // 提交通过标识符
   let isSaveSuccess: boolean = false;
   // 发送请求
   await axios
-    .post("/glassmanagement/api/save-new-eyeglassframe", formData)
+    .post("/glassmanagement/api/generate-calculate-task", formData)
     .then((response) => {
       // 判断返回的code值，若为-1则提示无镜架信息
       if (response.data.code === -1) {
@@ -2320,7 +2324,7 @@ const calculateParamsAndStyles = () => {
   });
 
   // 计算镜架风格，todo：未来要用websocket或http请求去计算
-  EyeGlassStyleFormState.style = [1];
+  // EyeGlassStyleFormState.style = [1];
 };
 
 // 功能函数：清楚摄像头缓存
@@ -2343,9 +2347,9 @@ const initEyeGlassBasicFormState = () => {
 };
 
 // 功能函数：初始化风格参数表单
-const initEyeGlassStyleFormState = () => {
-  Object.assign(EyeGlassStyleFormState, EyeGlassStyleFormInitState);
-};
+// const initEyeGlassStyleFormState = () => {
+//   Object.assign(EyeGlassStyleFormState, EyeGlassStyleFormInitState);
+// };
 
 // 功能函数：初始化详细参数表单
 const initEyeGlassDetailFormState = () => {
@@ -2381,7 +2385,7 @@ const initCapture = () => {
 // 功能函数：初始化所有表单和状态
 const initAll = () => {
   initEyeGlassBasicFormState();
-  initEyeGlassStyleFormState();
+  // initEyeGlassStyleFormState();
   initEyeGlassDetailFormState();
   initEyeGlassWeightFormState();
   initEyeGlassImageFormState();
@@ -2571,22 +2575,22 @@ const onClickCaptureOrConfirm = () => {
   console.log("enableSubmitButton:", enabledSubmitButton.value);
   switch (currentStage.value) {
     case "preview": //预览
-      // if (camera.cameraState.cameraInitState) {
-      //   // 开启取流，进行预览
-      //   CameraCapture()
-      //     .then(() => {
-      //       currentStage.value = "confirm";
-      //     })
-      //     .catch((error) => {
-      //       // 打开模态窗，展示错误
-      //       showCameraStateErrorModal.value = true;
-      //       cameraStateErrorModalLoading.value = false;
-      //       console.log(error);
-      //     });
-      // } else {
-      //   // 摄像头未初始化，弹出提示框
-      //   showCameraStateErrorModal.value = true;
-      // }
+      if (camera.cameraState.cameraInitState) {
+        // 开启取流，进行预览
+        CameraCapture()
+          .then(() => {
+            currentStage.value = "confirm";
+          })
+          .catch((error) => {
+            // 打开模态窗，展示错误
+            showCameraStateErrorModal.value = true;
+            cameraStateErrorModalLoading.value = false;
+            console.log(error);
+          });
+      } else {
+        // 摄像头未初始化，弹出提示框
+        showCameraStateErrorModal.value = true;
+      }
       currentStage.value = "input-params";
       break;
     case "confirm":
@@ -2796,6 +2800,8 @@ const onClickLightdown = () => {
   height: 100vh;
   background-color: #8675ff;
 }
+/* 消除所有a-col的padding */
+/* a-col */
 
 /* 输入sku */
 .sku-form-card {
@@ -2837,16 +2843,20 @@ const onClickLightdown = () => {
 
 /* 输入基础信息 */
 .input-basic-form-card {
-  width: 520px;
+  width: 980px;
   border: 3px solid #8675ff;
   border-radius: 20px;
   padding: 49px 60px;
+  /* display: flex;
+  flex-direction: column;
+  justify-items: center; */
 }
 
 .basic-item {
-  height: 32px;
+  min-height: 32px;
+  height: fit-content;
   padding: 0 16px;
-  margin: 24px;
+  margin: 12px;
 }
 
 .basic-item >>> label {
@@ -2867,11 +2877,6 @@ const onClickLightdown = () => {
 .basic-item >>> .ant-input-number-input {
   padding: 0;
 }
-
-/* 输入基础信息：风格选择标签 */
-/* .basic-item >>> .ant-select-selection-item {
-  border-radius: 9px;
-} */
 
 /* 输入基础信息：表单验证提示信息 */
 .basic-item >>> .ant-form-item-explain-connected {
@@ -2948,9 +2953,9 @@ const onClickLightdown = () => {
   color: #999999;
 }
 
-/* 计算参数 基础信息 风格选择标签 */
-.calculate-item >>> .ant-select-selection-item {
-  border-radius: 9px;
+/* 计算参数 基础信息 减小radio选项框的大小 */
+.calculate-item >>> .ant-radio-button-wrapper {
+  padding: 0 11px;
 }
 
 /* 计算参数 取消表单验证提示信息 */

@@ -35,8 +35,9 @@ urlpatterns = [
     path('api/get-all-materials', views.GetAllMaterialsView.as_view()), # get: 获取所有材质
     path('api/get-all-colors', views.GetAllColorsView.as_view()), # get: 获取所有颜色
     path('api/get-all-shapes', views.GetAllShapesView.as_view()), # get: 获取所有形状
-    path('api/get-all-styles', views.GetAllStylesView.as_view()), # get: 获取所有风格
-
+    path('api/get-all-is-transparent', views.GetAllIsTransparenrView.as_view()), # get: 获取所有透明度
+    path('api/get-all-frame-types', views.GetAllFrameTypesView.as_view()), # get: 获取所有形状
+    
     ###################以下为测试用####################
     path('api/add-style', views.AddStyle), # post: 添加风格
     path('api/add-style-list', views.AddStyleList), # post: 添加风格列表
