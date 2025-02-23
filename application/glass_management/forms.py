@@ -29,9 +29,9 @@ class EyeglassFramePixelMeasurementForm(forms.ModelForm):
 """
 镜架计算数据
 """
-class EyeglassFrameCalulationForm(forms.ModelForm):
+class EyeglassFrameCalculationForm(forms.ModelForm):
     class Meta:
-        model = models.EyeglassFrameCalulation
+        model = models.EyeglassFrameCalculation
         exclude = ['entry', 'create_user', 'update_user']
 
 """

@@ -212,7 +212,7 @@ def DeleteEyeglassFrameEntrys(request: HttpRequest):
     # 返回成功信息
     return R.ok(msg="镜架删除成功")
 
-def GenerateCalculateTask(request: HttpRequest):
+def UploadNewEyeglassFrame(request: HttpRequest):
     """
     保存新镜架：基本信息，三视图；生成计算任务
     
@@ -233,25 +233,25 @@ def GenerateCalculateTask(request: HttpRequest):
             镜架基本信息表处理
             """
             # 创建镜架扫描结果表实例
-            form_EyeglassFrameEntry = (
-                forms.EyeglassFrameEntryForm(request.POST)
-            )
-            # 验证镜架基本信息表表单
-            if form_EyeglassFrameEntry.is_valid():
-                # 保存镜架基本信息表实例
-                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save(commit=False)
-                # 保存镜架计算状态为0待计算
-                EyeglassFrameEntry_instance.pixel_measurement_state = 0
-                EyeglassFrameEntry_instance.millimeter_measurement_state = 0
-                EyeglassFrameEntry_instance.calculation_state = 0
-                EyeglassFrameEntry_instance.coordinate_state = 0
-                EyeglassFrameEntry_instance.image_mask_state = 0
-                EyeglassFrameEntry_instance.image_seg_state = 0
-                EyeglassFrameEntry_instance.image_beautify_state = 0
-                EyeglassFrameEntry_instance.save()
-                """
-                镜架图片数据表处理
-                """
+            # form_EyeglassFrameEntry = (
+            #     forms.EyeglassFrameEntryForm(request.POST)
+            # )
+            # # 验证镜架基本信息表表单
+            # if form_EyeglassFrameEntry.is_valid():
+            #     # 保存镜架基本信息表实例
+            #     EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save(commit=False)
+            #     # 保存镜架计算状态为0待计算
+            #     EyeglassFrameEntry_instance.pixel_measurement_state = 0
+            #     EyeglassFrameEntry_instance.millimeter_measurement_state = 0
+            #     EyeglassFrameEntry_instance.calculation_state = 0
+            #     EyeglassFrameEntry_instance.coordinate_state = 0
+            #     EyeglassFrameEntry_instance.image_mask_state = 0
+            #     EyeglassFrameEntry_instance.image_seg_state = 0
+            #     EyeglassFrameEntry_instance.image_beautify_state = 0
+            #     EyeglassFrameEntry_instance.save()
+                # """
+                # 镜架图片数据表处理
+                # """
                 # # 创建镜架扫描结果表实例
                 # form_EyeglassFrameDetectionResult = (
                 #     forms.EyeglassFrameDetectionResultForm(request.POST)
@@ -284,22 +284,69 @@ def GenerateCalculateTask(request: HttpRequest):
                 # # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
                 # EyeglassFrameImage_instance.save()
                 # print("GenerateCalculateTask:",id)
-                """
-                生成celery计算任务：传递镜架基础信息表的id值
-                """
-                sku = request.POST.get("sku")
-                task_id = tasks.calc.delay(sku)
-                return R.ok(msg="生成计算任务成功："+str(task_id))
-            else:
-                # 处理镜架基本信息表表单验证失败的情况
-                err_msg = regular.get_err(form_EyeglassFrameEntry)
-                # 抛出异常
-                raise ValueError(err_msg)
+            """
+            生成celery计算任务：传递镜架基础信息表的sku值
+            """
+            sku = request.POST.get("sku")
+            task_id = tasks.calc.delay(sku)
+            return R.ok(msg="生成计算任务成功："+str(task_id))
+            # else:
+            #     # 处理镜架基本信息表表单验证失败的情况
+            #     err_msg = regular.get_err(form_EyeglassFrameEntry)
+            #     # 抛出异常
+            #     raise ValueError(err_msg)
     except ValueError as ve:
         return R.failed(msg=str(ve))
     except Exception as e:
         return R.failed(msg=str(e))
    
+def GenerateCalculateTask(request: HttpRequest):
+    """
+    生成计算任务
+
+    参数：
+        request: HttpRequest 请求对象
+
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+    """
+   # 接收请求参数
+    if not request.POST:
+        return R.failed(msg="参数错误")
+    # 获取修改镜架ID
+    id = request.POST.get("id")
+    # 镜架ID为空判断
+    if not id:
+        return R.failed(msg="镜架ID为空")
+
+    # 查询镜架基本信息表实例
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(
+        id=id
+    ).first()
+    # 镜架基本信息表实例为空判断
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="镜架ID不存在")
+    # 判断镜架已经在计算队列中
+    if EyeglassFrameEntry_instance.pixel_measurement_state < 2 or EyeglassFrameEntry_instance.millimeter_measurement_state < 2 or EyeglassFrameEntry_instance.calculation_state < 2 or EyeglassFrameEntry_instance.coordinate_state < 2 or EyeglassFrameEntry_instance.image_mask_state < 2 or EyeglassFrameEntry_instance.image_seg_state < 2 or EyeglassFrameEntry_instance.image_beautify_state < 2 :
+        return R.failed(msg="镜架已经在计算队列中")
+    # 添加镜架到计算队列中
+    # 数据库事务处理
+    with transaction.atomic():
+        # 更改计算状态为待计算
+        EyeglassFrameEntry_instance.pixel_measurement_state = 0
+        EyeglassFrameEntry_instance.millimeter_measurement_state = 0
+        EyeglassFrameEntry_instance.calculation_state = 0
+        EyeglassFrameEntry_instance.coordinate_state = 0
+        EyeglassFrameEntry_instance.image_mask_state = 0
+        EyeglassFrameEntry_instance.image_seg_state = 0
+        EyeglassFrameEntry_instance.image_beautify_state = 0
+        EyeglassFrameEntry_instance.save()
+        """
+        生成celery计算任务：传递镜架基础信息表的sku值
+        """
+        sku = EyeglassFrameEntry_instance.sku
+        task_id = tasks.calc.delay(sku)
+        return R.ok(msg="生成计算任务成功："+str(task_id))
 #todo:该函数好像没用了，待删除
 def SaveNewEyeglassFrame(request: HttpRequest):
     """
@@ -390,10 +437,10 @@ def SaveNewEyeglassFrame(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=str(e))
 
-#todo： 确认修改内容
+
 def SaveEditEyeglassFrame(request: HttpRequest):
     """
-    编辑镜架，更新数据库实例：镜架基本信息表、镜架像素测量数据、镜架毫米测量数据、镜架计算数据、镜架坐标数据
+    编辑镜架，更新数据库实例：镜架基本信息表、镜架毫米测量数据
 
     参数：
         request: HttpRequest 请求对象
@@ -429,71 +476,39 @@ def SaveEditEyeglassFrame(request: HttpRequest):
                 request.POST, instance=EyeglassFrameEntry_instance
             )
             if form_EyeglassFrameEntry.is_valid():
-                # 删除镜架风格关联表实例
-                models.EyeglassFrameEntryStyle.objects.filter(
-                    entry=EyeglassFrameEntry_instance
-                ).delete()
                 # 保存镜架基本信息表实例
                 EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
 
                 """
-                镜架扫描结果表处理
+                镜架毫米测量数据处理
                 """
                 # 查询镜架扫描结果表实例
-                EyeglassFrameDetectionResult_instance = (
-                    models.EyeglassFrameDetectionResult.objects.filter(
+                EyeglassFrameMillimeterMeasurement_instance = (
+                    models.EyeglassFrameMillimeterMeasurement.objects.filter(
                         entry=EyeglassFrameEntry_instance
                     ).first()
                 )
                 # 镜架扫描结果表实例为空判断
-                if not EyeglassFrameDetectionResult_instance:
+                if not EyeglassFrameMillimeterMeasurement_instance:
                     # 抛出异常
-                    raise ValueError("镜架扫描结果表实例为空")
+                    raise ValueError("镜架毫米测量数据实例为空")
                 # 创建镜架扫描结果表实例
-                form_EyeglassFrameDetectionResult = (
-                    forms.EyeglassFrameDetectionResultForm(
-                        request.POST, instance=EyeglassFrameDetectionResult_instance
+                form_EyeglassFrameMillimeterMeasurement = (
+                    forms.EyeglassFrameMillimeterMeasurementForm(
+                        request.POST, instance=EyeglassFrameMillimeterMeasurement_instance
                     )
                 )
                 # 验证镜架扫描结果表表单
-                if form_EyeglassFrameDetectionResult.is_valid():
+                if form_EyeglassFrameMillimeterMeasurement.is_valid():
                     # 保存镜架扫描结果表实例
-                    EyeglassFrameDetectionResult_instance = (
-                        form_EyeglassFrameDetectionResult.save()
+                    EyeglassFrameMillimeterMeasurement_instance = (
+                        form_EyeglassFrameMillimeterMeasurement.save()
                     )
                 else:
                     # 处理镜架扫描结果表表单验证失败的情况
-                    err_msg = regular.get_err(form_EyeglassFrameDetectionResult)
+                    err_msg = regular.get_err(form_EyeglassFrameMillimeterMeasurement)
                     # 抛出异常
                     raise ValueError(err_msg)
-
-                """
-                镜架风格关联表处理
-                """
-                # 提取镜架风格类型ID列表
-                style_ids = request.POST.get("style")
-                style_ids = json.loads(style_ids)
-                for style_id in style_ids:
-                    # 验证镜架风格关联表表单
-                    form_EyeglassFrameEntryStyle = forms.EyeglassFrameEntryStyleForm(
-                        {"entry": EyeglassFrameEntry_instance, "style": style_id}
-                    )
-                    if form_EyeglassFrameEntryStyle.is_valid():
-                        # 构建并保存镜架风格关联表的数据库实例
-                        EyeglassFrameEntryStyle_instance = (
-                            form_EyeglassFrameEntryStyle.save(commit=False)
-                        )
-                        # 关联镜架基本信息表外键
-                        EyeglassFrameEntryStyle_instance.entry = (
-                            EyeglassFrameEntry_instance
-                        )
-                        # 保存镜架风格关联表实例
-                        EyeglassFrameEntryStyle_instance.save()
-                    else:
-                        # 处理镜架风格关联表表单验证失败的情况
-                        err_msg = regular.get_err(form_EyeglassFrameEntryStyle)
-                        # 抛出异常
-                        raise ValueError(err_msg)
 
                 # 返回成功信息
                 return R.ok(msg="镜架编辑成功")
@@ -507,10 +522,9 @@ def SaveEditEyeglassFrame(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=str(e))
 
-#todo：确认展示内容
 def GetEyeglassFrameDetail(request: HttpRequest):
     """
-    查询镜架详情
+    查询镜架详情: 镜架基本信息表 镜架毫米测量数据 镜架三视图1
 
     参数：
         request: HttpRequest 请求对象
@@ -531,14 +545,15 @@ def GetEyeglassFrameDetail(request: HttpRequest):
     if not eyeglassframeentry_result:
         return R.failed(msg="镜架不存在")
     # 查询镜架扫描结果表
-    eyeglassframedetectionresult_result = (
-        models.EyeglassFrameDetectionResult.objects.filter(
+    EyeglassFrameMillimeterMeasurement_result = (
+        models.EyeglassFrameMillimeterMeasurement.objects.filter(
             entry=eyeglassframeentry_result
         ).first()
     )
-    # 查询镜架风格关联表
-    eyeglassframeentrystyle_result = models.EyeglassFrameEntryStyle.objects.filter(
-        entry=eyeglassframeentry_result
+    EyeglassFrameImage_result = (
+        models.EyeglassFrameImage.objects.filter(
+            entry=eyeglassframeentry_result
+        ).first()
     )
     # 构建查询结果
     search_result = {
@@ -547,62 +562,65 @@ def GetEyeglassFrameDetail(request: HttpRequest):
         "brand": eyeglassframeentry_result.brand,
         "model_type": eyeglassframeentry_result.model_type,
         "price": eyeglassframeentry_result.price,
-        "material": eyeglassframeentry_result.material.id,
-        "color": eyeglassframeentry_result.color.id,
-        "shape": eyeglassframeentry_result.shape.id,
+        "material": eyeglassframeentry_result.material,
+        "color": eyeglassframeentry_result.color,
+        "shape": eyeglassframeentry_result.shape,
         "isnosepad": eyeglassframeentry_result.isnosepad,
+        "is_transparent": eyeglassframeentry_result.is_transparent,
+        "frame_type": eyeglassframeentry_result.frame_type,
         "lens_radian": eyeglassframeentry_result.lens_radian,
         "lens_width_st": eyeglassframeentry_result.lens_width_st,
         "bridge_width_st": eyeglassframeentry_result.bridge_width_st,
         "temple_length_st": eyeglassframeentry_result.temple_length_st,
+        "weight": eyeglassframeentry_result.weight,
         "stock": eyeglassframeentry_result.stock,
         "warehouse": eyeglassframeentry_result.warehouse.id,
-        # 镜架风格关联表
-        "style": [style.style.id for style in eyeglassframeentrystyle_result],
-        # 镜架扫描结果表
-        # 正视图
-        "frontview": utils.getImageURL(
-            str(eyeglassframedetectionresult_result.frontview)
-        ),
-        "sideview": utils.getImageURL(
-            str(eyeglassframedetectionresult_result.sideview)
-        ),
-        "topview": utils.getImageURL(str(eyeglassframedetectionresult_result.topview)),
-        "frame_height": eyeglassframedetectionresult_result.frame_height,
-        "frame_width": eyeglassframedetectionresult_result.frame_width,
-        "pile_height_left": eyeglassframedetectionresult_result.pile_height_left,
-        "pile_height_right": eyeglassframedetectionresult_result.pile_height_right,
-        "frame_top_width": eyeglassframedetectionresult_result.frame_top_width,
-        "top_points": eyeglassframedetectionresult_result.top_points,  # 需要解析
-        "frame_rects": eyeglassframedetectionresult_result.frame_rects,  # 需要解析
-        "lens_width_left": eyeglassframedetectionresult_result.lens_width_left,
-        "lens_width_right": eyeglassframedetectionresult_result.lens_width_right,
-        "lens_height_left": eyeglassframedetectionresult_result.lens_height_left,
-        "lens_height_right": eyeglassframedetectionresult_result.lens_height_right,
-        "lens_diagonal_left": eyeglassframedetectionresult_result.lens_diagonal_left,
-        "lens_diagonal_right": eyeglassframedetectionresult_result.lens_diagonal_right,
-        "lens_area_left": eyeglassframedetectionresult_result.lens_area_left,
-        "lens_area_right": eyeglassframedetectionresult_result.lens_area_right,
-        "bridge_width": eyeglassframedetectionresult_result.bridge_width,
-        "lens_center_points": eyeglassframedetectionresult_result.lens_center_points,  # 需要解析
-        "lens_top_points": eyeglassframedetectionresult_result.lens_top_points,  # 需要解析
-        "pile_distance": eyeglassframedetectionresult_result.pile_distance,
-        # 侧视图
-        "vertical_angle": eyeglassframedetectionresult_result.vertical_angle,
-        "forward_angle": eyeglassframedetectionresult_result.forward_angle,
-        "temple_angle": eyeglassframedetectionresult_result.temple_angle,
-        "drop_length": eyeglassframedetectionresult_result.drop_length,
-        # 俯视图
-        "face_angle": eyeglassframedetectionresult_result.face_angle,
-        "sagittal_angle_left": eyeglassframedetectionresult_result.sagittal_angle_left,
-        "sagittal_angle_right": eyeglassframedetectionresult_result.sagittal_angle_right,
-        "temple_length_left": eyeglassframedetectionresult_result.temple_length_left,
-        "temple_length_right": eyeglassframedetectionresult_result.temple_length_right,
-        "temporal_width": eyeglassframedetectionresult_result.temporal_width,
-        "spread_angle_left": eyeglassframedetectionresult_result.spread_angle_left,
-        "spread_angle_right": eyeglassframedetectionresult_result.spread_angle_right,
-        # 重量
-        "weight": eyeglassframedetectionresult_result.weight,
+        # 计算状态
+        "pixel_measurement_state":eyeglassframeentry_result.pixel_measurement_state,
+        "millimeter_measurement_state":eyeglassframeentry_result.millimeter_measurement_state,
+        "calculation_state":eyeglassframeentry_result.calculation_state,
+        "coordinate_state":eyeglassframeentry_result.coordinate_state,
+        "image_mask_state":eyeglassframeentry_result.image_mask_state,
+        "image_seg_state":eyeglassframeentry_result.image_seg_state,
+        "image_beautify_state":eyeglassframeentry_result.image_beautify_state,
+        # 镜架毫米测量数据
+        # # 正视图
+        # "frontview": utils.getImageURL(
+        #     str(EyeglassFrameImage_result.frontview)
+        # ),
+        # "sideview": utils.getImageURL(
+        #     str(EyeglassFrameImage_result.sideview)
+        # ),
+        # "topview": utils.getImageURL(str(EyeglassFrameImage_result.topview)),
+        # "frame_height": EyeglassFrameMillimeterMeasurement_result.frame_height,
+        # "frame_width": EyeglassFrameMillimeterMeasurement_result.frame_width,
+        # "pile_height_left": EyeglassFrameMillimeterMeasurement_result.pile_height_left,
+        # "pile_height_right": EyeglassFrameMillimeterMeasurement_result.pile_height_right,
+        # "frame_top_width": EyeglassFrameMillimeterMeasurement_result.frame_top_width,
+        # "lens_width_left": EyeglassFrameMillimeterMeasurement_result.lens_width_left,
+        # "lens_width_right": EyeglassFrameMillimeterMeasurement_result.lens_width_right,
+        # "lens_height_left": EyeglassFrameMillimeterMeasurement_result.lens_height_left,
+        # "lens_height_right": EyeglassFrameMillimeterMeasurement_result.lens_height_right,
+        # "lens_diagonal_left": EyeglassFrameMillimeterMeasurement_result.lens_diagonal_left,
+        # "lens_diagonal_right": EyeglassFrameMillimeterMeasurement_result.lens_diagonal_right,
+        # "lens_area_left": EyeglassFrameMillimeterMeasurement_result.lens_area_left,
+        # "lens_area_right": EyeglassFrameMillimeterMeasurement_result.lens_area_right,
+        # "bridge_width": EyeglassFrameMillimeterMeasurement_result.bridge_width,
+        # # 侧视图
+        # "vertical_angle": EyeglassFrameMillimeterMeasurement_result.vertical_angle,
+        # "forward_angle": EyeglassFrameMillimeterMeasurement_result.forward_angle,
+        # "temple_angle": EyeglassFrameMillimeterMeasurement_result.temple_angle,
+        # "drop_length": EyeglassFrameMillimeterMeasurement_result.drop_length,
+        # # 俯视图
+        # "face_angle": EyeglassFrameMillimeterMeasurement_result.face_angle,
+        # "sagittal_angle_left": EyeglassFrameMillimeterMeasurement_result.sagittal_angle_left,
+        # "sagittal_angle_right": EyeglassFrameMillimeterMeasurement_result.sagittal_angle_right,
+        # "temple_length_left": EyeglassFrameMillimeterMeasurement_result.temple_length_left,
+        # "temple_length_right": EyeglassFrameMillimeterMeasurement_result.temple_length_right,
+        # "temporal_width": EyeglassFrameMillimeterMeasurement_result.temporal_width,
+        # "spread_angle_left": EyeglassFrameMillimeterMeasurement_result.spread_angle_left,
+        # "spread_angle_right": EyeglassFrameMillimeterMeasurement_result.spread_angle_right,
+        # "pile_distance": EyeglassFrameMillimeterMeasurement_result.pile_distance,
     }
 
     # 返回查询结果
@@ -688,13 +706,21 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
                 "brand": entry.brand,
                 "model_type": entry.model_type,
                 "price": entry.price,
-                "material": entry.get_material_display(),
-                "color": entry.get_color_display(),
-                "shape": entry.get_shape_display(),
+                "material": entry.material,
+                "color": entry.color,
+                "shape": entry.shape,
                 "isnosepad": entry.isnosepad,
                 "lens_radian": entry.lens_radian,
                 "stock": entry.stock,
                 "warehouse": entry.warehouse.id,
+                  # 计算状态
+                "pixel_measurement_state":entry.pixel_measurement_state,
+                "millimeter_measurement_state":entry.millimeter_measurement_state,
+                "calculation_state":entry.calculation_state,
+                "coordinate_state":entry.coordinate_state,
+                "image_mask_state":entry.image_mask_state,
+                "image_seg_state":entry.image_seg_state,
+                "image_beautify_state":entry.image_beautify_state,
                 "create_time": entry.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "update_time": entry.update_time.strftime("%Y-%m-%d %H:%M:%S"),
             }

@@ -150,7 +150,7 @@ class EyeglassFrameMillimeterMeasurement(EyeglassFrameMeasurement):
         indexes = [models.Index(fields=["entry"])]
 
 
-class EyeglassFrameCalulation(BaseModel):
+class EyeglassFrameCalculation(BaseModel):
     """镜架计算数据 镜架推荐用"""
     # 镜架基本信息关联外键
     entry = models.OneToOneField(EyeglassFrameEntry, unique=True, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架基本信息")

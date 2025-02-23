@@ -221,6 +221,16 @@
               </a-space>
             </span>
           </template>
+          <template v-if="column.key === 'all_calculate_state'">
+            <span>
+              <a-button
+                type="primary"
+                ghost
+                @click="onClickCalculationState(record.id)"
+                >{{ getAllCalculateLabel(record.id) }}</a-button
+              >
+            </span>
+          </template>
         </template>
       </a-table>
     </div>
@@ -336,18 +346,14 @@
             ref="EyeGlassBasicFormRef"
             :model="EyeGlassBasicFormState"
             :rules="EyeGlassBasicFormRules"
+            :labelCol="{ span: 6 }"
+            :wrapperCol="{ span: 18 }"
+            labelAlign="left"
             hideRequiredMark
           >
             <a-row :gutter="[30, 30]" style="margin-top: 25px; width: 650px">
               <a-col style="height: 30px" :span="12">
-                <a-form-item
-                  label="SKU"
-                  name="sku"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                  class="modal-basic-item"
-                >
+                <a-form-item label="SKU" name="sku" class="modal-basic-item">
                   <a-input
                     v-model:value="EyeGlassBasicFormState.sku"
                     disabled
@@ -355,14 +361,7 @@
                 </a-form-item>
               </a-col>
               <a-col style="height: 30px" :span="12">
-                <a-form-item
-                  label="品牌"
-                  name="brand"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                  class="modal-basic-item"
-                >
+                <a-form-item label="品牌" name="brand" class="modal-basic-item">
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.brand"
                     :options="options.brand_options"
@@ -374,9 +373,6 @@
                 <a-form-item
                   label="型号"
                   name="model_type"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-auto-complete
@@ -387,14 +383,7 @@
                 </a-form-item>
               </a-col>
               <a-col style="height: 30px" :span="12">
-                <a-form-item
-                  label="价格"
-                  name="price"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                  class="modal-basic-item"
-                >
+                <a-form-item label="价格" name="price" class="modal-basic-item">
                   <a-input-number
                     v-model:value="EyeGlassBasicFormState.price"
                     :precision="2"
@@ -407,9 +396,6 @@
                 <a-form-item
                   label="材质"
                   name="material"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-select
@@ -420,14 +406,7 @@
                 </a-form-item>
               </a-col>
               <a-col style="height: 30px" :span="12">
-                <a-form-item
-                  label="颜色"
-                  name="color"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                  class="modal-basic-item"
-                >
+                <a-form-item label="颜色" name="color" class="modal-basic-item">
                   <a-select
                     v-model:value="EyeGlassBasicFormState.color"
                     placeholder="选择颜色（单选）"
@@ -436,14 +415,7 @@
                 </a-form-item>
               </a-col>
               <a-col style="height: 30px" :span="12">
-                <a-form-item
-                  label="形状"
-                  name="shape"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
-                  class="modal-basic-item"
-                >
+                <a-form-item label="形状" name="shape" class="modal-basic-item">
                   <a-select
                     v-model:value="EyeGlassBasicFormState.shape"
                     placeholder="选择形状（单选）"
@@ -455,9 +427,6 @@
                 <a-form-item
                   label="鼻托"
                   name="isnosepad"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-radio-group
@@ -482,15 +451,36 @@
                   </a-radio-group>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col :span="12">
                 <a-form-item
-                  label="库存"
-                  name="stock"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
+                  label="透明"
+                  name="is_transparent"
                   class="modal-basic-item"
                 >
+                  <a-radio-group
+                    v-model:value="EyeGlassBasicFormState.is_transparent"
+                    :options="options.is_transparent_options"
+                    option-type="button"
+                  >
+                  </a-radio-group>
+                </a-form-item>
+              </a-col>
+              <a-col :span="12">
+                <a-form-item
+                  label="镜框类型"
+                  name="frame_type"
+                  class="modal-basic-item"
+                >
+                  <a-radio-group
+                    v-model:value="EyeGlassBasicFormState.frame_type"
+                    :options="options.frame_type_options"
+                    option-type="button"
+                  >
+                  </a-radio-group>
+                </a-form-item>
+              </a-col>
+              <a-col style="height: 30px" :span="12">
+                <a-form-item label="库存" name="stock" class="modal-basic-item">
                   <a-input-number
                     v-model:value="EyeGlassBasicFormState.stock"
                     min="0"
@@ -502,9 +492,6 @@
                 <a-form-item
                   label="撑片弧度"
                   name="lens_radian"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-input-number
@@ -517,9 +504,6 @@
                 <a-form-item
                   label="镜片宽度"
                   name="lens_width_st"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-input-number
@@ -532,9 +516,6 @@
                 <a-form-item
                   label="鼻梁宽度"
                   name="bridge_width_st"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-input-number
@@ -547,9 +528,6 @@
                 <a-form-item
                   label="镜腿长度"
                   name="temple_length_st"
-                  :labelCol="{ span: 6 }"
-                  :wrapperCol="{ span: 18 }"
-                  labelAlign="left"
                   class="modal-basic-item"
                 >
                   <a-input-number
@@ -575,49 +553,20 @@
                 hideRequiredMark
                 layout="inline"
                 autocomplete="off"
+                :labelCol="{ span: 12 }"
+                :wrapperCol="{ span: 12 }"
+                labelAlign="left"
               >
                 <a-form-item
                   class="modal-explicit-item"
                   label="镜架重量"
                   name="weight"
-                  :labelCol="{ span: 12 }"
-                  :wrapperCol="{ span: 12 }"
-                  labelAlign="left"
                 >
                   <a-input
                     v-model:value="EyeGlassWeightFormState.weight"
                     :suffix="EyeGlassWeightFormUnit.weight"
                     style="border-radius: 9px; padding-left: 11px; height: 30px"
                   ></a-input>
-                </a-form-item>
-              </a-form>
-            </a-col>
-            <a-col :span="12">
-              <a-form
-                ref="EyeGlassStyleFormRef"
-                :model="EyeGlassStyleFormState"
-                :rules="EyeGlassStyleFormRules"
-                hideRequiredMark
-                layout="inline"
-                autocomplete="off"
-                labelAlign="left"
-              >
-                <a-form-item
-                  class="modal-explicit-item"
-                  label="风格"
-                  name="style"
-                  :labelCol="{ span: 12 }"
-                  :wrapperCol="{ span: 12 }"
-                  labelAlign="left"
-                >
-                  <a-select
-                    v-model:value="EyeGlassStyleFormState.style"
-                    mode="multiple"
-                    placeholder="选择风格（多选）"
-                    :max-tag-count="1"
-                    :maxTagTextLength="2"
-                    :options="options.style_options"
-                  />
                 </a-form-item>
               </a-form>
             </a-col>
@@ -629,6 +578,9 @@
             hideRequiredMark
             layout="inline"
             autocomplete="off"
+            :labelCol="{ span: 12 }"
+            :wrapperCol="{ span: 12 }"
+            labelAlign="left"
           >
             <a-row :gutter="[30, 30]" style="width: 650px">
               <a-col
@@ -636,12 +588,7 @@
                 :key="key"
                 :span="12"
               >
-                <a-form-item
-                  :label="EyeGlassDetailFormLabel[key]"
-                  :labelCol="{ span: 12 }"
-                  :wrapperCol="{ span: 12 }"
-                  labelAlign="left"
-                >
+                <a-form-item :label="EyeGlassDetailFormLabel[key]">
                   <a-input
                     v-model:value="EyeGlassDetailFormState[key]"
                     :suffix="EyeGlassDetailFormUnit[key]"
@@ -682,6 +629,7 @@ import {
   reactive,
   UnwrapRef,
   createVNode,
+  h,
 } from "vue";
 import { message, Modal } from "ant-design-vue";
 import {
@@ -698,7 +646,6 @@ import type { Rule } from "ant-design-vue/es/form"; // 引入表单验证规则R
 import {
   EyeGlassBasicForm, // 镜架基础参数接口
   // EyeGlassBasicFormLabel, // 镜架基础参数标签
-  EyeGlassStyleForm, // 镜架风格参数接口
   // EyeGlassStyleFormLabel, // 镜架风格参数标签
   EyeGlassDetailForm, // 镜架详细参数接口
   EyeGlassDetailFormLabel, // 镜架详细参数标签
@@ -764,6 +711,10 @@ const columns = [
     title: "操作",
     key: "operation",
   },
+  {
+    title: "计算状态",
+    key: "all_calculate_state",
+  },
 ];
 // 镜架table请求API携带参数格式
 type getAllEyeglassFrameEntryAPIParams = {
@@ -789,6 +740,13 @@ type getAllEyeglassFrameEntryAPIResult = {
     price: number;
     material: number;
     update_time: string;
+    pixel_measurement_state: number;
+    millimeter_measurement_state: number;
+    calculation_state: number;
+    coordinate_state: number;
+    image_mask_state: number;
+    image_seg_state: number;
+    image_beautify_state: number;
   }[];
   count: number;
 };
@@ -841,6 +799,8 @@ const EyeGlassBasicFormInitState: UnwrapRef<EyeGlassBasicForm> = reactive({
   color: null,
   shape: null,
   isnosepad: null,
+  is_transparent: null,
+  frame_type: null,
   stock: null,
   lens_radian: null,
   lens_width_st: null,
@@ -857,6 +817,8 @@ const EyeGlassBasicFormState: UnwrapRef<EyeGlassBasicForm> = reactive({
   color: null,
   shape: null,
   isnosepad: null,
+  is_transparent: null,
+  frame_type: null,
   stock: null,
   lens_radian: null,
   lens_width_st: null,
@@ -901,6 +863,20 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
     {
       required: true,
       message: "请选择是否有鼻托",
+      trigger: ["blur", "change"],
+    },
+  ],
+  is_transparent: [
+    {
+      required: true,
+      message: "请选择镜框是否透明",
+      trigger: ["blur", "change"],
+    },
+  ],
+  frame_type: [
+    {
+      required: true,
+      message: "请选择镜框类型",
       trigger: ["blur", "change"],
     },
   ],
@@ -972,21 +948,21 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
   ],
 };
 // 镜架风格参数表单实例
-const EyeGlassStyleFormRef = ref();
-// 镜架风格参数表单初始化数据
-const EyeGlassStyleFormInitState: UnwrapRef<EyeGlassStyleForm> = reactive({
-  style: [],
-});
-// 镜架风格参数表单数据
-const EyeGlassStyleFormState: UnwrapRef<EyeGlassStyleForm> = reactive({
-  style: [],
-});
+// const EyeGlassStyleFormRef = ref();
+// // 镜架风格参数表单初始化数据
+// const EyeGlassStyleFormInitState: UnwrapRef<EyeGlassStyleForm> = reactive({
+//   style: [],
+// });
+// // 镜架风格参数表单数据
+// const EyeGlassStyleFormState: UnwrapRef<EyeGlassStyleForm> = reactive({
+//   style: [],
+// });
 // 镜架风格参数表单校验规则
-const EyeGlassStyleFormRules: Record<string, Rule[]> = {
-  style: [
-    { required: true, message: "请选择镜框风格", trigger: ["blur", "change"] },
-  ],
-};
+// const EyeGlassStyleFormRules: Record<string, Rule[]> = {
+//   style: [
+//     { required: true, message: "请选择镜框风格", trigger: ["blur", "change"] },
+//   ],
+// };
 // 镜架详细参数表单实例
 const EyeGlassDetailFormRef = ref();
 // 镜架详细参数表单初始化数据
@@ -1272,6 +1248,8 @@ const modalBodyStyle = reactive({
   padding: "0 60px",
 });
 
+// 计算状态model相关
+const calculateModelLoading = ref(false); // 计算状态model加载中
 // #########################################生命周期函数############################################
 // 生命周期钩子：组件挂载完成后执行
 onMounted(async () => {
@@ -1310,6 +1288,7 @@ const filterOption = (input: string, option: Option) => {
 
 // 功能函数:获取Table数据
 const getTableData = (params: getAllEyeglassFrameEntryAPIParams) => {
+  calculateModelLoading.value = false;
   return axios
     .get<getAllEyeglassFrameEntryAPIResult>(
       "/glassmanagement/api/get-all-eyeglassframes_entrys",
@@ -1341,9 +1320,10 @@ const dataSource = computed(() => {
   if (data.value?.data.data == null) {
     return [];
   } else {
-    // 处理Table请求的返回数据,将material字段转化为对应的Label
+    // 处理Table请求的返回数据
     return data.value?.data.data.map((item) => ({
       ...item,
+      // 将material字段转化为对应的Label
       material:
         options.material_options?.find(
           (option) => option.value === item.material,
@@ -1432,10 +1412,10 @@ const getEyeglassFrameDetails = async (id: number) => {
             EyeGlassBasicFormState[key] = response.data.data[key];
         });
         // 将获取到的镜架风格信息赋值给镜架风格信息表单
-        Object.entries(EyeGlassStyleFormState).forEach(([key]) => {
-          if (key in response.data.data)
-            EyeGlassStyleFormState[key] = response.data.data[key];
-        });
+        // Object.entries(EyeGlassStyleFormState).forEach(([key]) => {
+        //   if (key in response.data.data)
+        //     EyeGlassStyleFormState[key] = response.data.data[key];
+        // });
         // 将获取到的镜架详细信息赋值给镜架详细信息表单
         Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
           if (key in response.data.data)
@@ -1471,6 +1451,10 @@ const formatEyeGlassFormState = () => {
   EyeGlassBasicFormState.color = Number(EyeGlassBasicFormState.color);
   EyeGlassBasicFormState.shape = Number(EyeGlassBasicFormState.shape);
   EyeGlassBasicFormState.isnosepad = EyeGlassBasicFormState.isnosepad ? 1 : 0;
+  EyeGlassBasicFormState.is_transparent = Number(
+    EyeGlassBasicFormState.is_transparent,
+  );
+  EyeGlassBasicFormState.frame_type = Number(EyeGlassBasicFormState.frame_type);
   EyeGlassBasicFormState.stock = Number(EyeGlassBasicFormState.stock);
   EyeGlassBasicFormState.lens_radian = Number(
     EyeGlassBasicFormState.lens_radian,
@@ -1485,9 +1469,9 @@ const formatEyeGlassFormState = () => {
     EyeGlassBasicFormState.temple_length_st,
   );
   // 将EyeGlassStyleFormState表单数据类型转换为对应的类型
-  EyeGlassStyleFormState.style = EyeGlassStyleFormState.style.map((item) =>
-    Number(item),
-  );
+  // EyeGlassStyleFormState.style = EyeGlassStyleFormState.style.map((item) =>
+  //   Number(item),
+  // );
 };
 
 // 功能函数：初始化基础参数表单
@@ -1496,9 +1480,9 @@ const initEyeGlassBasicFormState = () => {
 };
 
 // 功能函数：初始化风格参数表单
-const initEyeGlassStyleFormState = () => {
-  Object.assign(EyeGlassStyleFormState, EyeGlassStyleFormInitState);
-};
+// const initEyeGlassStyleFormState = () => {
+//   Object.assign(EyeGlassStyleFormState, EyeGlassStyleFormInitState);
+// };
 
 // 功能函数：初始化详细参数表单
 const initEyeGlassDetailFormState = () => {
@@ -1519,7 +1503,7 @@ const initEyeGlassImageFormState = () => {
 const initAllForms = () => {
   // 重置所有表单和状态
   initEyeGlassBasicFormState();
-  initEyeGlassStyleFormState();
+  // initEyeGlassStyleFormState();
   initEyeGlassDetailFormState();
   initEyeGlassWeightFormState();
   initEyeGlassImageFormState();
@@ -1535,10 +1519,10 @@ const saveEditEyeglassFrame = async () => {
     isFormValid = false;
   });
   // 检查镜架风格信息是否完善
-  await EyeGlassStyleFormRef.value.validate().catch(() => {
-    message.error("请完善镜架风格信息");
-    isFormValid = false;
-  });
+  // await EyeGlassStyleFormRef.value.validate().catch(() => {
+  //   message.error("请完善镜架风格信息");
+  //   isFormValid = false;
+  // });
   // 检查镜架详细信息是否完善
   await EyeGlassDetailFormRef.value.validate().catch(() => {
     message.error("请完善镜架详细信息");
@@ -1600,6 +1584,18 @@ const saveEditEyeglassFrame = async () => {
       : "",
   );
   formData.append(
+    "is_transparent",
+    EyeGlassBasicFormState.is_transparent !== null
+      ? EyeGlassBasicFormState.is_transparent.toString()
+      : "",
+  );
+  formData.append(
+    "frame_type",
+    EyeGlassBasicFormState.frame_type !== null
+      ? EyeGlassBasicFormState.frame_type.toString()
+      : "",
+  );
+  formData.append(
     "stock",
     EyeGlassBasicFormState.stock !== null
       ? EyeGlassBasicFormState.stock.toString()
@@ -1634,7 +1630,7 @@ const saveEditEyeglassFrame = async () => {
       : "",
   );
   // 将镜架风格信息添加到FormData对象
-  formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
+  // formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
   // 将镜架详细信息添加到FormData对象
   Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
     formData.append(key, value); // 将值转换为字符串后添加
@@ -1817,6 +1813,133 @@ const onClickDelete = async (id: number) => {
         });
     },
   });
+};
+// 计算状态相关
+// 功能函数：获取计算标签
+const getCalculateStateLabel = (state: number) => {
+  if (state == 0) {
+    return "待计算";
+  } else if (state == 1) {
+    return "计算中";
+  } else if (state == 2) {
+    return "计算成功";
+  } else if (state == 3) {
+    return "计算失败";
+  }
+};
+// 功能函数：获取统一计算状态标签
+const getAllCalculateLabel = (id: number) => {
+  let item = dataSource.value.find((item) => item.id === id);
+  if (!item) {
+    return "错误";
+  }
+  let all_calculate_state = 3;
+  if (
+    item.pixel_measurement_state == 2 &&
+    item.millimeter_measurement_state == 2 &&
+    item.calculation_state == 2 &&
+    item.coordinate_state == 2 &&
+    item.image_mask_state == 2 &&
+    item.image_seg_state == 2 &&
+    item.image_beautify_state == 2
+  ) {
+    // 当所有计算都成功时，计算状态为计算成功
+    all_calculate_state = 2;
+  } else if (
+    item.pixel_measurement_state == 1 ||
+    item.millimeter_measurement_state == 1 ||
+    item.calculation_state == 1 ||
+    item.coordinate_state == 1 ||
+    item.image_mask_state == 1 ||
+    item.image_seg_state == 1 ||
+    item.image_beautify_state == 1
+  ) {
+    // 当有一个为计算中时，计算状态为计算中
+    all_calculate_state = 1;
+  } else if (
+    item.pixel_measurement_state == 0 ||
+    item.millimeter_measurement_state == 0 ||
+    item.calculation_state == 0 ||
+    item.coordinate_state == 0 ||
+    item.image_mask_state == 0 ||
+    item.image_seg_state == 0 ||
+    item.image_beautify_state == 0
+  ) {
+    // 当有一个为待计算时，计算状态为待计
+    all_calculate_state = 0;
+  }
+  return getCalculateStateLabel(all_calculate_state);
+};
+
+// table计算状态点击事件：展开计算状态modal
+const onClickCalculationState = async (id: number) => {
+  let item = dataSource.value.find((item) => item.id === id);
+  if (!item) {
+    return;
+  }
+  Modal.confirm({
+    title: item.sku + " 计算状态",
+    okText: "发送计算任务",
+    cancelText: "取消",
+    centered: true,
+    icon: createVNode(ExclamationCircleOutlined),
+    content: h("div", {}, [
+      h(
+        "p",
+        "像素测量数据状态：" +
+          getCalculateStateLabel(item.pixel_measurement_state),
+      ),
+      h(
+        "p",
+        "毫米测量数据状态：" +
+          getCalculateStateLabel(item.millimeter_measurement_state),
+      ),
+      h("p", "计算数据状态：" + getCalculateStateLabel(item.calculation_state)),
+      h("p", "坐标数据状态：" + getCalculateStateLabel(item.coordinate_state)),
+      h(
+        "p",
+        "mask图片数据状态：" + getCalculateStateLabel(item.image_mask_state),
+      ),
+      h(
+        "p",
+        "分割图片数据状态：" + getCalculateStateLabel(item.image_seg_state),
+      ),
+      h(
+        "p",
+        "美化图片数据状态：" +
+          getCalculateStateLabel(item.image_beautify_state),
+      ),
+    ]),
+    onOk: () => {
+      sendCalculationTask(id);
+    },
+    okButtonProps: {
+      disabled: getAllCalculateLabel(id) == "待计算",
+      // getAllCalculateLabel(id) == "计算中",
+      loading: calculateModelLoading.value,
+    },
+  });
+};
+
+// table计算状态发送计算任务事件
+const sendCalculationTask = async (id: number) => {
+  calculateModelLoading.value = true;
+  // 构造post请求表单formdata
+  const formData = new FormData();
+  // 将待计算的表格项的key存入formdata
+  formData.append("id", JSON.stringify(id));
+  await axios
+    .post("/glassmanagement/api/generate-calculate-task", formData)
+    .then((response) => {
+      // 生成成功
+      if (response.data.code === 0) {
+        calculateModelLoading.value = false;
+      } else {
+        // 提示生成计算任务失败
+        message.error(response.data.msg);
+        calculateModelLoading.value = false;
+      }
+    });
 };
 </script>
 

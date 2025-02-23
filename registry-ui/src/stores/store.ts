@@ -58,6 +58,18 @@ export const useOptionStore = defineStore("option", {
           label: "",
         },
       ] as SelectProps["options"],
+      is_transparent_options: [
+        {
+          value: null,
+          label: "",
+        },
+      ] as SelectProps["options"],
+      frame_type_options: [
+        {
+          value: null,
+          label: "",
+        },
+      ] as SelectProps["options"],
     };
   },
 });

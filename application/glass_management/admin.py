@@ -8,7 +8,7 @@ from application.glass_management.models import (
     EyeglassFrameEntry,
     EyeglassFrameMillimeterMeasurement,
     EyeglassFramePixelMeasurement,
-    EyeglassFrameCalulation,
+    EyeglassFrameCalculation,
     EyeglassFrameCoordinate,
     EyeglassFrameImage,
     EyeglassFramePreloadData
@@ -21,7 +21,7 @@ admin.site.register(EyeglassFrameEntry) # 镜架基本信息表
 # admin.site.register(EyeglassFrameDataFromExcel) # 注释掉此行，因为models.py中未定义此模型
 admin.site.register(EyeglassFrameMillimeterMeasurement) # 镜架毫米测量数据
 admin.site.register(EyeglassFramePixelMeasurement) # 镜架像素测量数据
-admin.site.register(EyeglassFrameCalulation) # 镜架计算数据
+admin.site.register(EyeglassFrameCalculation) # 镜架计算数据
 admin.site.register(EyeglassFrameCoordinate) # 镜架坐标数据
 admin.site.register(EyeglassFrameImage) # 镜架图片数据
 admin.site.register(EyeglassFramePreloadData) # 镜架预加载数据

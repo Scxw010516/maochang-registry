@@ -1927,15 +1927,7 @@ const initWeight = () => {
   });
 };
 
-// 功能函数：上传新的镜架，并发送计算任务
-const uploadNewEyeglassFrame = () => {
-  // 保存已有的信息
-  // saveNewEyeglassFrame();
-  // 发送计算任务到服务器
-  sendCalcTask();
-};
-
-const sendCalcTask = async () => {
+const uploadNewEyeglassFrame = async () => {
   // 验证通过标识符
   let isFormValid = true;
   // 检查镜架基础信息是否完善
@@ -2070,7 +2062,7 @@ const sendCalcTask = async () => {
   // 提交通过标识符
   let isSaveSuccess: boolean = false;
   await axios
-    .post("/glassmanagement/api/generate-calculate-task", formData)
+    .post("/glassmanagement/api/upload-new-eyeglassframe", formData)
     .then((response) => {
       console.log(response);
     });
