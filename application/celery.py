@@ -1,27 +1,32 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
+from config import env
 import os
 from celery import Celery
-from config import env
+import django
 
-# 只要是想在自己的脚本中访问Django的数据库等文件就必须配置Django的环境变量
-os.environ.setdefault(env.DATABASE_NAME, 'application.settings')
+# Set the default Django settings module for the 'celery' program.
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'application.settings')
+django.setup()
 
-# app名字
-# app = Celery('application',broker="redis://127.0.0.1:6379/1",backend="redis://127.0.0.1:6379/2")
-app = Celery('application',)
+app = Celery('application')
 
-# 配置celery
+# Using a string here means the worker doesn't have to serialize
+# the configuration object to child processes.
+# - namespace='CELERY' means all celery-related configuration keys
+#   should have a `CELERY_` prefix.
+# app.config_from_object('django.conf:settings', namespace='CELERY')
 class Config:
-    BROKER_URL = 'redis://localhost:6379/1'
-    CELERY_RESULT_BACKEND = 'redis://localhost:6379/2'
+    BROKER_URL = 'redis://127.0.0.1:6379/1'
+    CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
+    # BROKER_URL = 'redis://172.17.0.3:6379/1'
+    # CELERY_RESULT_BACKEND = 'redis://172.17.0.3:6379/2'
+    # BROKER_URL = 'redis://0.0.0.0:6379/1'
+    # CELERY_RESULT_BACKEND = 'redis://0.0.0.0:6379/2'
 
 app.config_from_object(Config)
 # 到celery_tasks里自动发现tasks.py文件
 app.autodiscover_tasks(["application.celery_task.tasks"])
 
-@app.task(bind=True)
+@app.task(bind=True, ignore_result=True)
 def debug_task(self):
-    print('Request: {0!r}'.format(self.request))
-
+    print(f'Request: {self.request!r}')
 ######任务消费命令：celery  -A application  worker -l info -P eventlet

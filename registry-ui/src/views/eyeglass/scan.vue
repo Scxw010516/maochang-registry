@@ -2056,9 +2056,9 @@ const uploadNewEyeglassFrame = async () => {
   // 将镜架重量信息添加到FormData对象
   formData.append("weight", EyeGlassWeightFormState.weight);
   // 将镜架图片信息添加到FormData对象
-  // formData.append("frontview", EyeGlassImageFormState.frontview as File);
-  // formData.append("sideview", EyeGlassImageFormState.sideview as File);
-  // formData.append("topview", EyeGlassImageFormState.topview as File);
+  formData.append("frontview", EyeGlassImageFormState.frontview as File);
+  formData.append("sideview", EyeGlassImageFormState.sideview as File);
+  formData.append("topview", EyeGlassImageFormState.topview as File);
   // 提交通过标识符
   let isSaveSuccess: boolean = false;
   await axios
@@ -2583,7 +2583,7 @@ const onClickCaptureOrConfirm = () => {
         // 摄像头未初始化，弹出提示框
         showCameraStateErrorModal.value = true;
       }
-      currentStage.value = "input-params";
+      // currentStage.value = "input-params";
       break;
     case "confirm":
       currentStage.value = "input-params";
