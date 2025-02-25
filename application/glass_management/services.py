@@ -233,63 +233,60 @@ def UploadNewEyeglassFrame(request: HttpRequest):
             镜架基本信息表处理
             """
             # 创建镜架扫描结果表实例
-            # form_EyeglassFrameEntry = (
-            #     forms.EyeglassFrameEntryForm(request.POST)
-            # )
-            # # 验证镜架基本信息表表单
-            # if form_EyeglassFrameEntry.is_valid():
-            #     # 保存镜架基本信息表实例
-            #     EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save(commit=False)
-            #     # 保存镜架计算状态为0待计算
-            #     EyeglassFrameEntry_instance.pixel_measurement_state = 0
-            #     EyeglassFrameEntry_instance.millimeter_measurement_state = 0
-            #     EyeglassFrameEntry_instance.calculation_state = 0
-            #     EyeglassFrameEntry_instance.coordinate_state = 0
-            #     EyeglassFrameEntry_instance.image_mask_state = 0
-            #     EyeglassFrameEntry_instance.image_seg_state = 0
-            #     EyeglassFrameEntry_instance.image_beautify_state = 0
-            #     EyeglassFrameEntry_instance.save()
-                # """
-                # 镜架图片数据表处理
-                # """
-                # # 创建镜架扫描结果表实例
-                # form_EyeglassFrameDetectionResult = (
-                #     forms.EyeglassFrameDetectionResultForm(request.POST)
-                # )
+            form_EyeglassFrameEntry = (
+                forms.EyeglassFrameEntryForm(request.POST)
+            )
+            # 验证镜架基本信息表表单
+            if form_EyeglassFrameEntry.is_valid():
+                # 保存镜架基本信息表实例
+                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save(commit=False)
+                # 保存镜架计算状态为0待计算
+                EyeglassFrameEntry_instance.pixel_measurement_state = 0
+                EyeglassFrameEntry_instance.millimeter_measurement_state = 0
+                EyeglassFrameEntry_instance.calculation_state = 0
+                EyeglassFrameEntry_instance.coordinate_state = 0
+                EyeglassFrameEntry_instance.image_mask_state = 0
+                EyeglassFrameEntry_instance.image_seg_state = 0
+                EyeglassFrameEntry_instance.image_beautify_state = 0
+                EyeglassFrameEntry_instance.save()
+                """
+                镜架图片数据表处理
+                """
                 # 构建并保存镜架图片数据表的数据库实例，关联镜架基本信息表外键，储存图像
-                # EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(entry = EyeglassFrameEntry_instance)
-                # # 获取三视图图片文件
-                # frontview = request.FILES.get("frontview")
-                # sideview = request.FILES.get("sideview")
-                # topview = request.FILES.get("topview")
-                # # 获取三视图图片背景文件
-                # # frontview_bg = request.FILES.get("frontview_bg")
-                # # sideview_bg = request.FILES.get("sideview_bg")
-                # # topview_bg = request.FILES.get("topview_bg")
-                # # 获取三视图图片错误处理
-                # if (
-                #     not frontview
-                #     or not sideview
-                #     or not topview
-                #     # or not frontview_bg
-                #     # or not sideview_bg
-                #     # or not topview_bg
-                # ):
-                #     # 抛出异常
-                #     raise ValueError("三视图图片不能为空")
-                # # 保存三视图图片文件
-                # EyeglassFrameImage_instance.frontview = frontview
-                # EyeglassFrameImage_instance.sideview = sideview
-                # EyeglassFrameImage_instance.topview = topview
-                # # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
-                # EyeglassFrameImage_instance.save()
-                # print("GenerateCalculateTask:",id)
+                EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(entry = EyeglassFrameEntry_instance)
+                # 获取三视图图片文件
+                frontview = request.FILES.get("frontview")
+                sideview = request.FILES.get("sideview")
+                topview = request.FILES.get("topview")
+                # 获取三视图图片背景文件
+                # frontview_bg = request.FILES.get("frontview_bg")
+                # sideview_bg = request.FILES.get("sideview_bg")
+                # topview_bg = request.FILES.get("topview_bg")
+                # 获取三视图图片错误处理
+                if (
+                    not frontview
+                    or not sideview
+                    or not topview
+                    # or not frontview_bg
+                    # or not sideview_bg
+                    # or not topview_bg
+                ):
+                    # 抛出异常
+                    raise ValueError("三视图图片不能为空")
+                # 保存三视图图片文件
+                EyeglassFrameImage_instance.frontview = frontview
+                EyeglassFrameImage_instance.sideview = sideview
+                EyeglassFrameImage_instance.topview = topview
+                # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
+                EyeglassFrameImage_instance.save()
+                print("GenerateCalculateTask:",id)
             """
             生成celery计算任务：传递镜架基础信息表的sku值
             """
             sku = request.POST.get("sku")
             task_id = tasks.calc.delay(sku)
             return R.ok(msg="生成计算任务成功："+str(task_id))
+            # return R.ok(msg="保存成功")
             # else:
             #     # 处理镜架基本信息表表单验证失败的情况
             #     err_msg = regular.get_err(form_EyeglassFrameEntry)
@@ -327,8 +324,8 @@ def GenerateCalculateTask(request: HttpRequest):
     if not EyeglassFrameEntry_instance:
         return R.failed(msg="镜架ID不存在")
     # 判断镜架已经在计算队列中
-    if EyeglassFrameEntry_instance.pixel_measurement_state < 2 or EyeglassFrameEntry_instance.millimeter_measurement_state < 2 or EyeglassFrameEntry_instance.calculation_state < 2 or EyeglassFrameEntry_instance.coordinate_state < 2 or EyeglassFrameEntry_instance.image_mask_state < 2 or EyeglassFrameEntry_instance.image_seg_state < 2 or EyeglassFrameEntry_instance.image_beautify_state < 2 :
-        return R.failed(msg="镜架已经在计算队列中")
+    # if EyeglassFrameEntry_instance.pixel_measurement_state < 2 or EyeglassFrameEntry_instance.millimeter_measurement_state < 2 or EyeglassFrameEntry_instance.calculation_state < 2 or EyeglassFrameEntry_instance.coordinate_state < 2 or EyeglassFrameEntry_instance.image_mask_state < 2 or EyeglassFrameEntry_instance.image_seg_state < 2 or EyeglassFrameEntry_instance.image_beautify_state < 2 :
+    #     return R.failed(msg="镜架已经在计算队列中")
     # 添加镜架到计算队列中
     # 数据库事务处理
     with transaction.atomic():

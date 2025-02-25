@@ -444,127 +444,127 @@ class GetAllFrameTypesView(View):
 """
 添加镜架风格
 """
-def AddStyle(request: HttpRequest):
-	if request.method == 'POST':
-		style = request.POST.get('style', "")
-		if style:
-			styles = EyeglassFrameStyleType.objects.filter(style=style)
-			if len(styles) == 0:
-				style = EyeglassFrameStyleType(style=style)
-				style.save()
-				return JsonResponse(data={"result": "添加风格成功"})
-			else:
-				return JsonResponse(data={"result": "风格已存在"})
-		else:
-			return JsonResponse(data={"result": "风格不能为空"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddStyle(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		style = request.POST.get('style', "")
+# 		if style:
+# 			styles = EyeglassFrameStyleType.objects.filter(style=style)
+# 			if len(styles) == 0:
+# 				style = EyeglassFrameStyleType(style=style)
+# 				style.save()
+# 				return JsonResponse(data={"result": "添加风格成功"})
+# 			else:
+# 				return JsonResponse(data={"result": "风格已存在"})
+# 		else:
+# 			return JsonResponse(data={"result": "风格不能为空"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 	
-def AddStyleList(request: HttpRequest):
-	if request.method == 'POST':
-		style_list = request.POST.getlist('style', [])
-		for style in style_list:
-			styles = EyeglassFrameStyleType.objects.filter(style=style)
-			if len(styles) == 0:
-				style = EyeglassFrameStyleType(style=style)
-				style.save()
-		return JsonResponse(data={"result": "添加风格成功"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddStyleList(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		style_list = request.POST.getlist('style', [])
+# 		for style in style_list:
+# 			styles = EyeglassFrameStyleType.objects.filter(style=style)
+# 			if len(styles) == 0:
+# 				style = EyeglassFrameStyleType(style=style)
+# 				style.save()
+# 		return JsonResponse(data={"result": "添加风格成功"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 
 """
 添加镜架材质
 """
-def AddMaterial(request: HttpRequest):
-	if request.method == 'POST':
-		material = request.POST.get('material', "")
-		if material:
-			materials = EyeglassFrameMaterialType.objects.filter(material=material)
-			if len(materials) == 0:
-				material = EyeglassFrameMaterialType(material=material)
-				material.save()
-				return JsonResponse(data={"result": "添加材质成功"})
-			else:
-				return JsonResponse(data={"result": "材质已存在"})
-		else:
-			return JsonResponse(data={"result": "材质不能为空"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddMaterial(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		material = request.POST.get('material', "")
+# 		if material:
+# 			materials = EyeglassFrameMaterialType.objects.filter(material=material)
+# 			if len(materials) == 0:
+# 				material = EyeglassFrameMaterialType(material=material)
+# 				material.save()
+# 				return JsonResponse(data={"result": "添加材质成功"})
+# 			else:
+# 				return JsonResponse(data={"result": "材质已存在"})
+# 		else:
+# 			return JsonResponse(data={"result": "材质不能为空"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 	
-def AddMaterialList(request: HttpRequest):
-	if request.method == 'POST':
-		material_list = request.POST.getlist('material', [])
-		for material in material_list:
-			materials = EyeglassFrameMaterialType.objects.filter(material=material)
-			if len(materials) == 0:
-				material = EyeglassFrameMaterialType(material=material)
-				material.save()
-		return JsonResponse(data={"result": "添加材质成功"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddMaterialList(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		material_list = request.POST.getlist('material', [])
+# 		for material in material_list:
+# 			materials = EyeglassFrameMaterialType.objects.filter(material=material)
+# 			if len(materials) == 0:
+# 				material = EyeglassFrameMaterialType(material=material)
+# 				material.save()
+# 		return JsonResponse(data={"result": "添加材质成功"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 	
 
 """
 添加镜架颜色
 """
-def AddColor(request: HttpRequest):
-	if request.method == 'POST':
-		color = request.POST.get('color', "")
-		if color:
-			colors = EyeglassFrameColorType.objects.filter(color=color)
-			if len(colors) == 0:
-				color = EyeglassFrameColorType(color=color)
-				color.save()
-				return JsonResponse(data={"result": "添加颜色成功"})
-			else:
-				return JsonResponse(data={"result": "颜色已存在"})
-		else:
-			return JsonResponse(data={"result": "颜色不能为空"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddColor(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		color = request.POST.get('color', "")
+# 		if color:
+# 			colors = EyeglassFrameColorType.objects.filter(color=color)
+# 			if len(colors) == 0:
+# 				color = EyeglassFrameColorType(color=color)
+# 				color.save()
+# 				return JsonResponse(data={"result": "添加颜色成功"})
+# 			else:
+# 				return JsonResponse(data={"result": "颜色已存在"})
+# 		else:
+# 			return JsonResponse(data={"result": "颜色不能为空"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 	
-def AddColorList(request: HttpRequest):
-	if request.method == 'POST':
-		color_list = request.POST.getlist('color', [])
-		for color in color_list:
-			colors = EyeglassFrameColorType.objects.filter(color=color)
-			if len(colors) == 0:
-				color = EyeglassFrameColorType(color=color)
-				color.save()
-		return JsonResponse(data={"result": "添加颜色成功"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddColorList(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		color_list = request.POST.getlist('color', [])
+# 		for color in color_list:
+# 			colors = EyeglassFrameColorType.objects.filter(color=color)
+# 			if len(colors) == 0:
+# 				color = EyeglassFrameColorType(color=color)
+# 				color.save()
+# 		return JsonResponse(data={"result": "添加颜色成功"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 
 """
 添加镜架形状
 """
-def AddShape(request: HttpRequest):
-	if request.method == 'POST':
-		shape = request.POST.get('shape', "")
-		if shape:
-			shapes = EyeglassFrameShapeType.objects.filter(shape=shape)
-			if len(shapes) == 0:
-				shape = EyeglassFrameShapeType(shape=shape)
-				shape.save()
-				return JsonResponse(data={"result": "添加形状成功"})
-			else:
-				return JsonResponse(data={"result": "形状已存在"})
-		else:
-			return JsonResponse(data={"result": "形状不能为空"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddShape(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		shape = request.POST.get('shape', "")
+# 		if shape:
+# 			shapes = EyeglassFrameShapeType.objects.filter(shape=shape)
+# 			if len(shapes) == 0:
+# 				shape = EyeglassFrameShapeType(shape=shape)
+# 				shape.save()
+# 				return JsonResponse(data={"result": "添加形状成功"})
+# 			else:
+# 				return JsonResponse(data={"result": "形状已存在"})
+# 		else:
+# 			return JsonResponse(data={"result": "形状不能为空"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 	
-def AddShapeList(request: HttpRequest):
-	if request.method == 'POST':
-		shape_list = request.POST.getlist('shape', [])
-		for shape in shape_list:
-			shapes = EyeglassFrameShapeType.objects.filter(shape=shape)
-			if len(shapes) == 0:
-				shape = EyeglassFrameShapeType(shape=shape)
-				shape.save()
-		return JsonResponse(data={"result": "添加形状成功"})
-	else:
-		return JsonResponse(data={"result": "请求方式错误"})
+# def AddShapeList(request: HttpRequest):
+# 	if request.method == 'POST':
+# 		shape_list = request.POST.getlist('shape', [])
+# 		for shape in shape_list:
+# 			shapes = EyeglassFrameShapeType.objects.filter(shape=shape)
+# 			if len(shapes) == 0:
+# 				shape = EyeglassFrameShapeType(shape=shape)
+# 				shape.save()
+# 		return JsonResponse(data={"result": "添加形状成功"})
+# 	else:
+# 		return JsonResponse(data={"result": "请求方式错误"})
 
 
 

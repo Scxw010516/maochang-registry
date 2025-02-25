@@ -41,12 +41,12 @@ urlpatterns = [
     path('api/get-all-frame-types', views.GetAllFrameTypesView.as_view()), # get: 获取所有形状
     
     ###################以下为测试用####################
-    path('api/add-style', views.AddStyle), # post: 添加风格
-    path('api/add-style-list', views.AddStyleList), # post: 添加风格列表
-    path('api/add-material', views.AddMaterial), # post: 添加材质
-    path('api/add-material-list', views.AddMaterialList), # post: 添加材质列表
-    path('api/add-color', views.AddColor), # post: 添加颜色
-    path('api/add-color-list', views.AddColorList), # post: 添加颜色列表
-    path('api/add-shape', views.AddShape), # post: 添加形状
-    path('api/add-shape-list', views.AddShapeList), # post: 添加形状列表
+    # path('api/add-style', views.AddStyle), # post: 添加风格
+    # path('api/add-style-list', views.AddStyleList), # post: 添加风格列表
+    # path('api/add-material', views.AddMaterial), # post: 添加材质
+    # path('api/add-material-list', views.AddMaterialList), # post: 添加材质列表
+    # path('api/add-color', views.AddColor), # post: 添加颜色
+    # path('api/add-color-list', views.AddColorList), # post: 添加颜色列表
+    # path('api/add-shape', views.AddShape), # post: 添加形状
+    # path('api/add-shape-list', views.AddShapeList), # post: 添加形状列表
 ]
