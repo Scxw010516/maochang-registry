@@ -59,14 +59,18 @@ def get_lens_contours(mask):
 
 
 def get_reflection(mask, ratio=0.3, alpha=1):
-    lens = cv2.imread("beautify/reflection/lens.png", cv2.IMREAD_UNCHANGED)
+    import os
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    lens_path = os.path.join(os.path.dirname(current_dir), "reflection","lens.png")
+    lens = cv2.imread(lens_path, cv2.IMREAD_UNCHANGED)
     # lens_mask = lens[:, :, 3].astype(np.float32)
     # lens_mask = (lens_mask * alpha).astype(np.uint8)
     assert lens.shape[2] == 4, "lens must be in BGRA or RGBA"
     h, w = lens.shape[:2]
     # 随机shadow
     shadow_index = random.randint(1, 3)
-    shadow = cv2.imread(f"beautify/reflection/{shadow_index}.png", cv2.IMREAD_UNCHANGED)
+    shadow_path = os.path.join(os.path.dirname(current_dir), "reflection", f"{shadow_index}.png")
+    shadow = cv2.imread(shadow_path, cv2.IMREAD_UNCHANGED)
     if len(shadow.shape) != 2:
         shadow = cv2.cvtColor(shadow, cv2.COLOR_BGR2GRAY)
     shadow_h, shadow_w = shadow.shape
@@ -127,11 +131,13 @@ def add_lens(
 
 
 def main():
+    import os
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
     glasses_path = "glasses.png"
     mask_path = "mask.png"
     glasses = cv2.imread(glasses_path, cv2.IMREAD_UNCHANGED)
     mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)
-    reflection = cv2.imread("reflection/lens.png", cv2.IMREAD_UNCHANGED)
+    # reflection = cv2.imread("reflection/lens.png", cv2.IMREAD_UNCHANGED)
     # print(reflection.shape)
     # glasses = add_lens(glasses, mask, reflections=reflection)
     glasses = add_lens(glasses, mask)

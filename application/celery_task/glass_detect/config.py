@@ -1,4 +1,5 @@
 import numpy as np
+
 default_options = {
     "types": {
         "frame": 0, # 对应EyeglassFrameEntry表的frame_type
@@ -7,7 +8,7 @@ default_options = {
         "special": False, # 默认为False
     }
 }
-# 坐标
+
 default_front_points = {
     "frame_bounding_points": [[-1, -1], [-1, -1]],
     "pile_points": [[-1, -1], [-1, -1]],
@@ -33,7 +34,6 @@ default_up_points = {
     "tail_points": [[-1, -1], [-1, -1]],
     "bridge_point": [-1, -1],
 }
-#px
 default_parameters = {
     "lens_width_left": -1,
     "lens_width_right": -1,
@@ -63,7 +63,6 @@ default_parameters = {
     "spread_angle_right": -1,
     "pile_distance": -1,
 }
-#mm
 default_sizes = {
     "lens_width_left": -1,
     "lens_width_right": -1,
@@ -94,7 +93,7 @@ default_sizes = {
     "pile_distance": -1,
 }
 
-#输出 state：0-失败，1-成功
+
 default_output = {
     "mask": {
         "state": 0,
@@ -123,11 +122,8 @@ default_output = {
             "left": default_left_points,
         },
     },
-    #px
     "parameter": {"state": 0, "data": default_parameters},
-    #mm
     "size": {"state": 0, "data": default_sizes},
-    # 参数
     "shape": {
         "state": 0,
         "data": {

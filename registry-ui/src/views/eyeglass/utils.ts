@@ -76,14 +76,12 @@ export const getAllMaterials = async () => {
         return;
       } else {
         // 将返回的材质列表赋值给store中的material_options
-        console.log(response.data.data);
         options.material_options = response.data.data.map(
           (item: { id: number; material: string }) => ({
             value: item.id,
             label: item.material,
           }),
         );
-        console.log(options.material_options);
       }
     })
     .catch((error) => {

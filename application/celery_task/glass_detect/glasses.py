@@ -226,7 +226,7 @@ def process(images: dict, models: dict, options: dict=default_options):
 
 
 if __name__ == "__main__":
-    images = get_capture_images("201300053024730500")
+    images = get_capture_images("201300053024730270")
     models = get_models()
     output = process(images, models, default_options)
     print(output)
