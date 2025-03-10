@@ -652,75 +652,6 @@
           </a-row>
         </a-col>
       </a-row>
-      <!-- 详细信息modal -->
-      <a-modal
-        width="calc(360*3px + 80*2px + 44*2px)"
-        v-model:open="showDetailModal"
-        :footer="null"
-        @cancel="onClickCancelDetailModal"
-      >
-        <a-row>
-          <p style="margin: 0px 15.5px; font-size: 30px; font-weight: bold">
-            详细信息
-          </p>
-        </a-row>
-        <a-form
-          ref="EyeGlassDetailModelFormRef"
-          :model="EyeGlassDetailModelFormState"
-          :rules="EyeGlassDetailFormRules"
-          hideRequiredMark
-          layout="inline"
-          autocomplete="off"
-          :labelCol="{ span: 10 }"
-          :wrapperCol="{ span: 14 }"
-          labelAlign="left"
-        >
-          <a-row :gutter="[80, 20]" style="margin: 24px 20px">
-            <a-col
-              :span="8"
-              v-for="(value, key) in EyeGlassDetailFormLabel"
-              :key="key"
-            >
-              <a-form-item :label="value" class="modal-item" :name="key">
-                <a-input
-                  class="modal-input"
-                  v-model:value="EyeGlassDetailModelFormState[key]"
-                  :disabled="isInputEditable !== EyeGlassDetailFormLabel[key]"
-                  :suffix="EyeGlassDetailFormUnit[key]"
-                >
-                  <template #suffix>
-                    <FormOutlined
-                      style="color: rgba(0, 0, 0, 0.45)"
-                      @click="isInputEditable = EyeGlassDetailFormLabel[key]"
-                    />
-                  </template>
-                </a-input>
-              </a-form-item>
-            </a-col>
-          </a-row>
-        </a-form>
-
-        <!-- 详细信息modal：保存按钮 -->
-        <a-row width="100%" justify="end">
-          <a-button
-            style="
-              margin: 16px 20px 46.9px;
-              right: 0;
-              border-radius: 12px;
-              width: 100px;
-              height: 60px;
-              background-color: #8675ff;
-              color: #ffffff;
-              justify-content: center;
-              align-items: center;
-              font-size: 16px;
-            "
-            @click="onClickSaveDetailModal"
-          >
-            保存
-          </a-button>
-        </a-row>
-      </a-modal>
     </a-col>
   </a-row>
   <!-- 操作按钮 -->
@@ -2007,16 +1938,6 @@ const initEyeGlassBasicFormState = () => {
   Object.assign(EyeGlassBasicFormState, EyeGlassBasicFormInitState);
 };
 
-// 功能函数：初始化风格参数表单
-// const initEyeGlassStyleFormState = () => {
-//   Object.assign(EyeGlassStyleFormState, EyeGlassStyleFormInitState);
-// };
-
-// 功能函数：初始化详细参数表单
-// const initEyeGlassDetailFormState = () => {
-//   Object.assign(EyeGlassDetailFormState, EyeGlassDetailFormInitState);
-// };
-
 // 功能函数：初始化详细参数模态框表单
 const initEyeGlassDetailModelFormState = () => {
   Object.assign(EyeGlassDetailModelFormState, EyeGlassDetailModelFormInitState);
@@ -2362,29 +2283,29 @@ const onClickResetWeight = () => {
 };
 
 // 详细信息模态窗按钮点击事件
-const onClickShowDetailModal = () => {
-  isInputEditable.value = "";
-  showDetailModal.value = true;
-  Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-    EyeGlassDetailModelFormState[key] = value;
-  });
-};
+// const onClickShowDetailModal = () => {
+//   isInputEditable.value = "";
+//   showDetailModal.value = true;
+//   Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
+//     EyeGlassDetailModelFormState[key] = value;
+//   });
+// };
 
 // 详细信息模态窗保存按钮点击事件
-const onClickSaveDetailModal = () => {
-  EyeGlassDetailModelFormRef.value
-    .validate()
-    .then(() => {
-      Object.entries(EyeGlassDetailModelFormState).forEach(([key, value]) => {
-        EyeGlassDetailFormState[key] = value;
-      });
-      initEyeGlassDetailModelFormState();
-      showDetailModal.value = false;
-    })
-    .catch(() => {
-      message.error("请完善镜架详细信息");
-    });
-};
+// const onClickSaveDetailModal = () => {
+//   EyeGlassDetailModelFormRef.value
+//     .validate()
+//     .then(() => {
+//       Object.entries(EyeGlassDetailModelFormState).forEach(([key, value]) => {
+//         EyeGlassDetailFormState[key] = value;
+//       });
+//       initEyeGlassDetailModelFormState();
+//       showDetailModal.value = false;
+//     })
+//     .catch(() => {
+//       message.error("请完善镜架详细信息");
+//     });
+// };
 
 // 详细信息模态窗取消按钮或关闭按钮点击事件
 const onClickCancelDetailModal = () => {

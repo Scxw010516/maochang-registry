@@ -240,7 +240,7 @@
       centered
       :keyboard="false"
       :maskClosable="false"
-      width="800px"
+      width="1000px"
       :bodyStyle="modalBodyStyle"
       footer=""
       @cancel="onClickCancelEditModal"
@@ -351,8 +351,8 @@
             labelAlign="left"
             hideRequiredMark
           >
-            <a-row :gutter="[30, 30]" style="margin-top: 25px; width: 650px">
-              <a-col style="height: 30px" :span="12">
+            <a-row :gutter="[30, 30]" style="margin-top: 25px; width: 850px">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item label="SKU" name="sku" class="modal-basic-item">
                   <a-input
                     v-model:value="EyeGlassBasicFormState.sku"
@@ -360,7 +360,7 @@
                   ></a-input>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item label="品牌" name="brand" class="modal-basic-item">
                   <a-auto-complete
                     v-model:value="EyeGlassBasicFormState.brand"
@@ -369,7 +369,7 @@
                   ></a-auto-complete>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="型号"
                   name="model_type"
@@ -382,7 +382,7 @@
                   ></a-auto-complete>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item label="价格" name="price" class="modal-basic-item">
                   <a-input-number
                     v-model:value="EyeGlassBasicFormState.price"
@@ -392,7 +392,7 @@
                   ></a-input-number>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="材质"
                   name="material"
@@ -405,7 +405,7 @@
                   ></a-select>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item label="颜色" name="color" class="modal-basic-item">
                   <a-select
                     v-model:value="EyeGlassBasicFormState.color"
@@ -414,7 +414,7 @@
                   ></a-select>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item label="形状" name="shape" class="modal-basic-item">
                   <a-select
                     v-model:value="EyeGlassBasicFormState.shape"
@@ -423,7 +423,8 @@
                   ></a-select>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="鼻托"
                   name="isnosepad"
@@ -451,7 +452,7 @@
                   </a-radio-group>
                 </a-form-item>
               </a-col>
-              <a-col :span="12">
+              <a-col :span="8">
                 <a-form-item
                   label="透明"
                   name="is_transparent"
@@ -465,7 +466,7 @@
                   </a-radio-group>
                 </a-form-item>
               </a-col>
-              <a-col :span="12">
+              <a-col :span="8">
                 <a-form-item
                   label="镜框类型"
                   name="frame_type"
@@ -479,7 +480,7 @@
                   </a-radio-group>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item label="库存" name="stock" class="modal-basic-item">
                   <a-input-number
                     v-model:value="EyeGlassBasicFormState.stock"
@@ -488,7 +489,7 @@
                   ></a-input-number>
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="撑片弧度"
                   name="lens_radian"
@@ -500,7 +501,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="镜片宽度"
                   name="lens_width_st"
@@ -512,7 +513,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="鼻梁宽度"
                   name="bridge_width_st"
@@ -524,7 +525,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="镜腿长度"
                   name="temple_length_st"
@@ -536,7 +537,7 @@
                   />
                 </a-form-item>
               </a-col>
-              <a-col style="height: 30px" :span="12">
+              <a-col style="height: 30px" :span="8">
                 <a-form-item
                   label="镜架重量"
                   name="weight"
@@ -557,36 +558,40 @@
             editModalState.modalDetailsType === 'explicit' &&
             editModalState.millimeter_measurement_state == 2
           "
-          style="height: 590px; width: 680px; overflow: auto; margin-top: 25px"
+          style="height: 590px; overflow: auto; margin-top: 25px"
         >
-          <a-form
-            ref="EyeGlassDetailFormRef"
-            :model="EyeGlassDetailFormState"
-            :rules="EyeGlassDetailFormRules"
-            hideRequiredMark
-            layout="inline"
-            autocomplete="off"
-            :labelCol="{ span: 12 }"
-            :wrapperCol="{ span: 12 }"
-            labelAlign="left"
-          >
-            <a-row :gutter="[30, 30]" style="width: 650px">
-              <a-col
-                v-for="(value, key) in EyeGlassDetailFormLabel"
-                :key="key"
-                :span="12"
+          <a-row :gutter="[30, 30]" style="width: 800px">
+            <a-col
+              v-for="(value, key) in EyeGlassDetailFormLabel"
+              :key="key"
+              :span="6"
+            >
+              <a-row
+                style="height: 100%; width: 100%"
+                justify="center"
+                align="bottom"
               >
-                <a-form-item :label="EyeGlassDetailFormLabel[key]">
+                <a-col :span="24">
+                  <img
+                    :src="`/src/assets/params_pic/${key}.svg`"
+                    alt="SVG Image"
+                    width="70%"
+                    style="display: block; margin: 0 auto"
+                  />
+                </a-col>
+                <a-col>
+                  {{ EyeGlassDetailFormLabel[key] }}
+                </a-col>
+                <a-col :span="24">
                   <a-input
                     v-model:value="EyeGlassDetailFormState[key]"
                     :suffix="EyeGlassDetailFormUnit[key]"
                     style="border-radius: 9px; padding-left: 11px; height: 30px"
-                  >
-                  </a-input>
-                </a-form-item>
-              </a-col>
-            </a-row>
-          </a-form>
+                  ></a-input>
+                </a-col>
+              </a-row>
+            </a-col>
+          </a-row>
         </div>
         <!-- 保存按钮 -->
         <a-button
@@ -1973,6 +1978,9 @@ const sendCalculationTask = async (id: number) => {
 /* 修改modal basic：消除input-number的重复padding */
 .modal-basic-item >>> .ant-input-number-input {
   padding: 0;
+}
+.modal-basic-item :deep(.ant-radio-button-wrapper) {
+  padding-inline: 7.85px;
 }
 
 /* 修改modal explicit item 用于镜架重量和风格 */
