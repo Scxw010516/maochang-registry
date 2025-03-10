@@ -394,9 +394,7 @@
 
       <!-- 信息展示 -->
       <a-row style="margin-top: 18px">
-        <!-- 基础信息 -->
         <a-col :span="24">
-          <p class="calculate-title">基础信息</p>
           <!-- 录入的基础信息 -->
           <a-form
             ref="EyeGlassBasicFormRef"
@@ -604,66 +602,19 @@
                   />
                 </a-form-item>
               </a-col>
-              <!-- <a-col :span="6">
-                      <a-form-item
-                        class="calculate-item"
-                        label="风格"
-                        name="style"
-                        :labelCol="{ span: 6 }"
-                        :wrapperCol="{ span: 18 }"
-                        labelAlign="left"
-                      >
-                        <a-select
-                          v-model:value="EyeGlassBasicFormState.style"
-                          mode="multiple"
-                          placeholder="选择风格（多选）"
-                          :max-tag-count="1"
-                          :max-tag-text-length="5"
-                          :options="options.style_options"
-                        />
-                      </a-form-item>
-                    </a-col> -->
             </a-row>
           </a-form>
-          <!-- 计算用参数 | TODO：正式上线不需要展示 -->
-          <!-- <a-form layout="inline" autocomplete="off" style="margin: 8px">
-                  <a-form-item
-                    class="calculate-item"
-                    v-for="(value, key) in EyeGlassCalculateParamsLabel"
-                    :label="EyeGlassCalculateParamsLabel[key]"
-                    :key="key"
-                    :name="key"
-                  >
-                    <a-input
-                      class="calculate-input"
-                      v-model:value="EyeGlassCalculateParamsState[key]"
-                    ></a-input>
-                  </a-form-item>
-                </a-form> -->
-        </a-col>
-        <!-- 详细信息 -->
-        <a-col>
-          <!-- 详细信息及模态窗按钮 -->
-          <p class="calculate-title">
-            详细信息
-            <MenuUnfoldOutlined
-              style="margin-left: 5px; font-size: 20px; color: #666666"
-              @click="onClickShowDetailModal"
-            />
-            <a-button style="margin-left: 30px" @click="onClickCalculateParams">
-              计算参数和风格
-            </a-button>
-          </p>
+          <!-- 镜架重量 -->
           <a-row
             :gutter="[26, 32]"
             style="
               margin-left: 40px !important;
+              margin-top: 32px;
               width: calc(100% - 85px);
               margin-bottom: 32px;
             "
           >
             <a-col :span="6">
-              <!-- 计算参数：镜架重量 -->
               <a-form
                 ref="EyeGlassWeightFormRef"
                 :model="EyeGlassWeightFormState"
@@ -671,8 +622,8 @@
                 hideRequiredMark
                 layout="inline"
                 autocomplete="off"
-                :labelCol="{ span: 10 }"
-                :wrapperCol="{ span: 14 }"
+                :labelCol="{ span: 6 }"
+                :wrapperCol="{ span: 18 }"
                 labelAlign="left"
               >
                 <a-form-item
@@ -682,7 +633,7 @@
                 >
                   <a-input
                     v-model:value="EyeGlassWeightFormState.weight"
-                    :suffix="EyeGlassWeightFormUnit.weight"
+                    :suffix="EyeGlassBasicFormUnit.weight"
                   ></a-input>
                 </a-form-item>
               </a-form>
@@ -698,63 +649,7 @@
                 重新称重
               </a-button>
             </a-col>
-            <a-col :span="6">
-              <!-- 镜架风格参数 -->
-              <!-- <a-form
-                ref="EyeGlassStyleFormRef"
-                :model="EyeGlassStyleFormState"
-                :rules="EyeGlassStyleFormRules"
-                hideRequiredMark
-                layout="inline"
-                autocomplete="off"
-                :labelCol="{ span: 10 }"
-                :wrapperCol="{ span: 14 }"
-                labelAlign="left"
-              >
-                <a-form-item class="calculate-item" label="风格" name="style">
-                  <a-select
-                    v-model:value="EyeGlassStyleFormState.style"
-                    mode="multiple"
-                    placeholder="选择风格（多选）"
-                    :max-tag-count="1"
-                    :maxTagTextLength="2"
-                    :options="options.style_options"
-                  />
-                </a-form-item>
-              </a-form> -->
-            </a-col>
           </a-row>
-          <!-- 计算参数：详细信息 -->
-          <a-form
-            ref="EyeGlassDetailFormRef"
-            :model="EyeGlassDetailFormState"
-            :rules="EyeGlassDetailFormRules"
-            hideRequiredMark
-            layout="inline"
-            autocomplete="off"
-            :labelCol="{ span: 10 }"
-            :wrapperCol="{ span: 14 }"
-            labelAlign="left"
-          >
-            <a-row
-              :gutter="[26, 32]"
-              style="margin-left: 40px !important; width: calc(100% - 85px)"
-            >
-              <a-col
-                :span="6"
-                v-for="(value, key) in EyeGlassDetailToviewFormLabel"
-                :key="key"
-              >
-                <a-form-item :label="value" class="calculate-item" :name="key">
-                  <a-input
-                    v-model:value="EyeGlassDetailFormState[key]"
-                    :suffix="EyeGlassDetailFormUnit[key]"
-                    disabled
-                  ></a-input>
-                </a-form-item>
-              </a-col>
-            </a-row>
-          </a-form>
         </a-col>
       </a-row>
       <!-- 详细信息modal -->
@@ -857,11 +752,7 @@
       >重拍
     </a-button>
     <a-button class="operation-button" @click="onClickReturn">返回 </a-button>
-    <a-button
-      class="operation-button-primary"
-      @click="onClickCaptureOrConfirm"
-      :disabled="currentStage === 'input-params' && !enabledSubmitButton"
-    >
+    <a-button class="operation-button-primary" @click="onClickCaptureOrConfirm">
       {{ currentStage === "preview" ? "拍摄" : "确认" }}
     </a-button>
   </a-row>
@@ -925,10 +816,11 @@ import {
   EyeGlassDetailFormLabel, // 镜架详细参数标签
   EyeGlassDetailToviewFormLabel, // 镜架详细参数转视图参数标签
   EyeGlassDetailFormUnit, // 镜架详细参数转视图参数单位标签
-  EyeGlassWeightForm, // 镜架重量参数接口
-  EyeGlassWeightFormUnit, // 镜架重量参数单位标签
+  // EyeGlassWeightForm, // 镜架重量参数接口
+  // EyeGlassWeightFormUnit, // 镜架重量参数单位标签
   EyeGlassImageForm, // 镜架图像参数接口
-  EyeGlassImageBackgroundForm, // 镜架图像背景参数接口
+  EyeGlassImageBackgroundForm,
+  EyeGlassBasicFormUnit, // 镜架图像背景参数接口
 } from "./params";
 import { initFormOptions } from "./utils";
 
@@ -1034,6 +926,7 @@ const EyeGlassBasicFormInitState: UnwrapRef<EyeGlassBasicForm> = reactive({
   lens_width_st: null,
   bridge_width_st: null,
   temple_length_st: null,
+  weight: "",
 });
 
 // 镜架基础参数表单数据
@@ -1053,6 +946,7 @@ const EyeGlassBasicFormState: UnwrapRef<EyeGlassBasicForm> = reactive({
   lens_width_st: null,
   bridge_width_st: null,
   temple_length_st: null,
+  weight: "",
 });
 // 镜架基础参数表单校验规则
 const EyeGlassBasicFormRules: Record<string, Rule[]> = {
@@ -1197,215 +1091,6 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
 //     { required: true, message: "请选择镜框风格", trigger: ["blur", "change"] },
 //   ],
 // };
-
-// 镜架详细参数表单实例
-const EyeGlassDetailFormRef = ref();
-// 镜架详细参数表单初始化数据
-const EyeGlassDetailFormInitState: UnwrapRef<EyeGlassDetailForm> = reactive({
-  frame_height: "",
-  frame_width: "",
-  pile_height_left: "",
-  pile_height_right: "",
-  frame_top_width: "",
-  top_points: "",
-  frame_rects: "",
-  lens_width_left: "",
-  lens_width_right: "",
-  lens_height_left: "",
-  lens_height_right: "",
-  lens_diagonal_left: "",
-  lens_diagonal_right: "",
-  lens_area_left: "",
-  lens_area_right: "",
-  bridge_width: "",
-  lens_center_points: "",
-  lens_top_points: "",
-  vertical_angle: "",
-  forward_angle: "",
-  temple_angle: "",
-  drop_length: "",
-  face_angle: "",
-  sagittal_angle_left: "",
-  sagittal_angle_right: "",
-  temple_length_left: "",
-  temple_length_right: "",
-  temporal_width: "",
-  spread_angle_left: "",
-  spread_angle_right: "",
-  pile_distance: "",
-});
-// 镜架详细参数表单数据
-const EyeGlassDetailFormState: UnwrapRef<EyeGlassDetailForm> = reactive({
-  frame_height: "",
-  frame_width: "",
-  pile_height_left: "",
-  pile_height_right: "",
-  frame_top_width: "",
-  top_points: "",
-  frame_rects: "",
-  lens_width_left: "",
-  lens_width_right: "",
-  lens_height_left: "",
-  lens_height_right: "",
-  lens_diagonal_left: "",
-  lens_diagonal_right: "",
-  lens_area_left: "",
-  lens_area_right: "",
-  bridge_width: "",
-  lens_center_points: "",
-  lens_top_points: "",
-  vertical_angle: "",
-  forward_angle: "",
-  temple_angle: "",
-  drop_length: "",
-  face_angle: "",
-  sagittal_angle_left: "",
-  sagittal_angle_right: "",
-  temple_length_left: "",
-  temple_length_right: "",
-  temporal_width: "",
-  spread_angle_left: "",
-  spread_angle_right: "",
-  pile_distance: "",
-});
-// 镜架详细参数表单校验规则
-const EyeGlassDetailFormRules: Record<string, Rule[]> = {
-  frame_height: [{ trigger: ["blur", "change"] }],
-  frame_width: [{ trigger: ["blur", "change"] }],
-  pile_height_left: [{ trigger: ["blur", "change"] }],
-  pile_height_right: [{ trigger: ["blur", "change"] }],
-  frame_top_width: [{ trigger: ["blur", "change"] }],
-  top_points: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  frame_rects: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_width_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_width_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_height_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_height_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_diagonal_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_diagonal_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_area_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_area_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  bridge_width: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_center_points: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  lens_top_points: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  vertical_angle: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  forward_angle: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  temple_angle: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  drop_length: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  face_angle: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  sagittal_angle_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  sagittal_angle_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  temple_length_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  temple_length_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  temporal_width: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  spread_angle_left: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  spread_angle_right: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-  pile_distance: [
-    {
-      trigger: ["blur", "change"],
-    },
-  ],
-};
 // modal展示的镜架详细参数表单实例
 const EyeGlassDetailModelFormRef = ref();
 // modal展示的镜架详细参数表单初始化数据
@@ -1483,11 +1168,11 @@ const hasWeightLoged = ref<boolean>(false);
 // 镜架重量参数表单实例
 const EyeGlassWeightFormRef = ref();
 // 镜架重量参数表单初始化数据
-const EyeGlassWeightFormInitState: UnwrapRef<EyeGlassWeightForm> = reactive({
+const EyeGlassWeightFormInitState = reactive({
   weight: "",
 });
 // 镜架重量参数表单数据
-const EyeGlassWeightFormState: UnwrapRef<EyeGlassWeightForm> = reactive({
+const EyeGlassWeightFormState = reactive({
   weight: "",
 });
 // 镜架重量参数表单校验规则
@@ -1935,26 +1620,16 @@ const uploadNewEyeglassFrame = async () => {
     message.error("请完善镜架基础信息");
     isFormValid = false;
   });
-  // 检查镜架风格信息是否完善
-  // await EyeGlassStyleFormRef.value.validate().catch(() => {
-  //   message.error("请完善镜架风格信息");
-  //   isFormValid = false;
-  // });
-  // 检查镜架详细信息是否完善
-  await EyeGlassDetailFormRef.value.validate().catch(() => {
-    message.error("请完善镜架详细信息");
-    isFormValid = false;
-  });
   // 检查镜架重量信息是否完善
   await EyeGlassWeightFormRef.value.validate().catch(() => {
     message.error("请完善镜架重量信息");
     isFormValid = false;
   });
   // 检查镜架图片信息是否完善
-  // if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
-  //   message.error("镜架三视图信息错误");
-  //   isFormValid = false;
-  // }
+  if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
+    message.error("镜架三视图信息错误");
+    isFormValid = false;
+  }
   // 检查镜架采集仓库地址是否完善
   if (!user.warehouse) {
     message.error("请完善镜架采集仓库地址");
@@ -2047,12 +1722,6 @@ const uploadNewEyeglassFrame = async () => {
       ? EyeGlassBasicFormState.temple_length_st.toString()
       : "",
   );
-  // 将镜架风格信息添加到FormData对象
-  // formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
-  // 将镜架详细信息添加到FormData对象
-  // Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-  //   formData.append(key, value); // 将值转换为字符串后添加
-  // });
   // 将镜架重量信息添加到FormData对象
   formData.append("weight", EyeGlassWeightFormState.weight);
   // 将镜架图片信息添加到FormData对象
@@ -2084,10 +1753,10 @@ const saveNewEyeglassFrame = async () => {
   //   isFormValid = false;
   // });
   // 检查镜架详细信息是否完善
-  await EyeGlassDetailFormRef.value.validate().catch(() => {
-    message.error("请完善镜架详细信息");
-    isFormValid = false;
-  });
+  // await EyeGlassDetailFormRef.value.validate().catch(() => {
+  //   message.error("请完善镜架详细信息");
+  //   isFormValid = false;
+  // });
   // 检查镜架重量信息是否完善
   await EyeGlassWeightFormRef.value.validate().catch(() => {
     message.error("请完善镜架重量信息");
@@ -2261,63 +1930,63 @@ const readWeight = () => {
 };
 
 // 功能函数：访问WebSocket，计算镜架参数
-const calculateParamsAndStyles = () => {
-  // 计算参数loading提示
-  const calculatingmessage = message.loading("正在计算参数和风格", 0);
-  // 访问WebSocket，计算镜架参数
-  const ws = new WebSocket(`ws://localhost:8765/calc-frame`);
-  // 监听WebSocket消息
-  ws.addEventListener("message", (event) => {
-    // 解析返回的参数
-    const result = JSON.parse(event.data as string);
-    if (result.code == "-1") {
-      // 显示相机状态错误Modal提示
-      showCameraStateErrorModal.value = true;
-      // 将相机状态置为false
-      cameraState.value = false;
-      // 移除计算参数loading提示
-      calculatingmessage();
-    } else {
-      const calculated_params = result.data;
-      // 判断计算结果flag，若为false则提示计算失败
-      if (calculated_params["flag"] === 0) {
-        // 将计算参数赋值给EyeGlassDetailFormState表单
-        Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
-          if (key in calculated_params) {
-            EyeGlassDetailFormState[key] = calculated_params[key];
-          }
-        });
-        // 将提交按钮置为可用
-        enabledSubmitButton.value = true;
-        // 移除计算参数loading提示
-        calculatingmessage();
-        // 提示计算失败
-        message.success("计算镜架参数成功", 5);
-      } else {
-        // 将计算参数赋值给EyeGlassDetailFormState表单
-        Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
-          if (key in calculated_params) {
-            EyeGlassDetailFormState[key] = calculated_params[key];
-          }
-        });
-        // 将提交按钮置为可用
-        enabledSubmitButton.value = true;
-        // 移除计算参数loading提示
-        calculatingmessage();
-        message.success("计算镜架参数成功", 5);
-      }
-    }
-    ws.close();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("参数计算失败，请检查设备连接", 10);
-    ws.close();
-  });
+// const calculateParamsAndStyles = () => {
+//   // 计算参数loading提示
+//   const calculatingmessage = message.loading("正在计算参数和风格", 0);
+//   // 访问WebSocket，计算镜架参数
+//   const ws = new WebSocket(`ws://localhost:8765/calc-frame`);
+//   // 监听WebSocket消息
+//   ws.addEventListener("message", (event) => {
+//     // 解析返回的参数
+//     const result = JSON.parse(event.data as string);
+//     if (result.code == "-1") {
+//       // 显示相机状态错误Modal提示
+//       showCameraStateErrorModal.value = true;
+//       // 将相机状态置为false
+//       cameraState.value = false;
+//       // 移除计算参数loading提示
+//       calculatingmessage();
+//     } else {
+//       const calculated_params = result.data;
+//       // 判断计算结果flag，若为false则提示计算失败
+//       if (calculated_params["flag"] === 0) {
+//         // 将计算参数赋值给EyeGlassDetailFormState表单
+//         Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
+//           if (key in calculated_params) {
+//             EyeGlassDetailFormState[key] = calculated_params[key];
+//           }
+//         });
+//         // 将提交按钮置为可用
+//         enabledSubmitButton.value = true;
+//         // 移除计算参数loading提示
+//         calculatingmessage();
+//         // 提示计算失败
+//         message.success("计算镜架参数成功", 5);
+//       } else {
+//         // 将计算参数赋值给EyeGlassDetailFormState表单
+//         Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
+//           if (key in calculated_params) {
+//             EyeGlassDetailFormState[key] = calculated_params[key];
+//           }
+//         });
+//         // 将提交按钮置为可用
+//         enabledSubmitButton.value = true;
+//         // 移除计算参数loading提示
+//         calculatingmessage();
+//         message.success("计算镜架参数成功", 5);
+//       }
+//     }
+//     ws.close();
+//   });
+//   // 监听错误事件
+//   ws.addEventListener("error", () => {
+//     message.error("参数计算失败，请检查设备连接", 10);
+//     ws.close();
+//   });
 
-  // 计算镜架风格，todo：未来要用websocket或http请求去计算
-  // EyeGlassStyleFormState.style = [1];
-};
+//   // 计算镜架风格，todo：未来要用websocket或http请求去计算
+//   // EyeGlassStyleFormState.style = [1];
+// };
 
 // 功能函数：清楚摄像头缓存
 const clearCameraCache = async () => {
@@ -2344,9 +2013,9 @@ const initEyeGlassBasicFormState = () => {
 // };
 
 // 功能函数：初始化详细参数表单
-const initEyeGlassDetailFormState = () => {
-  Object.assign(EyeGlassDetailFormState, EyeGlassDetailFormInitState);
-};
+// const initEyeGlassDetailFormState = () => {
+//   Object.assign(EyeGlassDetailFormState, EyeGlassDetailFormInitState);
+// };
 
 // 功能函数：初始化详细参数模态框表单
 const initEyeGlassDetailModelFormState = () => {
@@ -2378,7 +2047,7 @@ const initCapture = () => {
 const initAll = () => {
   initEyeGlassBasicFormState();
   // initEyeGlassStyleFormState();
-  initEyeGlassDetailFormState();
+  // initEyeGlassDetailFormState();
   initEyeGlassWeightFormState();
   initEyeGlassImageFormState();
   initCapture();
@@ -2593,7 +2262,7 @@ const onClickCaptureOrConfirm = () => {
       break;
     case "input-params": // 计算参数
       // 保存镜框信息成功后进入SKU输入阶段
-      saveNewEyeglassFrame().then((result) => {
+      uploadNewEyeglassFrame().then((result) => {
         if (result) {
           // 重置提交按钮
           enabledSubmitButton.value = false;
@@ -2690,13 +2359,6 @@ const onClickResetWeight = () => {
   });
   // 重置hasWeightLoged
   hasWeightLoged.value = false;
-};
-
-// 计算参数按钮点击事件
-const onClickCalculateParams = () => {
-  // 计算参数
-  // calculateParamsAndStyles();
-  uploadNewEyeglassFrame();
 };
 
 // 详细信息模态窗按钮点击事件

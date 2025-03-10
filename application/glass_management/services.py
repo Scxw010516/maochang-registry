@@ -541,17 +541,6 @@ def GetEyeglassFrameDetail(request: HttpRequest):
     # 判断查询结果是否为空
     if not eyeglassframeentry_result:
         return R.failed(msg="镜架不存在")
-    # 查询镜架扫描结果表
-    EyeglassFrameMillimeterMeasurement_result = (
-        models.EyeglassFrameMillimeterMeasurement.objects.filter(
-            entry=eyeglassframeentry_result
-        ).first()
-    )
-    EyeglassFrameImage_result = (
-        models.EyeglassFrameImage.objects.filter(
-            entry=eyeglassframeentry_result
-        ).first()
-    )
     # 构建查询结果
     search_result = {
         # 镜架基本信息表
@@ -580,46 +569,68 @@ def GetEyeglassFrameDetail(request: HttpRequest):
         "image_mask_state":eyeglassframeentry_result.image_mask_state,
         "image_seg_state":eyeglassframeentry_result.image_seg_state,
         "image_beautify_state":eyeglassframeentry_result.image_beautify_state,
-        # 镜架毫米测量数据
-        # # 正视图
-        # "frontview": utils.getImageURL(
-        #     str(EyeglassFrameImage_result.frontview)
-        # ),
-        # "sideview": utils.getImageURL(
-        #     str(EyeglassFrameImage_result.sideview)
-        # ),
-        # "topview": utils.getImageURL(str(EyeglassFrameImage_result.topview)),
-        # "frame_height": EyeglassFrameMillimeterMeasurement_result.frame_height,
-        # "frame_width": EyeglassFrameMillimeterMeasurement_result.frame_width,
-        # "pile_height_left": EyeglassFrameMillimeterMeasurement_result.pile_height_left,
-        # "pile_height_right": EyeglassFrameMillimeterMeasurement_result.pile_height_right,
-        # "frame_top_width": EyeglassFrameMillimeterMeasurement_result.frame_top_width,
-        # "lens_width_left": EyeglassFrameMillimeterMeasurement_result.lens_width_left,
-        # "lens_width_right": EyeglassFrameMillimeterMeasurement_result.lens_width_right,
-        # "lens_height_left": EyeglassFrameMillimeterMeasurement_result.lens_height_left,
-        # "lens_height_right": EyeglassFrameMillimeterMeasurement_result.lens_height_right,
-        # "lens_diagonal_left": EyeglassFrameMillimeterMeasurement_result.lens_diagonal_left,
-        # "lens_diagonal_right": EyeglassFrameMillimeterMeasurement_result.lens_diagonal_right,
-        # "lens_area_left": EyeglassFrameMillimeterMeasurement_result.lens_area_left,
-        # "lens_area_right": EyeglassFrameMillimeterMeasurement_result.lens_area_right,
-        # "bridge_width": EyeglassFrameMillimeterMeasurement_result.bridge_width,
-        # # 侧视图
-        # "vertical_angle": EyeglassFrameMillimeterMeasurement_result.vertical_angle,
-        # "forward_angle": EyeglassFrameMillimeterMeasurement_result.forward_angle,
-        # "temple_angle": EyeglassFrameMillimeterMeasurement_result.temple_angle,
-        # "drop_length": EyeglassFrameMillimeterMeasurement_result.drop_length,
-        # # 俯视图
-        # "face_angle": EyeglassFrameMillimeterMeasurement_result.face_angle,
-        # "sagittal_angle_left": EyeglassFrameMillimeterMeasurement_result.sagittal_angle_left,
-        # "sagittal_angle_right": EyeglassFrameMillimeterMeasurement_result.sagittal_angle_right,
-        # "temple_length_left": EyeglassFrameMillimeterMeasurement_result.temple_length_left,
-        # "temple_length_right": EyeglassFrameMillimeterMeasurement_result.temple_length_right,
-        # "temporal_width": EyeglassFrameMillimeterMeasurement_result.temporal_width,
-        # "spread_angle_left": EyeglassFrameMillimeterMeasurement_result.spread_angle_left,
-        # "spread_angle_right": EyeglassFrameMillimeterMeasurement_result.spread_angle_right,
-        # "pile_distance": EyeglassFrameMillimeterMeasurement_result.pile_distance,
     }
+    # 查询镜架图片表
+    EyeglassFrameImage_result = (
+        models.EyeglassFrameImage.objects.filter(
+            entry=eyeglassframeentry_result
+        ).first()
+    )
 
+    if EyeglassFrameImage_result:
+        # 镜架图片表
+        search_result = dict(
+            search_result,
+            **{
+                "frontview": utils.getImageURL(
+                    str(EyeglassFrameImage_result.frontview)
+                ),
+                "sideview": utils.getImageURL(
+                    str(EyeglassFrameImage_result.sideview)
+                ),
+                "topview": utils.getImageURL(str(EyeglassFrameImage_result.topview)),
+            }
+        )
+    # 查询镜架扫描结果表
+    EyeglassFrameMillimeterMeasurement_result = (
+        models.EyeglassFrameMillimeterMeasurement.objects.filter(
+            entry=eyeglassframeentry_result
+        ).first()
+    )
+    if EyeglassFrameMillimeterMeasurement_result:
+        measurment_result={
+            # 镜架毫米测量数据
+            "frame_height": EyeglassFrameMillimeterMeasurement_result.frame_height,
+            "frame_width": EyeglassFrameMillimeterMeasurement_result.frame_width,
+            "pile_height_left": EyeglassFrameMillimeterMeasurement_result.pile_height_left,
+            "pile_height_right": EyeglassFrameMillimeterMeasurement_result.pile_height_right,
+            "frame_top_width": EyeglassFrameMillimeterMeasurement_result.frame_top_width,
+            "lens_width_left": EyeglassFrameMillimeterMeasurement_result.lens_width_left,
+            "lens_width_right": EyeglassFrameMillimeterMeasurement_result.lens_width_right,
+            "lens_height_left": EyeglassFrameMillimeterMeasurement_result.lens_height_left,
+            "lens_height_right": EyeglassFrameMillimeterMeasurement_result.lens_height_right,
+            "lens_diagonal_left": EyeglassFrameMillimeterMeasurement_result.lens_diagonal_left,
+            "lens_diagonal_right": EyeglassFrameMillimeterMeasurement_result.lens_diagonal_right,
+            "lens_area_left": EyeglassFrameMillimeterMeasurement_result.lens_area_left,
+            "lens_area_right": EyeglassFrameMillimeterMeasurement_result.lens_area_right,
+            "bridge_width": EyeglassFrameMillimeterMeasurement_result.bridge_width,
+            # 侧视图
+            "vertical_angle": EyeglassFrameMillimeterMeasurement_result.vertical_angle,
+            "forward_angle": EyeglassFrameMillimeterMeasurement_result.forward_angle,
+            "temple_angle": EyeglassFrameMillimeterMeasurement_result.temple_angle,
+            "drop_length": EyeglassFrameMillimeterMeasurement_result.drop_length,
+            # 俯视图
+            "face_angle": EyeglassFrameMillimeterMeasurement_result.face_angle,
+            "sagittal_angle_left": EyeglassFrameMillimeterMeasurement_result.sagittal_angle_left,
+            "sagittal_angle_right": EyeglassFrameMillimeterMeasurement_result.sagittal_angle_right,
+            "temple_length_left": EyeglassFrameMillimeterMeasurement_result.temple_length_left,
+            "temple_length_right": EyeglassFrameMillimeterMeasurement_result.temple_length_right,
+            "temporal_width": EyeglassFrameMillimeterMeasurement_result.temporal_width,
+            "spread_angle_left": EyeglassFrameMillimeterMeasurement_result.spread_angle_left,
+            "spread_angle_right": EyeglassFrameMillimeterMeasurement_result.spread_angle_right,
+            "pile_distance": EyeglassFrameMillimeterMeasurement_result.pile_distance,
+        }
+        search_result=dict(search_result,**measurment_result)
     # 返回查询结果
     return R.ok(data=search_result)
 

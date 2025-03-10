@@ -28,6 +28,7 @@ export interface EyeGlassBasicForm {
   lens_width_st: number | null;
   bridge_width_st: number | null;
   temple_length_st: number | null;
+  weight: string;
   [key: string]: any;
 }
 export const EyeGlassBasicFormLabel = {
@@ -46,6 +47,7 @@ export const EyeGlassBasicFormLabel = {
   lens_width_st: "镜片宽度",
   bridge_width_st: "鼻梁宽度",
   temple_length_st: "镜腿长度",
+  weight: "重量",
 };
 export const EyeGlassBasicFormUnit = {
   sku: "",
@@ -63,6 +65,7 @@ export const EyeGlassBasicFormUnit = {
   lens_width_st: "mm",
   bridge_width_st: "mm",
   temple_length_st: "mm",
+  weight: "g",
 };
 
 // 数据参数接口: 镜架风格参数
@@ -81,8 +84,6 @@ export interface EyeGlassDetailForm {
   pile_height_left: string;
   pile_height_right: string;
   frame_top_width: string;
-  top_points: string;
-  frame_rects: string;
   lens_width_left: string;
   lens_width_right: string;
   lens_height_left: string;
@@ -92,8 +93,6 @@ export interface EyeGlassDetailForm {
   lens_area_left: string;
   lens_area_right: string;
   bridge_width: string;
-  lens_center_points: string;
-  lens_top_points: string;
   vertical_angle: string;
   forward_angle: string;
   temple_angle: string;
@@ -116,8 +115,6 @@ export const EyeGlassDetailFormLabel = {
   pile_height_left: "左桩头高度",
   pile_height_right: "右桩头高度",
   frame_top_width: "镜框顶部宽度",
-  top_points: "镜框顶点坐标",
-  frame_rects: "镜框矩形坐标",
   lens_width_left: "左镜圈宽度",
   lens_width_right: "右镜圈宽度",
   lens_height_left: "左镜圈高度",
@@ -127,8 +124,6 @@ export const EyeGlassDetailFormLabel = {
   lens_area_left: "左镜圈面积",
   lens_area_right: "右镜圈面积",
   bridge_width: "鼻梁宽度",
-  lens_center_points: "镜圈中心点坐标",
-  lens_top_points: "镜圈顶点坐标",
   vertical_angle: "垂俯角",
   forward_angle: "前倾角",
   temple_angle: "镜腿角度",
@@ -150,8 +145,6 @@ export const EyeGlassDetailFormUnit = {
   pile_height_left: "mm",
   pile_height_right: "mm",
   frame_top_width: "mm",
-  top_points: "",
-  frame_rects: "",
   lens_width_left: "mm",
   lens_width_right: "mm",
   lens_height_left: "mm",
@@ -161,8 +154,6 @@ export const EyeGlassDetailFormUnit = {
   lens_area_left: "mm²",
   lens_area_right: "mm²",
   bridge_width: "mm",
-  lens_center_points: "",
-  lens_top_points: "",
   vertical_angle: "°",
   forward_angle: "°",
   temple_angle: "°",
@@ -206,18 +197,6 @@ export const EyeGlassDetailToviewFormLabel = {
   spread_angle_left: "左镜腿外张角",
   spread_angle_right: "右镜腿外张角",
   pile_distance: "桩头距离",
-};
-
-// 数据参数接口: 镜架重量参数
-export interface EyeGlassWeightForm {
-  weight: string;
-  [key: string]: any;
-}
-export const EyeGlassWeightFormLabel = {
-  weight: "重量",
-};
-export const EyeGlassWeightFormUnit = {
-  weight: "g",
 };
 
 // 数据参数接口: 镜架图片参数
