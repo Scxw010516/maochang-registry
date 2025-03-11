@@ -11,8 +11,6 @@ from io import BytesIO
 from PIL import Image
 
 from utils import R, regular
-from django.db import connection,connections
-from eventlet.green.thread import get_ident
 from django.db import transaction
 from django.core.files import File
 
@@ -21,19 +19,14 @@ from application.glass_management import forms
 
 # 引入镜架计算模型
 from .glass_detect.glasses import process,get_models
-from .glass_detect.glasses import get_capture_images
-
-
+# from .glass_detect.glasses import get_capture_images
 
 @shared_task
 def calc(sku):
     """
     计算眼镜参数并保存计算结果
     """
-    # #创建连接
-    # conn = connection
-    # conn._thread_ident = get_ident()
-    print("连接已建立")
+    print("执行计算任务："+sku)
     # 查询镜架基本信息表
     EyeglassFrameEntry_instance = (
             models.EyeglassFrameEntry.objects.filter(sku=sku).first()
@@ -87,6 +80,7 @@ def calc(sku):
         front_image = read_image_from_field(EyeglassFrameImage_instance.frontview)
         left_image = read_image_from_field(EyeglassFrameImage_instance.sideview)
         images = {"up": up_image, "front": front_image, "left": left_image}
+        # images=get_capture_images(sku)
         # 读取模型
         calc_models = get_models()
         # 设置计算参数
@@ -216,13 +210,8 @@ def calc(sku):
         # 保存镜架基本信息表
     
     EyeglassFrameEntry_instance.save()
-    
-    #关闭本线程全部连接
-    # connections.close_all()
-    print("连接已关闭")
     # 返回
-    print(sku)
-    print('执行完毕')
+    print('计算任务执行完毕：'+sku)
     return sku
 
 
@@ -335,7 +324,7 @@ def save_output_images(output_images, instance):
 
 def save_output_point(output_point, entry_instance):
     # 查询镜架坐标数据表实例
-    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry=EyeglassFrameEntry_instance).first()
+    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry=entry_instance).first()
     if not EyeglassFrameCoordinate_instance:
         # 不存在镜架坐标数据表实例，则创建
         form_EyeglassFrameCoordinate = (
