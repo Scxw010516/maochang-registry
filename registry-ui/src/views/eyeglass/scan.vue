@@ -2434,11 +2434,11 @@ const onClickLightdown = () => {
   margin: 12px;
 }
 
-.basic-item >>> label {
+.basic-item :deep(label) {
   font-size: 18px !important;
 }
 
-.basic-item >>> .ant-select-selector,
+.basic-item :deep(.ant-select-selector),
 .ant-input,
 .ant-input-number {
   padding-left: 11px;
@@ -2449,12 +2449,12 @@ const onClickLightdown = () => {
 }
 
 /* 输入基础信息：消除input-number的重复padding */
-.basic-item >>> .ant-input-number-input {
+.basic-item :deep(.ant-input-number-input) {
   padding: 0;
 }
 
 /* 输入基础信息：表单验证提示信息 */
-.basic-item >>> .ant-form-item-explain-connected {
+.basic-item :deep(.ant-form-item-explain-connected) {
   position: absolute;
   top: 32px;
 }
@@ -2509,11 +2509,11 @@ const onClickLightdown = () => {
   width: 100%;
 }
 
-.calculate-item >>> label {
+.calculate-item :deep(label) {
   color: #666666;
 }
 
-.calculate-item >>> .ant-select-selector,
+.calculate-item :deep(.ant-select-selector),
 .ant-input {
   padding-left: 11px;
   height: 35px;
@@ -2523,18 +2523,18 @@ const onClickLightdown = () => {
 }
 
 /* 计算参数 基础信息 消除input-number的重复padding */
-.calculate-item >>> .ant-input-number-input {
+.calculate-item :deep(.ant-input-number-input) {
   padding: 0;
   color: #999999;
 }
 
 /* 计算参数 基础信息 减小radio选项框的大小 */
-.calculate-item >>> .ant-radio-button-wrapper {
+.calculate-item :deep(.ant-radio-button-wrapper) {
   padding: 0 11px;
 }
 
 /* 计算参数 取消表单验证提示信息 */
-.calculate-item >>> .ant-form-item-explain-connected {
+.calculate-item :deep(.ant-form-item-explain-connected) {
   display: none;
 }
 

@@ -1916,7 +1916,7 @@ const sendCalculationTask = async (id: number) => {
 }
 
 /* 搜索栏 */
-.search-form >>> .ant-select-selector {
+.search-form :deep(.ant-select-selector) {
   width: 100%;
   height: 32px;
   font-size: 16px;
@@ -1965,7 +1965,7 @@ const sendCalculationTask = async (id: number) => {
 }
 
 /* 修改modal baisc */
-.modal-basic-item >>> .ant-select-selector,
+.modal-basic-item :deep(.ant-select-selector),
 .ant-input,
 .ant-input-number {
   padding-left: 11px;
@@ -1976,7 +1976,7 @@ const sendCalculationTask = async (id: number) => {
 }
 
 /* 修改modal basic：消除input-number的重复padding */
-.modal-basic-item >>> .ant-input-number-input {
+.modal-basic-item :deep(.ant-input-number-input) {
   padding: 0;
 }
 .modal-basic-item :deep(.ant-radio-button-wrapper) {
@@ -1991,7 +1991,7 @@ const sendCalculationTask = async (id: number) => {
 }
 
 /* 修改modal：信息栏目选择 */
-.detailTypeChosen >>> .ant-btn-text {
+.detailTypeChosen :deep(.ant-btn-text) {
   background-color: #ffffff;
   width: 163.5px;
   height: 49px;
@@ -2002,7 +2002,7 @@ const sendCalculationTask = async (id: number) => {
   font-size: 18px;
 }
 
-.detailTypeUnchosen >>> .ant-btn-text {
+.detailTypeUnchosen :deep(.ant-btn-text) {
   width: 163.9px;
   height: 49px;
   border-radius: 7px;
@@ -2013,12 +2013,12 @@ const sendCalculationTask = async (id: number) => {
 }
 
 /* 去除a-image预览字样 */
-.custom-a-image >>> .ant-image-mask-info {
+.custom-a-image :deep(.ant-image-mask-info) {
   visibility: hidden;
   font-size: 0;
 }
 
-.custom-a-image >>> .ant-image-mask-info span {
+.custom-a-image :deep(.ant-image-mask-info span) {
   visibility: visible;
   font-size: 20;
 }
