@@ -623,6 +623,7 @@ import {
   UnwrapRef,
   createVNode,
   h,
+  watch,
 } from "vue";
 import { message, Modal } from "ant-design-vue";
 import {
@@ -741,6 +742,22 @@ type getAllEyeglassFrameEntryAPIResult = {
   }[];
   count: number;
 };
+
+// 镜架计算状态接口
+interface calculate_state {
+  id: number;
+  pixel_measurement_state: number;
+  millimeter_measurement_state: number;
+  calculation_state: number;
+  coordinate_state: number;
+  image_mask_state: number;
+  image_seg_state: number;
+  image_beautify_state: number;
+}
+
+// 镜架计算状态数组
+const calculateStates = ref<calculate_state[]>([]);
+
 // 镜架查询表单实例
 const searchFormRef = ref();
 
@@ -1284,7 +1301,12 @@ const dataSource = computed(() => {
   } else {
     // 处理Table请求的返回数据
     return data.value?.data.data.map((item) => ({
-      ...item,
+      id: item.id,
+      sku: item.sku,
+      brand: item.brand,
+      model_type: item.model_type,
+      price: item.price,
+      update_time: item.update_time,
       // 将material字段转化为对应的Label
       material:
         options.material_options?.find(
@@ -1792,9 +1814,11 @@ const getCalculateStateLabel = (state: number) => {
 };
 // 功能函数：获取统一计算状态标签
 const getAllCalculateLabel = (id: number) => {
-  let item = dataSource.value.find((item) => item.id === id);
+  let item = calculateStates.value.find(
+    (item: calculate_state) => item.id === id,
+  );
   if (!item) {
-    return "错误";
+    return "无";
   }
   let all_calculate_state = 3;
   if (
@@ -1836,12 +1860,13 @@ const getAllCalculateLabel = (id: number) => {
 
 // table计算状态点击事件：展开计算状态modal
 const onClickCalculationState = async (id: number) => {
-  let item = dataSource.value.find((item) => item.id === id);
+  let item = calculateStates.value.find((item) => item.id === id);
   if (!item) {
     return;
   }
+  let sku = dataSource.value.find((item) => item.id === id)?.sku || item.id;
   Modal.confirm({
-    title: item.sku + " 计算状态",
+    title: sku + " 计算状态",
     okText: "发送计算任务",
     cancelText: "取消",
     centered: true,
@@ -1877,9 +1902,9 @@ const onClickCalculationState = async (id: number) => {
       sendCalculationTask(id);
     },
     okButtonProps: {
-      disabled: getAllCalculateLabel(id) == "待计算",
-      // getAllCalculateLabel(id) == "计算中",
-      loading: calculateModelLoading.value,
+      // disabled: getAllCalculateLabel(id) == "待计算",
+      // // getAllCalculateLabel(id) == "计算中",
+      // loading: calculateModelLoading.value,
     },
   });
 };
@@ -1894,9 +1919,21 @@ const sendCalculationTask = async (id: number) => {
   await axios
     .post("/glassmanagement/api/generate-calculate-task", formData)
     .then((response) => {
+      console.log(response);
       // 生成成功
       if (response.data.code === 0) {
         calculateModelLoading.value = false;
+        // 修改计算状态
+        const item = calculateStates.value.find((item) => item.id === id);
+        if (item) {
+          item.pixel_measurement_state = 0;
+          item.millimeter_measurement_state = 0;
+          item.calculation_state = 0;
+          item.coordinate_state = 0;
+          item.image_mask_state = 0;
+          item.image_seg_state = 0;
+          item.image_beautify_state = 0;
+        }
       } else {
         // 提示生成计算任务失败
         message.error(response.data.msg);
@@ -1904,6 +1941,24 @@ const sendCalculationTask = async (id: number) => {
       }
     });
 };
+// #########################################监视函数#########################################
+watch(dataSource, () => {
+  // 清空计算状态
+  calculateStates.value = [];
+  // 遍历dataSource，将计算状态加入calculateStates
+  data.value?.data.data.forEach((item) => {
+    calculateStates.value.push({
+      id: item.id,
+      pixel_measurement_state: item.pixel_measurement_state,
+      millimeter_measurement_state: item.millimeter_measurement_state,
+      calculation_state: item.calculation_state,
+      coordinate_state: item.coordinate_state,
+      image_mask_state: item.image_mask_state,
+      image_seg_state: item.image_seg_state,
+      image_beautify_state: item.image_beautify_state,
+    });
+  });
+});
 </script>
 
 <style scoped>

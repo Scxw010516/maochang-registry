@@ -10,6 +10,7 @@ from application.glass_management import models
 from application.glass_management import forms
 
 from application.celery_task import tasks
+from application.celery_task.services import search_calc_task as _search_calc_task
 
 
 # 镜架采集端
@@ -307,7 +308,7 @@ def GenerateCalculateTask(request: HttpRequest):
     返回：
         HttpResponse: JSON格式的响应对象, {code,data,msg}
     """
-   # 接收请求参数
+    # 接收请求参数
     if not request.POST:
         return R.failed(msg="参数错误")
     # 获取修改镜架ID
@@ -324,8 +325,12 @@ def GenerateCalculateTask(request: HttpRequest):
     if not EyeglassFrameEntry_instance:
         return R.failed(msg="镜架ID不存在")
     # 判断镜架已经在计算队列中
-    # if EyeglassFrameEntry_instance.pixel_measurement_state < 2 or EyeglassFrameEntry_instance.millimeter_measurement_state < 2 or EyeglassFrameEntry_instance.calculation_state < 2 or EyeglassFrameEntry_instance.coordinate_state < 2 or EyeglassFrameEntry_instance.image_mask_state < 2 or EyeglassFrameEntry_instance.image_seg_state < 2 or EyeglassFrameEntry_instance.image_beautify_state < 2 :
-    #     return R.failed(msg="镜架已经在计算队列中")
+    if _search_calc_task(EyeglassFrameEntry_instance.sku):
+        return R.failed(msg="镜架已在计算队列中")
+    # 判断镜架是否正在计算中
+    if EyeglassFrameEntry_instance.pixel_measurement_state == 1 or EyeglassFrameEntry_instance.millimeter_measurement_state == 1 or EyeglassFrameEntry_instance.calculation_state == 1 or EyeglassFrameEntry_instance.coordinate_state == 1 or EyeglassFrameEntry_instance.image_mask_state == 1 or EyeglassFrameEntry_instance.image_seg_state == 1 or EyeglassFrameEntry_instance.image_beautify_state == 1 :
+        return R.failed(msg="镜架正在计算钟")
+
     # 添加镜架到计算队列中
     # 数据库事务处理
     with transaction.atomic():
@@ -341,9 +346,10 @@ def GenerateCalculateTask(request: HttpRequest):
         """
         生成celery计算任务：传递镜架基础信息表的sku值
         """
-        sku = EyeglassFrameEntry_instance.sku
-        task_id = tasks.calc.delay(sku)
-        return R.ok(msg="生成计算任务成功："+str(task_id))
+    sku = EyeglassFrameEntry_instance.sku
+    task_id = tasks.calc.delay(sku)
+    print("GenerateCalculateTask:",task_id)
+    return R.ok(msg="生成计算任务成功："+str(task_id))
 #todo:该函数好像没用了，待删除
 def SaveNewEyeglassFrame(request: HttpRequest):
     """
