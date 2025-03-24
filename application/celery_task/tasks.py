@@ -3,7 +3,7 @@ from celery import shared_task
 import json
 import cv2
 import os
-import tempfile
+from time import sleep
 
 from django.core.files.base import ContentFile
 import numpy as np
@@ -17,11 +17,38 @@ from django.core.files import File
 from application.glass_management import models
 from application.glass_management import forms
 
+# 引入通用函数
+from application.celery_task.services import (
+    read_image_from_field, # 从数据库读取图片
+    save_output_mask, # 保存mask
+    save_output_images, # 保存images
+    save_output_point,  # 保存point
+    save_output_parameter, # 保存parameter
+    save_output_size, # 保存size
+    save_output_shape, # 保存shape
+    delete_calc_task, # 删除重复任务
+)
+
 # 引入镜架计算模型
 from .glass_detect.glasses import process,get_models
-# from .glass_detect.glasses import get_capture_images
+from .glass_detect.glasses import get_capture_images
 
-@shared_task
+@shared_task()
+def test( sku):
+    try:
+        
+        # 模拟处理过程
+        sleep(10)
+
+        print("执行计算任务：" + sku)
+        # 删除重复任务
+        delete_calc_task(sku)
+        
+        return {'status': 'SUCCESS', 'sku': sku}
+    except Exception as e:
+        print("计算任务失败：" + str(e))
+        raise
+@shared_task()
 def calc(sku):
     """
     计算眼镜参数并保存计算结果
@@ -207,269 +234,14 @@ def calc(sku):
             EyeglassFrameEntry_instance.calculation_state = 3
             print("shape处理失败:" + str(e))
 
+        # 删除重复任务
+        delete_calc_task(sku)
         # 保存镜架基本信息表
-    
-    EyeglassFrameEntry_instance.save()
+        EyeglassFrameEntry_instance.save()  
+        print("镜架基本信息表已保存")  
     # 返回
     print('计算任务执行完毕：'+sku)
     return sku
-
-
-# def process_and_save(image_np, model_instance):
-#     """处理OpenCV数组并存储到Django模型的ImageField
-    
-#     Args:
-#         image_np: OpenCV格式的numpy数组 (H x W x C)
-#         model_instance: Django模型实例
-#     """
-#     # 内存编码阶段
-#     retval, buffer = cv2.imencode('.png', image_np)
-#     if not retval:
-#         raise RuntimeError("图像编码失败")
-
-#     # 内存流转换
-#     in_memory_file = BytesIO(buffer.tobytes())
-    
-#     # 构建存储对象
-#     content_file = ContentFile(in_memory_file.getvalue())
-    
-#     # 数据库存储
-#     filename = f"processed_{model_instance.id}.png" # 这里的文件名随便啥，只要是png结尾，因为下一步存数据库的时候，会被upload_to的文件名逻辑覆盖掉
-#     model_instance.result_image.save(filename, content_file)
-    
-#     # 内存清理
-#     in_memory_file.close()
-#     del buffer, content_file
-def save_output_mask(output_mask, instance):
-    """
-    保存mask 
-    """
-    # 需要保存的图片字段
-    mask_fields = {
-        'frame': output_mask['data']['frame'],
-        'lens': output_mask['data']['lens'],
-        'templeWf': output_mask['data']['templeWf'],
-        'nose': output_mask['data']['nose'],
-        'front': output_mask['data']['front'],
-    }
-
-    for field_name, mask_array in mask_fields.items():
-        if mask_array is not None:
-            """处理OpenCV数组并存储到Django模型的ImageField
-    
-            Args:
-                image_np: OpenCV格式的numpy数组 (H x W x C)
-                model_instance: Django模型实例
-            """
-            # 内存编码阶段
-            retval, buffer = cv2.imencode('.png', mask_array)
-            if not retval:
-                raise RuntimeError("图像编码失败")
-
-            # 内存流转换
-            in_memory_file = BytesIO(buffer.tobytes())
-            
-            # 构建存储对象
-            content_file = ContentFile(in_memory_file.getvalue())
-            
-            # 数据库存储
-            filename = f"processed_{instance.id}.png" # 这里的文件名随便啥，只要是png结尾，因为下一步存数据库的时候，会被upload_to的文件名逻辑覆盖掉
-            getattr(instance,field_name).save(filename, content_file)
-            
-            # 内存清理
-            in_memory_file.close()
-            del buffer, content_file
-
-    # 保存模型实例
-    instance.save()
-    return output_mask
-
-def save_output_images(output_images, instance):
-    """
-    将process输出的图片保存到Django模型的ImageField中
-
-    Args:
-    output:process函数的输出字曲
-    instance:Django模型实例
-    """
-    # 需要保存的图片字段
-    image_fields = {
-        'frontview_seg': output_images['data']['frontview_seg'],
-        'sideview_seg': output_images['data']['sideview_seg'],
-        'frontview_beautify': output_images['data']['frontview_beautify'],
-        'sideview_beautify': output_images['data']['sideview_beautify']
-    }
-
-    for field_name, image_array in image_fields.items():
-        if image_array is not None:
-            #创建临时文件
-            temp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
-            try:
-                # 保存numpy array为图片文件
-                cv2.imwrite(temp.name, image_array)
-                # 打开临时文件并保存到ImageField
-                with open(temp.name, 'rb')as f:
-                    # 模型的字段名与image fields的key相同
-                    getattr(instance,field_name).save(
-                        f'{field_name}.png' ,
-                        File(f),
-                        save=False
-                    )
-            finally:
-                # 清理临时文件
-                temp.close()
-                os.unlink(temp.name)
-    # 保存模型实例
-    instance.save()
-
-def save_output_point(output_point, entry_instance):
-    # 查询镜架坐标数据表实例
-    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry=entry_instance).first()
-    if not EyeglassFrameCoordinate_instance:
-        # 不存在镜架坐标数据表实例，则创建
-        form_EyeglassFrameCoordinate = (
-            forms.EyeglassFrameCoordinateForm(
-                output_point['data']
-            )
-        )
-    else:
-        # 存在镜架坐标数据表实例，则更新
-        form_EyeglassFrameCoordinate = (
-            forms.EyeglassFrameCoordinateForm(
-                output_point['data'],
-                instance=EyeglassFrameCoordinate_instance
-            )
-        )
-    if form_EyeglassFrameCoordinate.is_valid():
-        # 构建并保存镜架坐标数据表数据库实例
-        EyeglassFrameCoordinate_instance = (
-            form_EyeglassFrameCoordinate.save(commit=False)
-        )
-        # 关联镜架基本信息表外键
-        EyeglassFrameCoordinate_instance.entry = entry_instance
-        EyeglassFrameCoordinate_instance.save()
-    else:
-        raise ValueError("镜架坐标数据表表单验证失败")
-
-def save_output_parameter(output_parameter, entry_instance):
-    # 数据位数处理：保留到小数点后四位
-    for key in output_parameter['data']:
-        output_parameter['data'][key] = round(output_parameter['data'][key], 4)
-    # 查询镜架像素测量数据表实例
-    EyeglassFramePixelMeasurement_instance = models.EyeglassFramePixelMeasurement.objects.filter(entry=entry_instance).first()
-    if not EyeglassFramePixelMeasurement_instance:
-        # 不存在镜架像素测量数据表实例，则创建
-        form_EyeglassFramePixelMeasurement = (
-            forms.EyeglassFramePixelMeasurementForm(
-                output_parameter['data']
-            )
-        )
-    else:
-        # 存在镜架像素测量数据表实例，则更新
-        form_EyeglassFramePixelMeasurement = (
-            forms.EyeglassFramePixelMeasurementForm(
-                output_parameter['data'],
-                instance=EyeglassFramePixelMeasurement_instance
-            )
-        )
-    if form_EyeglassFramePixelMeasurement.is_valid():
-        # 构建并保存镜架像素测量数据表数据库实例
-        EyeglassFramePixelMeasurement_instance = (
-            form_EyeglassFramePixelMeasurement.save(commit=False)
-        )
-        # 关联镜架基本信息表外键
-        EyeglassFramePixelMeasurement_instance.entry = entry_instance
-        EyeglassFramePixelMeasurement_instance.save()
-    else:
-        raise ValueError("镜架像素测量数据表表单验证失败")
-
-def save_output_size(output_size, entry_instance):
-    # 数据位数处理：保留到小数点后四位
-    for key in output_size['data']:
-        output_size['data'][key] = round(output_size['data'][key], 4)
-    # 查询镜架毫米测量数据表实例
-    EyeglassFrameMillimeterMeasurement_instance = models.EyeglassFrameMillimeterMeasurement.objects.filter(entry=entry_instance).first()
-    if not EyeglassFrameMillimeterMeasurement_instance:
-        # 不存在镜架毫米测量数据表实例，则创建
-        form_EyeglassFrameMillimeterMeasurement = (
-            forms.EyeglassFrameMillimeterMeasurementForm(
-                output_size['data']
-            )
-        )
-    else:
-        # 存在镜架毫米测量数据表实例，则更新
-        form_EyeglassFrameMillimeterMeasurement = (
-            forms.EyeglassFrameMillimeterMeasurementForm(
-                output_size['data'],
-                instance=EyeglassFrameMillimeterMeasurement_instance
-            )
-        )
-    if form_EyeglassFrameMillimeterMeasurement.is_valid():
-        # 构建并保存镜架毫米测量数据表数据库实例
-        EyeglassFrameMillimeterMeasurement_instance = (
-            form_EyeglassFrameMillimeterMeasurement.save(commit=False)
-        )
-        # 关联镜架基本信息表外键
-        EyeglassFrameMillimeterMeasurement_instance.entry = entry_instance
-        EyeglassFrameMillimeterMeasurement_instance.save()
-    else:
-        raise ValueError("镜架毫米测量数据表表单验证失败")
-
-def save_output_shape(output_shape, entry_instance):
-    # 数据位数处理：保留到小数点后四位
-    for key in output_shape['data']:
-        if key != 'frame_size':
-            output_shape['data'][key] = round(output_shape['data'][key], 4)
-    # 查询镜架计算数据表实例
-    EyeglassFrameCalculation_instance = models.EyeglassFrameCalculation.objects.filter(entry=entry_instance).first()
-    if not EyeglassFrameCalculation_instance:
-        # 不存在镜架计算数据表实例，则创建
-        form_EyeglassFrameCalculation = (
-            forms.EyeglassFrameCalculationForm(
-                output_shape['data']
-            )
-        )
-    else:
-        # 存在镜架计算数据表实例，则更新
-        form_EyeglassFrameCalculation = (
-            forms.EyeglassFrameCalculationForm(
-                output_shape['data'],
-                instance=EyeglassFrameCalculation_instance
-            )
-        )
-    if form_EyeglassFrameCalculation.is_valid():
-        # 构建并保存镜架计算数据表数据库实例
-        EyeglassFrameCalculation_instance = (
-            form_EyeglassFrameCalculation.save(commit=False)
-        )
-        # 关联镜架基本信息表外键
-        EyeglassFrameCalculation_instance.entry = entry_instance
-        EyeglassFrameCalculation_instance.save()
-    else:
-        raise ValueError("镜架计算数据表表单验证失败")
-
-def read_image_from_field(image_field):
-    """从Django的ImageField中读取图像并转换为OpenCV格式"""
-    if not image_field:
-        return None
-    
-    # 打开图像文件
-    with image_field.open() as f:
-        # 读取文件内容到内存中
-        image_data = f.read()
-    
-    # 使用PIL读取图像
-    pil_image = Image.open(BytesIO(image_data))
-    
-    # 转换为OpenCV格式
-    open_cv_image = np.array(pil_image)
-    # 如果图像是灰度图，则转换为RGB
-    if len(open_cv_image.shape) == 2:
-        open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_GRAY2BGR)
-    else:
-        # 转换为BGR格式（OpenCV默认）
-        open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
-    return open_cv_image
 
 
 # todo：添加定时添加任务功能

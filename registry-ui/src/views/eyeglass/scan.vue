@@ -1240,7 +1240,7 @@ async function initCamera(): Promise<boolean> {
         // 判断设备类型是否为videoinput，并且设备label拥有相同的设备名和VID
         if (
           device.kind === "videoinput" &&
-          device.label.includes("16MP USB Camera (32e4:0002)")
+          device.label.includes("16MP USB Camera (32e4:0009)")
         ) {
           // 添加设备到设备列表
           camera.cameraState.cameraList.push({
@@ -1264,7 +1264,7 @@ async function initCamera(): Promise<boolean> {
           });
         } else if (
           device.kind === "videoinput" &&
-          device.label.includes("16MP USB Camera (32e4:0009)")
+          device.label.includes("16MP USB Camera (32e4:0002)")
         ) {
           // 添加设备到设备列表
           camera.cameraState.cameraList.push({

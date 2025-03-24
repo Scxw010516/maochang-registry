@@ -323,23 +323,30 @@ def search_calc_task(sku):
                 return task_id
         except json.JSONDecodeError as e:
             print("Failed to decode task data:", e)
-    # 查看正在执行的任务
-    # active_tasks=redis_client.smembers('celery-active')
-    # if active_tasks:
-    #     print(f"当前活动任务数: {len(active_tasks)}")
-    #     for task in active_tasks:
-    #         try:
-    #             task_info = json.loads(task)
-    #             task_id = task_info.get('headers', {}).get('id', None)
-    #             task_args = task_info.get('headers', {}).get('argsrepr', '[]')
-    #             print(f"- 任务ID: {task_id}")
-    #             print(f"  参数: {task_args}")
-    #         except json.JSONDecodeError:
-    #             print(f"- 原始任务数据: {task}")
-    # else:
-    #     print("当前没有活动任务")
-    # print("Active tasks:", active_tasks)
     print("No matching task found.")
+    return None
+
+def delete_calc_task(sku):
+    # 连接到 Redis
+    redis_client = redis.Redis(host='redis', port=6379, db=1)
+    # 查询默认 Celery 队列中的任务
+    queue_name = 'celery'
+    tasks = redis_client.lrange(queue_name, 0, -1)
+    # 解析任务数据
+    for task in tasks:
+        try:
+            # 只有calc任务，所以暂时不需要判断任务类型
+            task_data = json.loads(task)
+            task_id = task_data.get('headers', {}).get('id', None)
+            task_args = task_data.get('headers', {}).get('argsrepr', '[]')
+            task_args_list = eval(task_args)  # 将字符串转换为元组
+            first_arg = task_args_list[0]
+            if sku in first_arg:
+                # 从队列中移除任务
+                redis_client.lrem(queue_name, 1, task)
+                print("Task removed:", task_id)
+        except json.JSONDecodeError as e:
+            print("Failed to decode task data:", e)
     return None
 
 # def check_redis_connection():
