@@ -26,12 +26,13 @@ urlpatterns = [
     path('api/search-sku', views.SearchSKUView.as_view()), # get: 查询镜架SKU
     path('api/delete-eyeglassframes', views.DeleteEyeglassFrameEntrysView.as_view()), # get: 删除镜架SKU
     path('api/upload-new-eyeglassframe', views.UploadNewEyeglassFrameView.as_view()), # post : 保存新镜架并生成新的计算任务
-        path('api/generate-calculate-task', views.GenerateCalculateTaskView.as_view()), # post : 生成计算任务 
+    path('api/generate-calculate-task', views.GenerateCalculateTaskView.as_view()), # post : 生成计算任务 
 
     path('api/save-new-eyeglassframe', views.SaveNewEyeglassFrameView.as_view()), # post: 添加新镜架
     path('api/save-edit-eyeglassframe', views.SaveEditEyeglassFrameView.as_view()), # post: 编辑镜架
     path('api/get-eyeglassframe-detail', views.GetEyeglassFrameDetailView.as_view()), # get: 获取镜架详情
     path('api/get-all-eyeglassframes_entrys', views.GetAllEyeglassFrameEntryView.as_view()), # get: 获取所有镜架基本信息
+    path('api/get-all-calculate-states', views.GetAllCalculateStatesView.as_view()), # get: 获取所有计算状态
     path('api/get-all-brands', views.GetAllBrandsView.as_view()), # get: 获取所有品牌
     path('api/get-all-model-types', views.GetAllModelTypesView.as_view()), # get: 获取所有型号
     path('api/get-all-materials', views.GetAllMaterialsView.as_view()), # get: 获取所有材质

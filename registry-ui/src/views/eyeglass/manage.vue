@@ -227,7 +227,7 @@
                 type="primary"
                 ghost
                 @click="onClickCalculationState(record.id)"
-                >{{ getAllCalculateLabel(record.id) }}</a-button
+                >{{ getAllCalculateStateLabel(record.id) }}</a-button
               >
             </span>
           </template>
@@ -579,16 +579,27 @@
                     style="display: block; margin: 0 auto"
                   />
                 </a-col>
-                <a-col>
-                  {{ EyeGlassDetailFormLabel[key] }}
-                </a-col>
-                <a-col :span="24">
-                  <a-input
-                    v-model:value="EyeGlassDetailFormState[key]"
-                    :suffix="EyeGlassDetailFormUnit[key]"
-                    style="border-radius: 9px; padding-left: 11px; height: 30px"
-                  ></a-input>
-                </a-col>
+                <a-row
+                  style="width: 100%"
+                  justify="center"
+                  align="bottom"
+                  :gutter="[0, 5]"
+                >
+                  <a-col style="font-size: 20px; text-align: center" :span="24">
+                    {{ EyeGlassDetailFormLabel[key] }}
+                  </a-col>
+                  <a-col :span="24">
+                    <a-input
+                      v-model:value="EyeGlassDetailFormState[key]"
+                      :suffix="EyeGlassDetailFormUnit[key]"
+                      style="
+                        border-radius: 9px;
+                        padding-left: 11px;
+                        height: 30px;
+                      "
+                    ></a-input>
+                  </a-col>
+                </a-row>
               </a-row>
             </a-col>
           </a-row>
@@ -603,6 +614,10 @@
             border-radius: 12px;
             color: white;
             font-size: 20px;
+          "
+          :disabled="
+            editModalState.modalId !== null &&
+            getAllCalculateState(editModalState.modalId) == 1
           "
           @click="onClickSaveEditModal"
         >
@@ -624,6 +639,7 @@ import {
   createVNode,
   h,
   watch,
+  onBeforeUnmount,
 } from "vue";
 import { message, Modal } from "ant-design-vue";
 import {
@@ -655,12 +671,15 @@ import {
   // EyeGlassCalculateParamsExample, // 镜架计算参数示例
 } from "./params";
 import { initFormOptions } from "./utils";
+import { Item } from "ant-design-vue/es/menu";
 
 //#########################################参数初始化###########################################
 // const router = useRouter();
 const options = useOptionStore();
 const user = useUserStore();
 const state = useStateStore();
+// 定时器，用于定时刷新表格
+let timer: number;
 // 镜架表格栏目
 const columns = [
   {
@@ -1251,6 +1270,17 @@ onMounted(async () => {
       pageSize: 10,
     });
   }
+  timer = setInterval(() => {
+    // 刷新页面
+    setTimeout(() => {
+      refreshCalculateStates();
+    }, 0);
+  }, 5000);
+});
+
+// 生命钩子函数：组件卸载前执行
+onBeforeUnmount(() => {
+  clearInterval(timer);
 });
 
 // #########################################静态功能函数定义#########################################
@@ -1810,15 +1840,22 @@ const getCalculateStateLabel = (state: number) => {
     return "计算成功";
   } else if (state == 3) {
     return "计算失败";
+  } else {
+    return "无";
   }
 };
-// 功能函数：获取统一计算状态标签
-const getAllCalculateLabel = (id: number) => {
+// 功能函数：获取全局计算状态标签
+const getAllCalculateStateLabel = (id: number) => {
+  return getCalculateStateLabel(getAllCalculateState(id));
+};
+
+// 功能函数：获取全局计算状态参数
+const getAllCalculateState = (id: number) => {
   let item = calculateStates.value.find(
     (item: calculate_state) => item.id === id,
   );
   if (!item) {
-    return "无";
+    return -1;
   }
   let all_calculate_state = 3;
   if (
@@ -1852,10 +1889,10 @@ const getAllCalculateLabel = (id: number) => {
     item.image_seg_state == 0 ||
     item.image_beautify_state == 0
   ) {
-    // 当有一个为待计算时，计算状态为待计
+    // 当有一个为待计算时，计算状态为待计算
     all_calculate_state = 0;
   }
-  return getCalculateStateLabel(all_calculate_state);
+  return all_calculate_state;
 };
 
 // table计算状态点击事件：展开计算状态modal
@@ -1872,6 +1909,10 @@ const onClickCalculationState = async (id: number) => {
     centered: true,
     icon: createVNode(ExclamationCircleOutlined),
     content: h("div", {}, [
+      h(
+        "p",
+        "计算状态：" + getCalculateStateLabel(getAllCalculateState(item.id)),
+      ),
       h(
         "p",
         "像素测量数据状态：" +
@@ -1923,17 +1964,8 @@ const sendCalculationTask = async (id: number) => {
       // 生成成功
       if (response.data.code === 0) {
         calculateModelLoading.value = false;
-        // 修改计算状态
-        const item = calculateStates.value.find((item) => item.id === id);
-        if (item) {
-          item.pixel_measurement_state = 0;
-          item.millimeter_measurement_state = 0;
-          item.calculation_state = 0;
-          item.coordinate_state = 0;
-          item.image_mask_state = 0;
-          item.image_seg_state = 0;
-          item.image_beautify_state = 0;
-        }
+        // 刷新计算状态
+        refreshCalculateStates();
       } else {
         // 提示生成计算任务失败
         message.error(response.data.msg);
@@ -1941,6 +1973,39 @@ const sendCalculationTask = async (id: number) => {
       }
     });
 };
+
+// 功能函数: 只获取计算状态数据
+const refreshCalculateStates = async () => {
+  try {
+    const ids = calculateStates.value.map((item) => item.id);
+    const response = await axios.get(
+      "/glassmanagement/api/get-all-calculate-states",
+      {
+        params: {
+          ids: ids.join(","), // 将数组转换为逗号分隔的字符串
+        },
+      },
+    );
+    if (response.data.code === 0) {
+      // console.log(response.data.data);
+      calculateStates.value = response.data.data.map(
+        (item: calculate_state) => ({
+          id: item.id,
+          pixel_measurement_state: item.pixel_measurement_state,
+          millimeter_measurement_state: item.millimeter_measurement_state,
+          calculation_state: item.calculation_state,
+          coordinate_state: item.coordinate_state,
+          image_mask_state: item.image_mask_state,
+          image_seg_state: item.image_seg_state,
+          image_beautify_state: item.image_beautify_state,
+        }),
+      );
+    }
+  } catch (error) {
+    console.error("获取计算状态失败:", error);
+  }
+};
+
 // #########################################监视函数#########################################
 watch(dataSource, () => {
   // 清空计算状态

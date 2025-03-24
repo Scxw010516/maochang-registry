@@ -461,7 +461,7 @@ def SaveEditEyeglassFrame(request: HttpRequest):
     # 镜架ID为空判断
     if not id:
         return R.failed(msg="镜架ID为空")
-
+    
     # 查询镜架基本信息表实例
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(
         id=id
@@ -469,6 +469,10 @@ def SaveEditEyeglassFrame(request: HttpRequest):
     # 镜架基本信息表实例为空判断
     if not EyeglassFrameEntry_instance:
         return R.failed(msg="镜架ID不存在")
+
+    # 判断镜架正在计算中
+    if EyeglassFrameEntry_instance.pixel_measurement_state == 1 or EyeglassFrameEntry_instance.millimeter_measurement_state == 1 or EyeglassFrameEntry_instance.calculation_state == 1 or EyeglassFrameEntry_instance.coordinate_state == 1 or EyeglassFrameEntry_instance.image_mask_state == 1 or EyeglassFrameEntry_instance.image_seg_state == 1 or EyeglassFrameEntry_instance.image_beautify_state == 1 :
+        return R.failed(msg="镜架正在计算中")
 
     try:
         # 数据库事务处理
@@ -746,6 +750,47 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     # 返回查询结果
     return R.ok(data=search_result, count=count)
 
+def GetAllCalculateStates(request: HttpRequest):
+    """
+    获取指定 ID 列表的镜架计算状态
+    
+    Args:
+        request: HTTP 请求对象，包含 ids 参数
+        
+    Returns:
+        JSON响应：包含计算状态的列表
+    """
+    try:
+        # 获取 ID 列表
+        ids = request.GET.get("ids", "")
+        if not ids:
+            return R.failed(msg="未指定镜架 ID")
+        # 将字符串转换为列表
+        try:
+            ids = [int(id) for id in ids.split(",")]
+        except ValueError:
+            return R.failed(msg="无效的镜架 ID")
+            
+        # 查询指定 ID 的镜架
+        entries = models.EyeglassFrameEntry.objects.filter(id__in=ids)
+        
+        # 构建返回数据
+        if len(entries) > 0:
+            search_result = [{
+            "id": entry.id,
+            "pixel_measurement_state": entry.pixel_measurement_state,
+            "millimeter_measurement_state": entry.millimeter_measurement_state, 
+            "calculation_state": entry.calculation_state,
+            "coordinate_state": entry.coordinate_state,
+            "image_mask_state": entry.image_mask_state,
+            "image_seg_state": entry.image_seg_state,
+            "image_beautify_state": entry.image_beautify_state
+            } for entry in entries]
+        
+        return R.ok(data=search_result)
+        
+    except Exception as e:
+        return R.failed(msg=f"获取计算状态失败: {str(e)}")
 
 def GetAllBrands(request: HttpRequest):
     """

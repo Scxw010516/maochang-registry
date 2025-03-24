@@ -367,6 +367,16 @@ class GetAllEyeglassFrameEntryView(View):
 		return result
 	
 """
+获取所有镜架计算状态
+"""
+class GetAllCalculateStatesView(View):
+	def get(self, request: HttpRequest):
+		# 调用查询计算状态的服务方法
+		result = services.GetAllCalculateStates(request)
+		# 返回结果
+		return result
+
+"""
 获取所有镜架品牌
 """
 class GetAllBrandsView(View):
