@@ -314,17 +314,18 @@ def search_calc_task(sku):
         try:
             # 只有calc任务，所以暂时不需要判断任务类型
             task_data = json.loads(task)
-            task_id = task_data.get('headers', {}).get('id', None)
-            task_args = task_data.get('headers', {}).get('argsrepr', '[]')
-            task_args_list = eval(task_args)  # 将字符串转换为元组
-            first_arg = task_args_list[0]
-            if sku in first_arg:
-                print("find task:", task_id,";sku:",sku)
-                return task_id
+            if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.calc":
+                task_id = task_data.get('headers', {}).get('id', None)
+                task_args = task_data.get('headers', {}).get('argsrepr', '[]')
+                task_args_list = eval(task_args)  # 将字符串转换为元组
+                first_arg = task_args_list[0]
+                if sku in first_arg:
+                    print("find task:", task_id,";sku:",sku)
+                    return task_id
         except json.JSONDecodeError as e:
             print("Failed to decode task data:", e)
-    print("No matching task found.")
-    return None
+    print("No matching task found:",sku)
+    return 0
 
 def delete_calc_task(sku):
     # 连接到 Redis
@@ -337,14 +338,15 @@ def delete_calc_task(sku):
         try:
             # 只有calc任务，所以暂时不需要判断任务类型
             task_data = json.loads(task)
-            task_id = task_data.get('headers', {}).get('id', None)
-            task_args = task_data.get('headers', {}).get('argsrepr', '[]')
-            task_args_list = eval(task_args)  # 将字符串转换为元组
-            first_arg = task_args_list[0]
-            if sku in first_arg:
-                # 从队列中移除任务
-                redis_client.lrem(queue_name, 1, task)
-                print("Task removed:", task_id)
+            if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.calc":
+                task_id = task_data.get('headers', {}).get('id', None)
+                task_args = task_data.get('headers', {}).get('argsrepr', '[]')
+                task_args_list = eval(task_args)  # 将字符串转换为元组
+                first_arg = task_args_list[0]
+                if sku in first_arg:
+                    # 从队列中移除任务
+                    redis_client.lrem(queue_name, 1, task)
+                    print("Task removed:", task_id)
         except json.JSONDecodeError as e:
             print("Failed to decode task data:", e)
     return None
