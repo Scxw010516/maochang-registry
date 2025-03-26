@@ -560,49 +560,61 @@
           "
           style="height: 590px; overflow: auto; margin-top: 25px"
         >
-          <a-row :gutter="[30, 30]" style="width: 800px">
-            <a-col
-              v-for="(value, key) in EyeGlassDetailFormLabel"
-              :key="key"
-              :span="6"
-            >
-              <a-row
-                style="height: 100%; width: 100%"
-                justify="center"
-                align="bottom"
+          <a-form
+            ref="EyeGlassDetailFormRef"
+            :model="EyeGlassDetailFormState"
+            :rules="EyeGlassDetailFormRules"
+            hideRequiredMark
+          >
+            <a-row :gutter="[30, 30]" style="width: 800px">
+              <a-col
+                v-for="(value, key) in EyeGlassDetailFormLabel"
+                :key="key"
+                :span="6"
               >
-                <a-col :span="24">
-                  <img
-                    :src="`/src/assets/params_pic/${key}.svg`"
-                    alt="SVG Image"
-                    width="70%"
-                    style="display: block; margin: 0 auto"
-                  />
-                </a-col>
                 <a-row
-                  style="width: 100%"
+                  style="height: 100%; width: 100%"
                   justify="center"
                   align="bottom"
-                  :gutter="[0, 5]"
                 >
-                  <a-col style="font-size: 20px; text-align: center" :span="24">
-                    {{ EyeGlassDetailFormLabel[key] }}
-                  </a-col>
                   <a-col :span="24">
-                    <a-input
-                      v-model:value="EyeGlassDetailFormState[key]"
-                      :suffix="EyeGlassDetailFormUnit[key]"
-                      style="
-                        border-radius: 9px;
-                        padding-left: 11px;
-                        height: 30px;
-                      "
-                    ></a-input>
+                    <img
+                      :src="`/src/assets/params_pic/${key}.svg`"
+                      alt="SVG Image"
+                      width="70%"
+                      style="display: block; margin: 0 auto"
+                    />
                   </a-col>
+                  <a-row
+                    style="width: 100%"
+                    justify="center"
+                    align="bottom"
+                    :gutter="[0, 5]"
+                  >
+                    <a-col
+                      style="font-size: 20px; text-align: center"
+                      :span="24"
+                    >
+                      {{ EyeGlassDetailFormLabel[key] }}
+                    </a-col>
+                    <a-col :span="24">
+                      <a-form-item :name="key" class="modal-explicit-item">
+                        <a-input
+                          v-model:value="EyeGlassDetailFormState[key]"
+                          :suffix="EyeGlassDetailFormUnit[key]"
+                          style="
+                            border-radius: 9px;
+                            padding-left: 11px;
+                            height: 30px;
+                          "
+                        ></a-input>
+                      </a-form-item>
+                    </a-col>
+                  </a-row>
                 </a-row>
-              </a-row>
-            </a-col>
-          </a-row>
+              </a-col>
+            </a-row>
+          </a-form>
         </div>
         <!-- 保存按钮 -->
         <a-button
@@ -1435,6 +1447,7 @@ const getEyeglassFrameDetails = async (id: number) => {
           if (key in response.data.data)
             EyeGlassDetailFormState[key] = response.data.data[key];
         });
+        console.log(EyeGlassDetailFormState);
         // 将获取到的镜架重量信息赋值给镜架重量信息表单
         // Object.entries(EyeGlassWeightFormState).forEach(([key]) => {
         //   if (key in response.data.data)
@@ -1523,25 +1536,24 @@ const initAllForms = () => {
   initEyeGlassImageFormState();
 };
 
-// 功能函数：提交修改镜架参数至服务器
+// 功能函数：提交修改镜架参数至服务器（详细信息和基础信息分开保存）
 const saveEditEyeglassFrame = async () => {
   // 验证通过标识符
   let isFormValid = true;
   // 检查镜架基础信息是否完善
-  await EyeGlassBasicFormRef.value.validate().catch(() => {
-    message.error("请完善镜架基础信息");
-    isFormValid = false;
-  });
-  // 检查镜架风格信息是否完善
-  // await EyeGlassStyleFormRef.value.validate().catch(() => {
-  //   message.error("请完善镜架风格信息");
-  //   isFormValid = false;
-  // });
+  if (editModalState.modalDetailsType === "basic") {
+    await EyeGlassBasicFormRef.value.validate().catch(() => {
+      message.error("请完善镜架基础信息");
+      isFormValid = false;
+    });
+  }
   // 检查镜架详细信息是否完善
-  await EyeGlassDetailFormRef.value.validate().catch(() => {
-    message.error("请完善镜架详细信息");
-    isFormValid = false;
-  });
+  if (editModalState.modalDetailsType === "explicit") {
+    await EyeGlassDetailFormRef.value.validate().catch(() => {
+      message.error("请完善镜架详细信息");
+      isFormValid = false;
+    });
+  }
   // 检查镜架重量信息是否完善
   // await EyeGlassWeightFormRef.value.validate().catch(() => {
   //   message.error("请完善镜架重量信息");
@@ -1563,101 +1575,103 @@ const saveEditEyeglassFrame = async () => {
     "id",
     editModalState.modalId ? editModalState.modalId.toString() : "",
   );
+  formData.append("save_type", editModalState.modalDetailsType);
   // 将镜架基础信息添加到FormData对象
-  formData.append("sku", EyeGlassBasicFormState.sku);
-  formData.append("brand", EyeGlassBasicFormState.brand);
-  formData.append("model_type", EyeGlassBasicFormState.model_type);
-  formData.append(
-    "price",
-    EyeGlassBasicFormState.price !== null
-      ? EyeGlassBasicFormState.price.toString()
-      : "",
-  );
-  formData.append(
-    "material",
-    EyeGlassBasicFormState.material !== null
-      ? EyeGlassBasicFormState.material.toString()
-      : "",
-  );
-  formData.append(
-    "color",
-    EyeGlassBasicFormState.color !== null
-      ? EyeGlassBasicFormState.color.toString()
-      : "",
-  );
-  formData.append(
-    "shape",
-    EyeGlassBasicFormState.shape !== null
-      ? EyeGlassBasicFormState.shape.toString()
-      : "",
-  );
-  formData.append(
-    "isnosepad",
-    EyeGlassBasicFormState.isnosepad
-      ? EyeGlassBasicFormState.isnosepad.toString()
-      : "",
-  );
-  formData.append(
-    "is_transparent",
-    EyeGlassBasicFormState.is_transparent !== null
-      ? EyeGlassBasicFormState.is_transparent.toString()
-      : "",
-  );
-  formData.append(
-    "frame_type",
-    EyeGlassBasicFormState.frame_type !== null
-      ? EyeGlassBasicFormState.frame_type.toString()
-      : "",
-  );
-  formData.append(
-    "stock",
-    EyeGlassBasicFormState.stock !== null
-      ? EyeGlassBasicFormState.stock.toString()
-      : "",
-  );
-  formData.append(
-    "warehouse",
-    user.warehouse !== null ? user.warehouse.toString() : "",
-  );
-  formData.append(
-    "lens_radian",
-    EyeGlassBasicFormState.lens_radian !== null
-      ? EyeGlassBasicFormState.lens_radian.toString()
-      : "",
-  );
-  formData.append(
-    "lens_width_st",
-    EyeGlassBasicFormState.lens_width_st !== null
-      ? EyeGlassBasicFormState.lens_width_st.toString()
-      : "",
-  );
-  formData.append(
-    "bridge_width_st",
-    EyeGlassBasicFormState.bridge_width_st !== null
-      ? EyeGlassBasicFormState.bridge_width_st.toString()
-      : "",
-  );
-  formData.append(
-    "temple_length_st",
-    EyeGlassBasicFormState.temple_length_st !== null
-      ? EyeGlassBasicFormState.temple_length_st.toString()
-      : "",
-  );
-  formData.append("weight", EyeGlassBasicFormState.weight);
-  // 将镜架风格信息添加到FormData对象
-  // formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
+  if (editModalState.modalDetailsType === "basic") {
+    formData.append("sku", EyeGlassBasicFormState.sku);
+    formData.append("brand", EyeGlassBasicFormState.brand);
+    formData.append("model_type", EyeGlassBasicFormState.model_type);
+    formData.append(
+      "price",
+      EyeGlassBasicFormState.price !== null
+        ? EyeGlassBasicFormState.price.toString()
+        : "",
+    );
+    formData.append(
+      "material",
+      EyeGlassBasicFormState.material !== null
+        ? EyeGlassBasicFormState.material.toString()
+        : "",
+    );
+    formData.append(
+      "color",
+      EyeGlassBasicFormState.color !== null
+        ? EyeGlassBasicFormState.color.toString()
+        : "",
+    );
+    formData.append(
+      "shape",
+      EyeGlassBasicFormState.shape !== null
+        ? EyeGlassBasicFormState.shape.toString()
+        : "",
+    );
+    formData.append(
+      "isnosepad",
+      EyeGlassBasicFormState.isnosepad
+        ? EyeGlassBasicFormState.isnosepad.toString()
+        : "",
+    );
+    formData.append(
+      "is_transparent",
+      EyeGlassBasicFormState.is_transparent !== null
+        ? EyeGlassBasicFormState.is_transparent.toString()
+        : "",
+    );
+    formData.append(
+      "frame_type",
+      EyeGlassBasicFormState.frame_type !== null
+        ? EyeGlassBasicFormState.frame_type.toString()
+        : "",
+    );
+    formData.append(
+      "stock",
+      EyeGlassBasicFormState.stock !== null
+        ? EyeGlassBasicFormState.stock.toString()
+        : "",
+    );
+    formData.append(
+      "warehouse",
+      user.warehouse !== null ? user.warehouse.toString() : "",
+    );
+    formData.append(
+      "lens_radian",
+      EyeGlassBasicFormState.lens_radian !== null
+        ? EyeGlassBasicFormState.lens_radian.toString()
+        : "",
+    );
+    formData.append(
+      "lens_width_st",
+      EyeGlassBasicFormState.lens_width_st !== null
+        ? EyeGlassBasicFormState.lens_width_st.toString()
+        : "",
+    );
+    formData.append(
+      "bridge_width_st",
+      EyeGlassBasicFormState.bridge_width_st !== null
+        ? EyeGlassBasicFormState.bridge_width_st.toString()
+        : "",
+    );
+    formData.append(
+      "temple_length_st",
+      EyeGlassBasicFormState.temple_length_st !== null
+        ? EyeGlassBasicFormState.temple_length_st.toString()
+        : "",
+    );
+    formData.append("weight", EyeGlassBasicFormState.weight);
+  }
   // 将镜架详细信息添加到FormData对象
-  Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-    formData.append(key, value); // 将值转换为字符串后添加
-  });
-  // 将镜架重量信息添加到FormData对象
-  // formData.append("weight", EyeGlassWeightFormState.weight);
+  if (editModalState.modalDetailsType === "explicit") {
+    Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
+      formData.append(key, value); // 将值转换为字符串后添加
+    });
+  }
   // 提交通过标识符
   let isSaveSuccess: boolean = false;
   // 发送post请求
   await axios
     .post("/glassmanagement/api/save-edit-eyeglassframe", formData)
     .then((response) => {
+      console.log(response);
       // 判断返回的code值，若为-1则提示无镜架信息
       if (response.data.code === -1) {
         message.error(response.data.msg);

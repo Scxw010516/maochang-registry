@@ -477,44 +477,66 @@ def SaveEditEyeglassFrame(request: HttpRequest):
     try:
         # 数据库事务处理
         with transaction.atomic():
-            """
-            镜架基本信息表处理
-            """
-            # 验证镜架基本信息表表单
-            form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(
-                request.POST, instance=EyeglassFrameEntry_instance
-            )
-            if form_EyeglassFrameEntry.is_valid():
-                # 保存镜架基本信息表实例
-                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
-
+            # 判断保存类型为基础信息
+            if request.POST.get("save_type") == "basic":
+                """
+                镜架基本信息表处理
+                """
+                # 验证镜架基本信息表表单
+                form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(
+                    request.POST, instance=EyeglassFrameEntry_instance
+                )
+                if form_EyeglassFrameEntry.is_valid():
+                    # 保存镜架基本信息表实例
+                    EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
+                    # 返回成功信息
+                    return R.ok(msg="镜架编辑成功")
+                else:
+                    # 处理镜架基本信息表表单验证失败的情况
+                    err_msg = regular.get_err(form_EyeglassFrameEntry)
+                    # 抛出异常
+                    raise ValueError(err_msg)
+                
+            # 判断保存类型为详细信息（保存到毫米测量数据表）
+            elif request.POST.get("save_type") == "explicit":
                 """
                 镜架毫米测量数据处理
                 """
-                # 查询镜架扫描结果表实例
+                print(request.POST)
+                # 查询镜架毫米测量数据表实例
                 EyeglassFrameMillimeterMeasurement_instance = (
                     models.EyeglassFrameMillimeterMeasurement.objects.filter(
                         entry=EyeglassFrameEntry_instance
                     ).first()
                 )
-                # 镜架扫描结果表实例为空判断
+                # 镜架毫米测量数据表实例为空判断
                 if not EyeglassFrameMillimeterMeasurement_instance:
                     # 抛出异常
-                    raise ValueError("镜架毫米测量数据实例为空")
-                # 创建镜架扫描结果表实例
-                form_EyeglassFrameMillimeterMeasurement = (
-                    forms.EyeglassFrameMillimeterMeasurementForm(
-                        request.POST, instance=EyeglassFrameMillimeterMeasurement_instance
-                    )
-                )
-                # 验证镜架扫描结果表表单
-                if form_EyeglassFrameMillimeterMeasurement.is_valid():
-                    # 保存镜架扫描结果表实例
-                    EyeglassFrameMillimeterMeasurement_instance = (
-                        form_EyeglassFrameMillimeterMeasurement.save()
+                    # raise ValueError("镜架毫米测量数据实例为空")
+                    # 不存在镜架毫米测量数据表实例，则创建
+                    form_EyeglassFrameMillimeterMeasurement = (
+                        forms.EyeglassFrameMillimeterMeasurementForm(
+                            request.POST
+                        )
                     )
                 else:
-                    # 处理镜架扫描结果表表单验证失败的情况
+                    # 根据原有数据，创建镜架毫米测量数据表实例
+                    form_EyeglassFrameMillimeterMeasurement = (
+                        forms.EyeglassFrameMillimeterMeasurementForm(
+                            request.POST, instance=EyeglassFrameMillimeterMeasurement_instance
+                        )
+                    )
+                # 验证镜架毫米测量数据表表单
+                if form_EyeglassFrameMillimeterMeasurement.is_valid():
+                    # 保存镜架毫米测量数据表实例
+                    EyeglassFrameMillimeterMeasurement_instance = (
+                        form_EyeglassFrameMillimeterMeasurement.save(commit=False)
+                    )
+                    # 关联镜架基本信息表外键
+                    EyeglassFrameMillimeterMeasurement_instance.entry = EyeglassFrameEntry_instance
+                    EyeglassFrameMillimeterMeasurement_instance.save()
+                else:
+                    # 处理镜架毫米测量数据表表单验证失败的情况
                     err_msg = regular.get_err(form_EyeglassFrameMillimeterMeasurement)
                     # 抛出异常
                     raise ValueError(err_msg)
@@ -522,10 +544,7 @@ def SaveEditEyeglassFrame(request: HttpRequest):
                 # 返回成功信息
                 return R.ok(msg="镜架编辑成功")
             else:
-                # 处理镜架基本信息表表单验证失败的情况
-                err_msg = regular.get_err(form_EyeglassFrameEntry)
-                # 抛出异常
-                raise ValueError(err_msg)
+                raise ValueError("保存类型错误")
     except ValueError as ve:
         return R.failed(msg=str(ve))
     except Exception as e:

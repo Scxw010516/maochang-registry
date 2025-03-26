@@ -28,3 +28,6 @@ node_modules/
 /registry-service/api/efficient_sam_vits.onnx
 /public/uploads/images/eyeglassframe/
 public/
+
+/application/celery_task/glass_detect/detect/checkpoints
+/application/celery_task/glass_detect/segment/checkpoints

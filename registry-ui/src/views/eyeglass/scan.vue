@@ -1665,6 +1665,19 @@ const uploadNewEyeglassFrame = async () => {
     .post("/glassmanagement/api/upload-new-eyeglassframe", formData)
     .then((response) => {
       console.log(response);
+      if (response.data.code === -1) {
+        message.error("镜架计算任务上传失败");
+        isSaveSuccess = false;
+      } else {
+        message.success("镜架计算任务上传成功");
+        // 重置所有表单和状态
+        initAll();
+        isSaveSuccess = true;
+      }
+    })
+    .catch((error) => {
+      console.log(error);
+      isSaveSuccess = false;
     });
   return isSaveSuccess;
 };
