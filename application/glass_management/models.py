@@ -279,21 +279,21 @@ class EyeglassFrameImage(BaseModel):
     entry = models.OneToOneField(EyeglassFrameEntry, unique=True, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架基本信息")
     # 镜架图片字段
     ## 镜架三视图
-    frontview = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe", ViewType.FRONT,"jpg"), unique=False, blank=False, null=True, verbose_name="正视图")
-    sideview = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe", ViewType.SIDE,"jpg"), unique=False, blank=False, null=True, verbose_name="侧视图")
-    topview = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe", ViewType.TOP,"jpg"), unique=False, blank=False, null=True, verbose_name="俯视图")
+    frontview = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe", ViewType.FRONT.value, "jpg"), unique=False, blank=False, null=True, verbose_name="正视图")
+    sideview = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe", ViewType.SIDE.value, "jpg"), unique=False, blank=False, null=True, verbose_name="侧视图")
+    topview = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe", ViewType.TOP.value, "jpg"), unique=False, blank=False, null=True, verbose_name="俯视图")
     ## 镜架mask图 
-    frame = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.FRAME,"png"), unique=False, blank=False, null=True, verbose_name="镜框mask图")
-    lens = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.LENS,"png"), unique=False, blank=False, null=True, verbose_name="镜圈mask图")
-    templeWf = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.TEMPLE,"png"), unique=False, blank=False, null=True, verbose_name="镜腿mask图")
-    nose = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.NOSE,"png"), unique=False, blank=False, null=True, verbose_name="鼻托mask图")
-    front = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.FRONT,"png"), unique=False, blank=False, null=True, verbose_name="正视图mask图")
+    frame = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.FRAME.value, "png"), unique=False, blank=False, null=True, verbose_name="镜框mask图")
+    lens = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.LENS.value, "png"), unique=False, blank=False, null=True, verbose_name="镜圈mask图")
+    templeWf = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.TEMPLE.value, "png"), unique=False, blank=False, null=True, verbose_name="镜腿mask图")
+    nose = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.NOSE.value, "png"), unique=False, blank=False, null=True, verbose_name="鼻托mask图")
+    front = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_mask", MaskType.FRONT.value, "png"), unique=False, blank=False, null=True, verbose_name="正视图mask图")
     ## 镜架分割图(前景图)
-    frontview_seg = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_seg", ViewType.FRONT,"png"), unique=False, blank=False, null=True, verbose_name="正视图分割图")
-    sideview_seg = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_seg", ViewType.SIDE,"png"), unique=False, blank=False, null=True, verbose_name="侧视图分割图")
+    frontview_seg = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_seg", ViewType.FRONT.value, "png"), unique=False, blank=False, null=True, verbose_name="正视图分割图")
+    sideview_seg = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_seg", ViewType.SIDE.value, "png"), unique=False, blank=False, null=True, verbose_name="侧视图分割图")
     ## 镜架美化图
-    frontview_beautify = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beautify", ViewType.FRONT,"png"), unique=False, blank=False, null=True, verbose_name="正视图美化图")
-    sideview_beautify = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beautify", ViewType.SIDE,"png"), unique=False, blank=False, null=True, verbose_name="侧视图美化图")
+    frontview_beautify = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beautify", ViewType.FRONT.value, "png"), unique=False, blank=False, null=True, verbose_name="正视图美化图")
+    sideview_beautify = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beautify", ViewType.SIDE.value, "png"), unique=False, blank=False, null=True, verbose_name="侧视图美化图")
 
     class Meta:
         indexes = [models.Index(fields=["entry"])]

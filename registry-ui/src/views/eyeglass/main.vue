@@ -131,7 +131,13 @@
       v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('2')"
     >
       <a-layout-content>
-        <ManagePage />
+        <ManagePage
+          :goToScan="
+            () => {
+              selectedMenuItem = ['1'];
+            }
+          "
+        />
       </a-layout-content>
     </a-layout>
     <!-- 账号中心 -->

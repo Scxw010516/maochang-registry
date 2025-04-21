@@ -262,53 +262,53 @@ def restart_uncalc_frame():
     队列中没有计算任务的时候再添加任务，删除重复的重启任务
     """
     # 连接到 Redis
-    redis_client = redis.Redis(host='redis', port=6379, db=1)
-    # 查询默认 Celery 队列中的任务
-    queue_name = 'celery'
-    tasks = redis_client.lrange(queue_name, 0, -1)
-    # 解析任务数据
-    for task in tasks:
-            task_data = json.loads(task)
-            # 删除重复的重启任务
-            if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.restart_uncalc_frame":
-                    redis_client.lrem(queue_name, 1, task)
-                    continue
-            # 如果队列中有calc任务，则不添加任务
-            if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.calc":
-                return
+    # redis_client = redis.Redis(host='redis', port=6379, db=1)
+    # # 查询默认 Celery 队列中的任务
+    # queue_name = 'celery'
+    # tasks = redis_client.lrange(queue_name, 0, -1)
+    # # 解析任务数据
+    # for task in tasks:
+    #         task_data = json.loads(task)
+    #         # 删除重复的重启任务
+    #         if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.restart_uncalc_frame":
+    #                 redis_client.lrem(queue_name, 1, task)
+    #                 continue
+    #         # 如果队列中有calc任务，则不添加任务
+    #         if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.calc":
+    #             return
     
-    """
-    获取所有镜架基础信息，查询状态异常的镜架，生成计算任务
-    """
-    try:
-        # 获取所有镜架基础信息
-        entries = models.EyeglassFrameEntry.objects.all()
+    # """
+    # 获取所有镜架基础信息，查询状态异常的镜架，生成计算任务
+    # """
+    # try:
+    #     # 获取所有镜架基础信息
+    #     entries = models.EyeglassFrameEntry.objects.all()
 
-        # 镜架基础信息列表为空判断
-        if not entries:
-            return None
+    #     # 镜架基础信息列表为空判断
+    #     if not entries:
+    #         return None
         
-        # 任务上限100
-        task_num = 100
+    #     # 任务上限100
+    #     task_num = 100
         
-        for entry in entries:
-            # print('check',entry.sku)
-            if task_num <= 0:
-                break
-            # 判断镜架状态是否为计算中
-            if entry.pixel_measurement_state == 1 or entry.millimeter_measurement_state == 1 or entry.calculation_state == 1 or entry.coordinate_state == 1 or entry.image_mask_state == 1 or entry.image_seg_state == 1 or entry.image_beautify_state == 1 :
-                # 生成计算任务，因为在calc中计算完成时会删除队列中的重复任务，所以不用判断是否真的在计算中
-                task_num -= 1
-                calc.delay(entry.sku)
+    #     for entry in entries:
+    #         # print('check',entry.sku)
+    #         if task_num <= 0:
+    #             break
+    #         # 判断镜架状态是否为计算中
+    #         if entry.pixel_measurement_state == 1 or entry.millimeter_measurement_state == 1 or entry.calculation_state == 1 or entry.coordinate_state == 1 or entry.image_mask_state == 1 or entry.image_seg_state == 1 or entry.image_beautify_state == 1 :
+    #             # 生成计算任务，因为在calc中计算完成时会删除队列中的重复任务，所以不用判断是否真的在计算中
+    #             task_num -= 1
+    #             calc.delay(entry.sku)
 
-            # 判断镜架状态是否为待计算
-            if entry.pixel_measurement_state == 0 or entry.millimeter_measurement_state == 0 or entry.calculation_state == 0 or entry.coordinate_state == 0 or entry.image_mask_state == 0 or entry.image_seg_state == 0 or entry.image_beautify_state == 0 :
-                # 如果redis中没有找到对应任务（返回0），则生成计算任务
-                if not search_calc_task(entry.sku):
-                    task_num -= 1
-                    calc.delay(entry.sku)
+    #         # 判断镜架状态是否为待计算
+    #         if entry.pixel_measurement_state == 0 or entry.millimeter_measurement_state == 0 or entry.calculation_state == 0 or entry.coordinate_state == 0 or entry.image_mask_state == 0 or entry.image_seg_state == 0 or entry.image_beautify_state == 0 :
+    #             # 如果redis中没有找到对应任务（返回0），则生成计算任务
+    #             if not search_calc_task(entry.sku):
+    #                 task_num -= 1
+    #                 calc.delay(entry.sku)
 
-    except Exception as e:
-        print("重启计算任务失败："+str(e))
+    # except Exception as e:
+    #     print("重启计算任务失败："+str(e))
 
     return None

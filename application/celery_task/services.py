@@ -336,8 +336,8 @@ def delete_calc_task(sku):
     # 解析任务数据
     for task in tasks:
         try:
-            # 只有calc任务，所以暂时不需要判断任务类型
             task_data = json.loads(task)
+            # 判断任务类型
             if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.calc":
                 task_id = task_data.get('headers', {}).get('id', None)
                 task_args = task_data.get('headers', {}).get('argsrepr', '[]')
