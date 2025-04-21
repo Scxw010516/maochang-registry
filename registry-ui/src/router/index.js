@@ -19,10 +19,6 @@ const routes = [
     component: () => import("../views/eyeglass/main.vue"),
   },
   {
-    path: "/editor",
-    component: () => import("../views/eyeglass/editor.vue"),
-  },
-  {
     path: "/:pathMatch(.*)*",
     component: () => import("../views/exception/404.vue"),
   },
