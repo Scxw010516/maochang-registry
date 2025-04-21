@@ -15,16 +15,22 @@ app = Celery('application')
 #   should have a `CELERY_` prefix.
 # app.config_from_object('django.conf:settings', namespace='CELERY')
 class Config:
-    BROKER_URL = 'redis://127.0.0.1:6379/1'
-    CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
-    # BROKER_URL = 'redis://172.17.0.3:6379/1'
-    # CELERY_RESULT_BACKEND = 'redis://172.17.0.3:6379/2'
+    # BROKER_URL = 'redis://127.0.0.1:6379/1'
+    # CELERY_RESULT_BACKEND = 'redis://127.0.0.1:6379/2'
+    BROKER_URL = 'redis://redis:6379/1'
+    CELERY_RESULT_BACKEND = 'redis://redis:6379/2'
     # BROKER_URL = 'redis://0.0.0.0:6379/1'
     # CELERY_RESULT_BACKEND = 'redis://0.0.0.0:6379/2'
 
 app.config_from_object(Config)
+# app.conf.beat_schedule = {
+#     'restart-uncalc-frame': {
+#         'task': 'application.celery_task.tasks.restart_uncalc_frame',
+#         'schedule': 30.0,
+#     },
+# }
 # 到celery_tasks里自动发现tasks.py文件
-app.autodiscover_tasks(["application.celery_task.tasks"])
+app.autodiscover_tasks(["application.celery_task"])
 
 @app.task(bind=True, ignore_result=True)
 def debug_task(self):

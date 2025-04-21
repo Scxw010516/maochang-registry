@@ -85,6 +85,21 @@
         </a-button>
       </a-row>
     </a-col>
+    <a-modal
+      v-model:visible="showRescanModal"
+      title="镜架已入库"
+      centered
+      :maskClosable="false"
+    >
+      <template #footer>
+        <a-button id="rescan-button" danger> 重新录入 </a-button>
+        <a-button @click="onClicRescanModelView"> 查看 </a-button>
+        <a-button type="primary" @click="onClicRescanModelReInput">
+          重新输入SKU
+        </a-button>
+      </template>
+      <p>该SKU对应镜架已入库，请选择下一步操作</p>
+    </a-modal>
   </a-row>
   <!-- 输入基础信息 -->
   <a-row
@@ -108,7 +123,7 @@
         :wrapper-col="{ span: 18 }"
         labelAlign="left"
       >
-        <a-form-item name="sku">
+        <a-form-item name="sku" :wrapper-col="{ span: 24 }">
           <a-input
             class="sku-input"
             v-model:value="EyeGlassBasicFormState.sku"
@@ -727,6 +742,8 @@ import {
   computed,
   watch,
   onUpdated,
+  h,
+  nextTick,
 } from "vue";
 // import { useRouter } from "vue-router";
 import {
@@ -754,7 +771,6 @@ import {
   EyeGlassBasicFormUnit, // 镜架图像背景参数接口
 } from "./params";
 import { initFormOptions } from "./utils";
-
 //#########################################参数初始化###########################################
 // const router = useRouter();
 const state = useStateStore();
@@ -780,6 +796,7 @@ const hasCaptured = ref(false); // 是否已经拍摄
 const searchString = ref(""); // 镜架检索信
 const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
 const skuormodeltype = ref<number>(1);
+const showRescanModal = ref(false);
 
 // 镜架拍摄html信息接口
 interface CaptureItem {
@@ -825,6 +842,7 @@ interface Option {
 //详细信息modal 相关
 const showDetailModal = ref<boolean>(false);
 const isInputEditable = ref<string>("");
+const isRescan = ref<boolean>(false);
 
 // 设备状态
 const cameraState = ref<boolean>(false);
@@ -1152,6 +1170,14 @@ onMounted(() => {
   SideCapture.value.videoElement = document.querySelector(
     "video[name='SideVideo']",
   ) as HTMLVideoElement;
+  // 判断状态管理store中是否有需要重新录入的sku
+  if (state.searchSku) {
+    // 将store中的sku赋值给searchString
+    skuormodeltype.value = 2;
+    searchString.value = state.searchSku;
+    // 清空store中的sku
+    state.searchSku = "";
+  }
 });
 
 // 生命周期钩子：组件因为响应式状态变更而更新其 DOM 树之后调用
@@ -1571,6 +1597,7 @@ const uploadNewEyeglassFrame = async () => {
   }
   // 构建FormData对象
   const formData = new FormData();
+  formData.append("isRescan", isRescan.value.toString());
   // 将镜架基础信息添加到FormData对象
   formData.append("sku", EyeGlassBasicFormState.sku);
   formData.append("brand", EyeGlassBasicFormState.brand);
@@ -1580,6 +1607,11 @@ const uploadNewEyeglassFrame = async () => {
     EyeGlassBasicFormState.price !== null
       ? EyeGlassBasicFormState.price.toString()
       : "",
+  );
+  console.log(
+    EyeGlassBasicFormState.material,
+    EyeGlassBasicFormState.color,
+    EyeGlassBasicFormState.shape,
   );
   formData.append(
     "material",
@@ -1682,172 +1714,6 @@ const uploadNewEyeglassFrame = async () => {
   return isSaveSuccess;
 };
 
-// 功能函数：发送图片、基础参数和详细参数到服务器
-const saveNewEyeglassFrame = async () => {
-  // 验证通过标识符
-  let isFormValid = true;
-  // 检查镜架基础信息是否完善
-  await EyeGlassBasicFormRef.value.validate().catch(() => {
-    message.error("请完善镜架基础信息");
-    isFormValid = false;
-  });
-  // 检查镜架风格信息是否完善
-  // await EyeGlassStyleFormRef.value.validate().catch(() => {
-  //   message.error("请完善镜架风格信息");
-  //   isFormValid = false;
-  // });
-  // 检查镜架详细信息是否完善
-  // await EyeGlassDetailFormRef.value.validate().catch(() => {
-  //   message.error("请完善镜架详细信息");
-  //   isFormValid = false;
-  // });
-  // 检查镜架重量信息是否完善
-  await EyeGlassWeightFormRef.value.validate().catch(() => {
-    message.error("请完善镜架重量信息");
-    isFormValid = false;
-  });
-  // 检查镜架图片信息是否完善
-  // if (!Object.values(EyeGlassImageFormState).every((image) => image !== null)) {
-  //   message.error("镜架三视图信息错误");
-  //   isFormValid = false;
-  // }
-  // 检查镜架图片背景信息是否完善
-  if (
-    !Object.values(EyeGlassImageBackgroundFormState).every(
-      (image) => image !== null,
-    )
-  ) {
-    message.error("镜架三视图背景信息错误");
-    isFormValid = false;
-  }
-  // 检查镜架采集仓库地址是否完善
-  if (!user.warehouse) {
-    message.error("请完善镜架采集仓库地址");
-    isFormValid = false;
-  }
-  if (!isFormValid) {
-    return false;
-  }
-  // 构建FormData对象
-  const formData = new FormData();
-  // 将镜架基础信息添加到FormData对象
-  formData.append("sku", EyeGlassBasicFormState.sku);
-  formData.append("brand", EyeGlassBasicFormState.brand);
-  formData.append("model_type", EyeGlassBasicFormState.model_type);
-  formData.append(
-    "price",
-    EyeGlassBasicFormState.price !== null
-      ? EyeGlassBasicFormState.price.toString()
-      : "",
-  );
-  formData.append(
-    "material",
-    EyeGlassBasicFormState.material !== null
-      ? EyeGlassBasicFormState.material.toString()
-      : "",
-  );
-  formData.append(
-    "color",
-    EyeGlassBasicFormState.color !== null
-      ? EyeGlassBasicFormState.color.toString()
-      : "",
-  );
-  formData.append(
-    "shape",
-    EyeGlassBasicFormState.shape !== null
-      ? EyeGlassBasicFormState.shape.toString()
-      : "",
-  );
-  // 数据库字段isnosepad为BooleanField类型，当isnosepad!==null时，后端会同意验证为True。因此，此处做特殊处理
-  formData.append(
-    "isnosepad",
-    EyeGlassBasicFormState.isnosepad
-      ? EyeGlassBasicFormState.isnosepad.toString()
-      : "",
-  );
-  formData.append(
-    "stock",
-    EyeGlassBasicFormState.stock !== null
-      ? EyeGlassBasicFormState.stock.toString()
-      : "",
-  );
-  formData.append(
-    "warehouse",
-    user.warehouse !== null ? user.warehouse.toString() : "",
-  );
-  formData.append(
-    "lens_radian",
-    EyeGlassBasicFormState.lens_radian !== null
-      ? EyeGlassBasicFormState.lens_radian.toString()
-      : "",
-  );
-  formData.append(
-    "lens_width_st",
-    EyeGlassBasicFormState.lens_width_st !== null
-      ? EyeGlassBasicFormState.lens_width_st.toString()
-      : "",
-  );
-  formData.append(
-    "bridge_width_st",
-    EyeGlassBasicFormState.bridge_width_st !== null
-      ? EyeGlassBasicFormState.bridge_width_st.toString()
-      : "",
-  );
-  formData.append(
-    "temple_length_st",
-    EyeGlassBasicFormState.temple_length_st !== null
-      ? EyeGlassBasicFormState.temple_length_st.toString()
-      : "",
-  );
-  // 将镜架风格信息添加到FormData对象
-  // formData.append("style", JSON.stringify(EyeGlassStyleFormState.style));
-  // 将镜架详细信息添加到FormData对象
-  // Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-  //   formData.append(key, value); // 将值转换为字符串后添加
-  // });
-  // 将镜架重量信息添加到FormData对象
-  formData.append("weight", EyeGlassWeightFormState.weight);
-  // 将镜架图片信息添加到FormData对象
-  // formData.append("frontview", EyeGlassImageFormState.frontview as File);
-  // formData.append("sideview", EyeGlassImageFormState.sideview as File);
-  // formData.append("topview", EyeGlassImageFormState.topview as File);
-  // 将镜架图片背景信息添加到FormData对象
-  // formData.append(
-  //   "frontview_bg",
-  //   EyeGlassImageBackgroundFormState.frontview_bg as File,
-  // );
-  // formData.append(
-  //   "sideview_bg",
-  //   EyeGlassImageBackgroundFormState.sideview_bg as File,
-  // );
-  // formData.append(
-  //   "topview_bg",
-  //   EyeGlassImageBackgroundFormState.topview_bg as File,
-  // );
-  // 提交通过标识符
-  let isSaveSuccess: boolean = false;
-  // 发送请求
-  await axios
-    .post("/glassmanagement/api/generate-calculate-task", formData)
-    .then((response) => {
-      // 判断返回的code值，若为-1则提示无镜架信息
-      if (response.data.code === -1) {
-        message.error("镜架保存失败");
-        isSaveSuccess = false;
-      } else {
-        message.success("镜架信息保存成功");
-        // 重置所有表单和状态
-        initAll();
-        isSaveSuccess = true;
-      }
-    })
-    .catch((error) => {
-      console.log(error);
-      isSaveSuccess = false;
-    });
-  return isSaveSuccess;
-};
-
 // 功能函数：访问WebSocket，读取称重结果
 const readWeight = () => {
   const ws = new WebSocket(`ws://localhost:8765/read-weight`);
@@ -1872,65 +1738,6 @@ const readWeight = () => {
   });
   wsMap.value.set("weight", ws);
 };
-
-// 功能函数：访问WebSocket，计算镜架参数
-// const calculateParamsAndStyles = () => {
-//   // 计算参数loading提示
-//   const calculatingmessage = message.loading("正在计算参数和风格", 0);
-//   // 访问WebSocket，计算镜架参数
-//   const ws = new WebSocket(`ws://localhost:8765/calc-frame`);
-//   // 监听WebSocket消息
-//   ws.addEventListener("message", (event) => {
-//     // 解析返回的参数
-//     const result = JSON.parse(event.data as string);
-//     if (result.code == "-1") {
-//       // 显示相机状态错误Modal提示
-//       showCameraStateErrorModal.value = true;
-//       // 将相机状态置为false
-//       cameraState.value = false;
-//       // 移除计算参数loading提示
-//       calculatingmessage();
-//     } else {
-//       const calculated_params = result.data;
-//       // 判断计算结果flag，若为false则提示计算失败
-//       if (calculated_params["flag"] === 0) {
-//         // 将计算参数赋值给EyeGlassDetailFormState表单
-//         Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
-//           if (key in calculated_params) {
-//             EyeGlassDetailFormState[key] = calculated_params[key];
-//           }
-//         });
-//         // 将提交按钮置为可用
-//         enabledSubmitButton.value = true;
-//         // 移除计算参数loading提示
-//         calculatingmessage();
-//         // 提示计算失败
-//         message.success("计算镜架参数成功", 5);
-//       } else {
-//         // 将计算参数赋值给EyeGlassDetailFormState表单
-//         Object.entries(EyeGlassDetailFormState).forEach(([key]) => {
-//           if (key in calculated_params) {
-//             EyeGlassDetailFormState[key] = calculated_params[key];
-//           }
-//         });
-//         // 将提交按钮置为可用
-//         enabledSubmitButton.value = true;
-//         // 移除计算参数loading提示
-//         calculatingmessage();
-//         message.success("计算镜架参数成功", 5);
-//       }
-//     }
-//     ws.close();
-//   });
-//   // 监听错误事件
-//   ws.addEventListener("error", () => {
-//     message.error("参数计算失败，请检查设备连接", 10);
-//     ws.close();
-//   });
-
-//   // 计算镜架风格，todo：未来要用websocket或http请求去计算
-//   // EyeGlassStyleFormState.style = [1];
-// };
 
 // 功能函数：清楚摄像头缓存
 const clearCameraCache = async () => {
@@ -2089,33 +1896,49 @@ const onClickEnterSKU = async () => {
         if (response.data["code"] == -1) {
           // 判断data状态，若返回data，表示镜架已入库
           if (response.data["data"]) {
-            Modal.confirm({
-              title: "镜架已入库",
-              okText: "重新输入SKU",
-              cancelText: "查看",
-              centered: true,
-              content: "该SKU对应镜架已入库，请选择下一步操作",
-              onOk: () => {
-                // 清空当前sku表单信息
-                EyeGlassBasicFormState.sku = "";
-              },
-              onCancel: () => {
-                // 将sku保存在状态管理store中
-                // provide("searchSku", EyeGlassBasicFormState.sku);
-                state.searchSku = EyeGlassBasicFormState.sku;
-                // 清空当前sku表单信息
-                EyeGlassBasicFormState.sku = "";
-                // 进入镜架查看环节
-                props.goToManage();
-              },
+            showRescanModal.value = true;
+            // 使用 nextTick 确保在 DOM 更新后再获取元素
+            nextTick(() => {
+              const rescanButton = document.querySelector("#rescan-button");
+              if (rescanButton) {
+                rescanButton.addEventListener("click", () => {
+                  showRescanModal.value = false;
+                  // 将返回的镜架信息赋值给表单
+                  console.log(response.data["data"]);
+                  Object.entries(response.data["data"]).forEach(
+                    ([key, value]) => {
+                      if (
+                        key == "price" ||
+                        key == "is_transparent" ||
+                        key == "frame_type" ||
+                        key == "stock" ||
+                        key == "lens_radian" ||
+                        key == "lens_width_st" ||
+                        key == "bridge_width_st" ||
+                        key == "temple_length_st"
+                      ) {
+                        EyeGlassBasicFormState[key] = Number(value);
+                      } else if (key == "isnosepad") {
+                        EyeGlassBasicFormState[key] = value == "True" ? 1 : 0;
+                      } else {
+                        EyeGlassBasicFormState[key] = value;
+                      }
+                    },
+                  );
+                  // 进入新镜架入库环节
+                  currentStage.value = "input-basic-params";
+                  isRescan.value = true;
+                  // 初始化表单Options
+                  initFormOptions();
+                });
+              }
             });
           } else {
             // 提示输入镜架sku
             message.warning(response.data["msg"]);
           }
-        }
-        // 若为0则表示镜架未入库
-        else {
+          // 若为0则表示镜架未入库
+        } else {
           // 判断data状态
           if (response.data["data"]) {
             // 提示表单载入成功
@@ -2125,12 +1948,20 @@ const onClickEnterSKU = async () => {
               if (
                 key == "price" ||
                 key == "stock" ||
+                key == "material" ||
+                key == "color" ||
+                key == "shape" ||
+                key == "is_transparent" ||
+                key == "frame_type" ||
                 key == "lens_radian" ||
                 key == "lens_width_st" ||
                 key == "bridge_width_st" ||
                 key == "temple_length_st"
               ) {
-                EyeGlassBasicFormState[key] = Number(value);
+                EyeGlassBasicFormState[key] =
+                  value !== null ? Number(value) : null;
+              } else if (key == "isnosepad") {
+                EyeGlassBasicFormState[key] = value == "True" ? 1 : 0;
               } else EyeGlassBasicFormState[key] = value;
             });
             // 进入新镜架入库环节
@@ -2151,6 +1982,23 @@ const onClickEnterSKU = async () => {
         console.log(error);
       });
   }
+};
+
+// 重扫modal重新输入sku按钮点击事件
+const onClicRescanModelReInput = () => {
+  EyeGlassBasicFormState.sku = "";
+  showRescanModal.value = false;
+};
+
+// 重扫modal查看按钮点击事件
+const onClicRescanModelView = () => {
+  showRescanModal.value = false;
+  // 将sku保存在状态管理store中
+  state.searchSku = EyeGlassBasicFormState.sku;
+  // 清空当前sku表单信息
+  EyeGlassBasicFormState.sku = "";
+  // 进入镜架查看环节
+  props.goToManage();
 };
 
 // 输入基础信息确认按钮点击事件
@@ -2409,6 +2257,7 @@ const onClickLightdown = () => {
   height: 58px !important;
   font-size: 14px !important;
   padding: 6.5px 28px !important;
+  margin: 0 calc(50% - 200px) !important;
 }
 
 .sku-button {

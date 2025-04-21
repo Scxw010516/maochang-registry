@@ -240,7 +240,7 @@
       centered
       :keyboard="false"
       :maskClosable="false"
-      width="1000px"
+      width="1050px"
       :bodyStyle="modalBodyStyle"
       footer=""
       @cancel="onClickCancelEditModal"
@@ -351,7 +351,7 @@
             labelAlign="left"
             hideRequiredMark
           >
-            <a-row :gutter="[30, 30]" style="margin-top: 25px; width: 850px">
+            <a-row :gutter="[30, 30]" style="margin-top: 25px; width: 880px">
               <a-col style="height: 30px" :span="8">
                 <a-form-item label="SKU" name="sku" class="modal-basic-item">
                   <a-input
@@ -566,7 +566,7 @@
             :rules="EyeGlassDetailFormRules"
             hideRequiredMark
           >
-            <a-row :gutter="[30, 30]" style="width: 800px">
+            <a-row :gutter="[30, 30]" style="width: 880px">
               <a-col
                 v-for="(value, key) in EyeGlassDetailFormLabel"
                 :key="key"
@@ -617,24 +617,39 @@
           </a-form>
         </div>
         <!-- 保存按钮 -->
-        <a-button
+        <div
           style="
-            margin: 30px calc(50% - 144px / 2) 39px;
-            height: 72px;
-            width: 144px;
-            background-color: #8675ff;
-            border-radius: 12px;
-            color: white;
-            font-size: 20px;
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            gap: 36px;
+            margin-top: 30px;
           "
-          :disabled="
-            editModalState.modalId !== null &&
-            getAllCalculateState(editModalState.modalId) == 1
-          "
-          @click="onClickSaveEditModal"
         >
-          保存
-        </a-button>
+          <a-button
+            style="
+              height: 72px;
+              width: 144px;
+              border-radius: 12px;
+              color: white;
+              font-size: 20px;
+            "
+            type="primary"
+            :disabled="
+              editModalState.modalId !== null &&
+              getAllCalculateState(editModalState.modalId) == 1
+            "
+            @click="onClickSaveEditModal"
+          >
+            保存
+          </a-button>
+          <a-button
+            style="height: 72px; border-radius: 12px; font-size: 20px"
+            @click="onClickRescan"
+          >
+            重新录入镜架
+          </a-button>
+        </div>
       </a-col>
     </a-modal>
   </div>
@@ -692,6 +707,15 @@ const user = useUserStore();
 const state = useStateStore();
 // 定时器，用于定时刷新表格
 let timer: number;
+// 父组件传递参数接口
+interface scanPageProps {
+  goToScan: () => void; //跳转到镜架管理页面
+}
+// 父组件传递参数实例
+const props = withDefaults(defineProps<scanPageProps>(), {
+  goToScan: () => {},
+});
+
 // 镜架表格栏目
 const columns = [
   {
@@ -1768,7 +1792,7 @@ const onClickEditModal = (id: number) => {
   editModalState.modalId = id;
 };
 
-//功能函数：提交修改镜架参数至服务器
+//modal保存按钮点击事件：提交修改镜架参数至服务器
 const onClickSaveEditModal = () => {
   // 提交修改镜架参数至服务器
   saveEditEyeglassFrame().then((isSaveSuccess) => {
@@ -1787,6 +1811,16 @@ const onClickSaveEditModal = () => {
   });
 };
 
+// modal重新录入镜架按钮点击事件：跳转到scan页面，重新录入
+const onClickRescan = () => {
+  // 将sku保存在状态管理store中
+  let sku = dataSource.value.find(
+    (item) => item.id === editModalState.modalId,
+  )!.sku;
+  state.searchSku = sku;
+  // 跳转到scan页面，重新录入
+  props.goToScan();
+};
 // 镜架详情modal关闭后触发回调
 const afterCloseEditModal = () => {
   // 重新获取Options,包括材质、颜色、形状、风格等

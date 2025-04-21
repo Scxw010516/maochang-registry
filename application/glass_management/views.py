@@ -328,15 +328,6 @@ class GenerateCalculateTaskView(View):
 		# 返回结果
 		return result
 	
-"""
-保存新镜架所有信息
-"""
-class SaveNewEyeglassFrameView(View):
-	def post(self, request: HttpRequest):
-		# 调用保存新镜架所有信息的服务方法
-		result = services.SaveNewEyeglassFrame(request)
-		# 返回结果
-		return result
 	
 """
 编辑镜架信息

@@ -90,22 +90,6 @@ def SearchModeltypeOrSKU(request: HttpRequest):
         for entry in tuple_search_result
     ]
 
-    # # 构建查询结果
-    # search_result = [
-    #     {
-    #         "sku": entry.sku,  # 镜架SKU，唯一
-    #         "brand": entry.brand,
-    #         "model_type": entry.model_type,
-    #         "price": entry.price,
-    #         "stock": entry.stock,
-    #         "lens_width_st": entry.lens_width_st,
-    #         "bridge_width_st": entry.bridge_width_st,
-    #         "temple_length_st": entry.temple_length_st,
-    #         "value": entry.model_type if searchtype == "1" else entry.sku,
-    #     }
-    #     for entry in entrys
-    # ]
-
     # 返回查询结果
     return R.ok(data=search_result)
 
@@ -166,10 +150,12 @@ def SearchSKU(request: HttpRequest):
         "brand": entry.brand,
         "model_type": entry.model_type,
         "price": entry.price,
-        "material": entry.get_material_display(),
-        "color": entry.get_color_display(),
-        "shape": entry.get_shape_display(),
+        "material": entry.material,
+        "color": entry.color,
+        "shape": entry.shape,
         "isnosepad": entry.isnosepad,
+        "is_transparent": entry.is_transparent,
+        "frame_type": entry.frame_type,
         "lens_radian": entry.lens_radian,
         "stock": entry.stock,
         "warehouse": entry.warehouse.id,
@@ -233,10 +219,21 @@ def UploadNewEyeglassFrame(request: HttpRequest):
             """
             镜架基本信息表处理
             """
+            print(request.POST)
             # 创建镜架扫描结果表实例
-            form_EyeglassFrameEntry = (
-                forms.EyeglassFrameEntryForm(request.POST)
-            )
+            # 判断是否为重新扫描
+            if request.POST.get("isRescan") == "true":
+                # 获取原有记录
+                sku = request.POST.get("sku")    
+                EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
+                if not EyeglassFrameEntry_instance:
+                    # 抛出异常
+                    raise ValueError("未找到原有记录")
+                form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(
+                    request.POST, instance=EyeglassFrameEntry_instance
+                )
+            else:
+                form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(request.POST)
             # 验证镜架基本信息表表单
             if form_EyeglassFrameEntry.is_valid():
                 # 保存镜架基本信息表实例
@@ -254,23 +251,22 @@ def UploadNewEyeglassFrame(request: HttpRequest):
                 镜架图片数据表处理
                 """
                 # 构建并保存镜架图片数据表的数据库实例，关联镜架基本信息表外键，储存图像
-                EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(entry = EyeglassFrameEntry_instance)
+                if request.POST.get("isRescan") == "true":
+                    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry=EyeglassFrameEntry_instance).first()
+                    if not EyeglassFrameImage_instance:
+                        # 抛出异常
+                        EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(entry=EyeglassFrameEntry_instance)
+                else:
+                    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(entry=EyeglassFrameEntry_instance)
                 # 获取三视图图片文件
                 frontview = request.FILES.get("frontview")
                 sideview = request.FILES.get("sideview")
                 topview = request.FILES.get("topview")
-                # 获取三视图图片背景文件
-                # frontview_bg = request.FILES.get("frontview_bg")
-                # sideview_bg = request.FILES.get("sideview_bg")
-                # topview_bg = request.FILES.get("topview_bg")
                 # 获取三视图图片错误处理
                 if (
                     not frontview
                     or not sideview
                     or not topview
-                    # or not frontview_bg
-                    # or not sideview_bg
-                    # or not topview_bg
                 ):
                     # 抛出异常
                     raise ValueError("三视图图片不能为空")
@@ -281,6 +277,9 @@ def UploadNewEyeglassFrame(request: HttpRequest):
                 # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
                 EyeglassFrameImage_instance.save()
                 print("GenerateCalculateTask:",id)
+            else:
+                print("form_EyeglassFrameEntry.errors:",form_EyeglassFrameEntry.errors)
+                raise ValueError(form_EyeglassFrameEntry.errors)
             """
             生成celery计算任务：传递镜架基础信息表的sku值
             """
@@ -352,96 +351,6 @@ def GenerateCalculateTask(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=str(e))
     return R.ok(msg="生成计算任务成功："+str(task_id))
-#todo:该函数好像没用了，待删除
-def SaveNewEyeglassFrame(request: HttpRequest):
-    """
-    保存新镜架，创建新的数据库实例：镜架基本信息表、镜架图片数据
-
-    参数：
-        request: HttpRequest 请求对象
-
-    返回：
-        HttpResponse: JSON格式的响应对象, {code,data,msg}
-    """
-    # 接收请求参数,前端提交的是formdata，所以从request.POST中获取数据。如果前端提交的是json数据，则从request.body中获取数据。
-    if not request.POST:
-        return R.failed(msg="参数错误")
-
-    try:
-        # 数据库事务处理
-        with transaction.atomic():
-            """
-            镜架基本信息表处理
-            """
-            # 验证镜架基本信息表表单
-            form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(request.POST)
-            if form_EyeglassFrameEntry.is_valid():
-                # 保存镜架基本信息表实例
-                EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save()
-
-                """
-                镜架图片数据：三视图
-                """
-                # 创建镜架扫描结果表实例
-                form_EyeglassFrameImage = (
-                    forms.EyeglassFrameImageForm(request.POST)
-                )
-                # 验证镜架扫描结果表表单
-                if form_EyeglassFrameImage.is_valid():
-                    # 构建并保存镜架扫描结果表的数据库实例
-                    EyeglassFrameImage_instance = (
-                        form_EyeglassFrameImage.save(commit=False)
-                    )
-                    # 关联镜架基本信息表外键
-                    EyeglassFrameImage_instance.entry = (
-                        EyeglassFrameEntry_instance
-                    )
-                    # 获取三视图图片文件
-                    frontview = request.FILES.get("frontview")
-                    sideview = request.FILES.get("sideview")
-                    topview = request.FILES.get("topview")
-                    # 获取三视图图片背景文件
-                    # frontview_bg = request.FILES.get("frontview_bg")
-                    # sideview_bg = request.FILES.get("sideview_bg")
-                    # topview_bg = request.FILES.get("topview_bg")
-                    # 获取三视图图片错误处理
-                    if (
-                        not frontview
-                        or not sideview
-                        or not topview
-                        # or not frontview_bg
-                        # or not sideview_bg
-                        # or not topview_bg
-                    ):
-                        # 抛出异常
-                        raise ValueError("三视图图片不能为空")
-                    # 保存三视图图片文件
-                    EyeglassFrameImage_instance.frontview = frontview
-                    EyeglassFrameImage_instance.sideview = sideview
-                    EyeglassFrameImage_instance.topview = topview
-                    # # 保存三视图图片背景文件
-                    # EyeglassFrameDetectionResult_instance.frontview_bg = frontview_bg
-                    # EyeglassFrameDetectionResult_instance.sideview_bg = sideview_bg
-                    # EyeglassFrameDetectionResult_instance.topview_bg = topview_bg
-                    # 保存镜架扫描结果表实例，并传入SKU，用于构建镜架三视图保存路径
-                    EyeglassFrameImage_instance.save()
-                else:
-                    # 处理镜架扫描结果表表单验证失败的情况
-                    err_msg = regular.get_err(form_EyeglassFrameImage)
-                    # 抛出异常
-                    raise ValueError(err_msg)
-                # 返回成功信息
-                return R.ok(msg="新镜架创建成功")
-            else:
-                # 处理镜架基本信息表表单验证失败的情况
-                err_msg = regular.get_err(form_EyeglassFrameEntry)
-                # 抛出异常
-                raise ValueError(err_msg)
-    except ValueError as ve:
-        return R.failed(msg=str(ve))
-    except Exception as e:
-        return R.failed(msg=str(e))
-
 
 def SaveEditEyeglassFrame(request: HttpRequest):
     """
