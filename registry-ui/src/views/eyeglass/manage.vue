@@ -566,54 +566,171 @@
             :rules="EyeGlassDetailFormRules"
             hideRequiredMark
           >
-            <a-row :gutter="[30, 30]" style="width: 880px">
-              <a-col
-                v-for="(value, key) in EyeGlassDetailFormLabel"
-                :key="key"
-                :span="6"
-              >
-                <a-row
-                  style="height: 100%; width: 100%"
-                  justify="center"
-                  align="bottom"
-                >
-                  <a-col :span="24">
-                    <img
-                      :src="`/src/assets/params_pic/${key}.svg`"
-                      alt="SVG Image"
-                      width="70%"
-                      style="display: block; margin: 0 auto"
-                    />
-                  </a-col>
-                  <a-row
-                    style="width: 100%"
-                    justify="center"
-                    align="bottom"
-                    :gutter="[0, 5]"
+            <a-collapse
+              v-model:activeKey="activeKey"
+              :bordered="false"
+              style="background: rgb(255, 255, 255)"
+            >
+              <template #expandIcon="{ isActive }">
+                <caret-right-outlined :rotate="isActive ? 90 : 0" />
+              </template>
+              
+              <!-- 正视图参数 -->
+              <a-collapse-panel key="1" :header="EyeGlassDetailFormLabelGroups.frontView.title" :style="customStyle">
+                <a-row :gutter="[30, 30]" style="width: 880px">
+                  <a-col
+                    v-for="key in Object.keys(EyeGlassDetailFormLabelGroups.frontView.params)"
+                    :key="key"
+                    :span="6"
                   >
-                    <a-col
-                      style="font-size: 20px; text-align: center"
-                      :span="24"
+                    <a-row
+                      style="height: 100%; width: 100%"
+                      justify="center"
+                      align="bottom"
                     >
-                      {{ EyeGlassDetailFormLabel[key] }}
-                    </a-col>
-                    <a-col :span="24">
-                      <a-form-item :name="key" class="modal-explicit-item">
-                        <a-input
-                          v-model:value="EyeGlassDetailFormState[key]"
-                          :suffix="EyeGlassDetailFormUnit[key]"
-                          style="
-                            border-radius: 9px;
-                            padding-left: 11px;
-                            height: 30px;
-                          "
-                        ></a-input>
-                      </a-form-item>
-                    </a-col>
-                  </a-row>
+                      <a-col :span="24">
+                        <img
+                          :src="paramsImages[key]"
+                          alt="SVG Image"
+                          width="70%"
+                          style="display: block; margin: 0 auto"
+                        />
+                      </a-col>
+                      <a-row
+                        style="width: 100%"
+                        justify="center"
+                        align="bottom"
+                        :gutter="[0, 5]"
+                      >
+                        <a-col
+                          style="font-size: 20px; text-align: center"
+                          :span="24"
+                        >
+                          {{ EyeGlassDetailFormLabel[key] }}
+                        </a-col>
+                        <a-col :span="24">
+                          <a-form-item :name="key" class="modal-explicit-item">
+                            <a-input
+                              v-model:value="EyeGlassDetailFormState[key]"
+                              :suffix="EyeGlassDetailFormUnit[key]"
+                              style="
+                                border-radius: 9px;
+                                padding-left: 11px;
+                                height: 30px;
+                              "
+                            ></a-input>
+                          </a-form-item>
+                        </a-col>
+                      </a-row>
+                    </a-row>
+                  </a-col>
                 </a-row>
-              </a-col>
-            </a-row>
+              </a-collapse-panel>
+              
+              <!-- 侧视图参数 -->
+              <a-collapse-panel key="2" :header="EyeGlassDetailFormLabelGroups.sideView.title" :style="customStyle">
+                <a-row :gutter="[30, 30]" style="width: 880px">
+                  <a-col
+                    v-for="key in Object.keys(EyeGlassDetailFormLabelGroups.sideView.params)"
+                    :key="key"
+                    :span="6"
+                  >
+                    <a-row
+                      style="height: 100%; width: 100%"
+                      justify="center"
+                      align="bottom"
+                    >
+                      <a-col :span="24">
+                        <img
+                          :src="paramsImages[key]"
+                          alt="SVG Image"
+                          width="70%"
+                          style="display: block; margin: 0 auto"
+                        />
+                      </a-col>
+                      <a-row
+                        style="width: 100%"
+                        justify="center"
+                        align="bottom"
+                        :gutter="[0, 5]"
+                      >
+                        <a-col
+                          style="font-size: 20px; text-align: center"
+                          :span="24"
+                        >
+                          {{ EyeGlassDetailFormLabel[key] }}
+                        </a-col>
+                        <a-col :span="24">
+                          <a-form-item :name="key" class="modal-explicit-item">
+                            <a-input
+                              v-model:value="EyeGlassDetailFormState[key]"
+                              :suffix="EyeGlassDetailFormUnit[key]"
+                              style="
+                                border-radius: 9px;
+                                padding-left: 11px;
+                                height: 30px;
+                              "
+                            ></a-input>
+                          </a-form-item>
+                        </a-col>
+                      </a-row>
+                    </a-row>
+                  </a-col>
+                </a-row>
+              </a-collapse-panel>
+              
+              <!-- 俯视图参数 -->
+              <a-collapse-panel key="3" :header="EyeGlassDetailFormLabelGroups.topView.title" :style="customStyle">
+                <a-row :gutter="[30, 30]" style="width: 880px">
+                  <a-col
+                    v-for="key in Object.keys(EyeGlassDetailFormLabelGroups.topView.params)"
+                    :key="key"
+                    :span="6"
+                  >
+                    <a-row
+                      style="height: 100%; width: 100%"
+                      justify="center"
+                      align="bottom"
+                    >
+                      <a-col :span="24">
+                        <img
+                          :src="paramsImages[key]"
+                          alt="SVG Image"
+                          width="70%"
+                          style="display: block; margin: 0 auto"
+                        />
+                      </a-col>
+                      <a-row
+                        style="width: 100%"
+                        justify="center"
+                        align="bottom"
+                        :gutter="[0, 5]"
+                      >
+                        <a-col
+                          style="font-size: 20px; text-align: center"
+                          :span="24"
+                        >
+                          {{ EyeGlassDetailFormLabel[key] }}
+                        </a-col>
+                        <a-col :span="24">
+                          <a-form-item :name="key" class="modal-explicit-item">
+                            <a-input
+                              v-model:value="EyeGlassDetailFormState[key]"
+                              :suffix="EyeGlassDetailFormUnit[key]"
+                              style="
+                                border-radius: 9px;
+                                padding-left: 11px;
+                                height: 30px;
+                              "
+                            ></a-input>
+                          </a-form-item>
+                        </a-col>
+                      </a-row>
+                    </a-row>
+                  </a-col>
+                </a-row>
+              </a-collapse-panel>
+            </a-collapse>
           </a-form>
         </div>
         <!-- 保存按钮 -->
@@ -673,6 +790,7 @@ import {
   ExclamationCircleOutlined,
   LeftCircleOutlined,
   RightCircleOutlined,
+  CaretRightOutlined,
 } from "@ant-design/icons-vue";
 // import { useRouter } from "vue-router";
 import { useOptionStore, useUserStore, useStateStore } from "@/stores/store";
@@ -686,6 +804,7 @@ import {
   // EyeGlassStyleFormLabel, // 镜架风格参数标签
   EyeGlassDetailForm, // 镜架详细参数接口
   EyeGlassDetailFormLabel, // 镜架详细参数标签
+  EyeGlassDetailFormLabelGroups, // 镜架详细参数分组标签
   // EyeGlassDetailToviewFormLabel, // 镜架详细参数转视图参数标签
   EyeGlassDetailFormUnit, // 镜架详细参数单位
   // EyeGlassWeightFormLabel, // 镜架重量参数标签
@@ -699,6 +818,70 @@ import {
 } from "./params";
 import { initFormOptions } from "./utils";
 import { Item } from "ant-design-vue/es/menu";
+
+// 导入所有SVG图片
+// 正视图参数
+import bridgeWidthSvg from "@/assets/params_pic/bridge_width.svg";
+import frameHeightSvg from "@/assets/params_pic/frame_height.svg";
+import frameTopWidthSvg from "@/assets/params_pic/frame_top_width.svg";
+import frameWidthSvg from "@/assets/params_pic/frame_width.svg";
+import lensAreaLeftSvg from "@/assets/params_pic/lens_area_left.svg";
+import lensAreaRightSvg from "@/assets/params_pic/lens_area_right.svg";
+import lensDiagonalLeftSvg from "@/assets/params_pic/lens_diagonal_left.svg";
+import lensDiagonalRightSvg from "@/assets/params_pic/lens_diagonal_right.svg";
+import lensHeightLeftSvg from "@/assets/params_pic/lens_height_left.svg";
+import lensHeightRightSvg from "@/assets/params_pic/lens_height_right.svg";
+import lensWidthLeftSvg from "@/assets/params_pic/lens_width_left.svg";
+import lensWidthRightSvg from "@/assets/params_pic/lens_width_right.svg";
+import pileHeightLeftSvg from "@/assets/params_pic/pile_height_left.svg";
+import pileHeightRightSvg from "@/assets/params_pic/pile_height_right.svg";
+// 侧视图参数
+import dropLengthSvg from "@/assets/params_pic/drop_length.svg";
+import forwardAngleSvg from "@/assets/params_pic/forward_angle.svg";
+import templeAngleSvg from "@/assets/params_pic/temple_angle.svg";
+import verticalAngleSvg from "@/assets/params_pic/vertical_angle.svg";
+// 俯视图参数
+import faceAngleSvg from "@/assets/params_pic/face_angle.svg";
+import pileDistanceSvg from "@/assets/params_pic/pile_distance.svg";
+import sagittalAngleLeftSvg from "@/assets/params_pic/sagittal_angle_left.svg";
+import sagittalAngleRightSvg from "@/assets/params_pic/sagittal_angle_right.svg";
+import spreadAngleLeftSvg from "@/assets/params_pic/spread_angle_left.svg";
+import spreadAngleRightSvg from "@/assets/params_pic/spread_angle_right.svg";
+import templeLengthLeftSvg from "@/assets/params_pic/temple_length_left.svg";
+import templeLengthRightSvg from "@/assets/params_pic/temple_length_right.svg";
+import temporalWidthSvg from "@/assets/params_pic/temporal_width.svg";
+
+
+// 创建图片映射对象
+const paramsImages: Record<string, string> = {
+  bridge_width: bridgeWidthSvg,
+  drop_length: dropLengthSvg,
+  face_angle: faceAngleSvg,
+  forward_angle: forwardAngleSvg,
+  frame_height: frameHeightSvg,
+  frame_top_width: frameTopWidthSvg,
+  frame_width: frameWidthSvg,
+  lens_area_left: lensAreaLeftSvg,
+  lens_area_right: lensAreaRightSvg,
+  lens_diagonal_left: lensDiagonalLeftSvg,
+  lens_diagonal_right: lensDiagonalRightSvg,
+  lens_height_left: lensHeightLeftSvg,
+  lens_height_right: lensHeightRightSvg,
+  lens_width_left: lensWidthLeftSvg,
+  lens_width_right: lensWidthRightSvg,
+  pile_distance: pileDistanceSvg,
+  pile_height_left: pileHeightLeftSvg,
+  pile_height_right: pileHeightRightSvg,
+  sagittal_angle_left: sagittalAngleLeftSvg,
+  sagittal_angle_right: sagittalAngleRightSvg,
+  spread_angle_left: spreadAngleLeftSvg,
+  spread_angle_right: spreadAngleRightSvg,
+  temple_angle: templeAngleSvg,
+  temple_length_left: templeLengthLeftSvg,
+  temple_length_right: templeLengthRightSvg,
+  temporal_width: temporalWidthSvg,
+  vertical_angle: verticalAngleSvg,
+};
 
 //#########################################参数初始化###########################################
 // const router = useRouter();
@@ -1284,6 +1467,10 @@ const modalBodyStyle = reactive({
 
 // 计算状态model相关
 const calculateModelLoading = ref(false); // 计算状态model加载中
+
+// 折叠面板相关
+const activeKey = ref(['1', '2', '3']); // 默认展开所有面板
+const customStyle = 'background: #f7f7f7;border-radius: 4px;margin-bottom: 24px;border: 0;overflow: hidden';
 // #########################################生命周期函数############################################
 // 生命周期钩子：组件挂载完成后执行
 onMounted(async () => {
@@ -1454,6 +1641,7 @@ const getEyeglassFrameDetails = async (id: number) => {
   await axios
     .get(`/glassmanagement/api/get-eyeglassframe-detail?id=${id}`)
     .then((response) => {
+      console.log(response);
       // 获取成功
       if (response.data.code === 0) {
         // 将获取到的镜架基本信息赋值给镜架基本信息表单

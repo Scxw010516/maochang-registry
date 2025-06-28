@@ -2,7 +2,6 @@ import axios from "@/config/axios-config";
 import { message } from "ant-design-vue";
 import { useOptionStore } from "@/stores/store";
 
-const options = useOptionStore();
 // 功能函数：初始化表单填写辅助信息
 export const initFormOptions = () => {
   // 获取所有镜架品牌
@@ -25,6 +24,7 @@ export const initFormOptions = () => {
 
 // 功能函数：获取所有镜架品牌
 export const getAllBrands = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-brands")
     .then((response) => {
@@ -46,6 +46,7 @@ export const getAllBrands = async () => {
 
 // 功能函数：获取所有镜架型号
 export const getAllModeltypes = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-model-types")
     .then((response) => {
@@ -67,6 +68,7 @@ export const getAllModeltypes = async () => {
 
 // 功能函数：获取所有镜架材质
 export const getAllMaterials = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-materials")
     .then((response) => {
@@ -91,6 +93,7 @@ export const getAllMaterials = async () => {
 
 // 功能函数：获取所有镜架颜色
 export const getAllColors = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-colors")
     .then((response) => {
@@ -115,6 +118,7 @@ export const getAllColors = async () => {
 
 // 功能函数：获取所有镜架形状
 export const getAllShapes = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-shapes")
     .then((response) => {
@@ -139,6 +143,7 @@ export const getAllShapes = async () => {
 
 // 功能函数：获取所有镜架透明度
 export const getAllIstransparent = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-is-transparent")
     .then((response) => {
@@ -163,6 +168,7 @@ export const getAllIstransparent = async () => {
 
 // 功能函数：获取所有镜框类型
 export const getAllFrametypes = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-frame-types")
     .then((response) => {
@@ -187,6 +193,7 @@ export const getAllFrametypes = async () => {
 
 // 功能函数：获取所有风格
 export const getAllStyles = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/glassmanagement/api/get-all-styles")
     .then((response) => {
@@ -211,6 +218,7 @@ export const getAllStyles = async () => {
 
 // 功能函数：获取所有仓库
 export const getAllWarehouses = async () => {
+  const options = useOptionStore(); // 在函数内部调用
   await axios
     .get("/warehouse/api/get-all-warehouses")
     .then((response) => {

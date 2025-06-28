@@ -108,38 +108,60 @@ export interface EyeGlassDetailForm {
   pile_distance: string;
   [key: string]: any;
 }
-// 镜架详细参数Label
-export const EyeGlassDetailFormLabel = {
-  frame_height: "镜框高度",
-  frame_width: "镜框宽度",
-  pile_height_left: "左桩头高度",
-  pile_height_right: "右桩头高度",
-  frame_top_width: "镜框顶部宽度",
-  lens_width_left: "左镜圈宽度",
-  lens_width_right: "右镜圈宽度",
-  lens_height_left: "左镜圈高度",
-  lens_height_right: "右镜圈高度",
-  lens_diagonal_left: "左镜圈对角线长度",
-  lens_diagonal_right: "右镜圈对角线长度",
-  lens_area_left: "左镜圈面积",
-  lens_area_right: "右镜圈面积",
-  bridge_width: "鼻梁宽度",
-  vertical_angle: "垂俯角",
-  forward_angle: "前倾角",
-  temple_angle: "镜腿角度",
-  drop_length: "垂长",
-  face_angle: "面弯",
-  sagittal_angle_left: "左垂内角",
-  sagittal_angle_right: "右垂内角",
-  temple_length_left: "左镜腿长度",
-  temple_length_right: "右镜腿长度",
-  temporal_width: "颞距",
-  spread_angle_left: "左镜腿外张角",
-  spread_angle_right: "右镜腿外张角",
-  pile_distance: "桩头距离",
+// 镜架详细参数Label（分组结构）
+export const EyeGlassDetailFormLabelGroups = {
+  frontView: {
+    title: "正视图参数",
+    params: {
+      frame_height: "镜框高度",
+      frame_width: "镜框宽度",
+      pile_height_left: "左桩头高度",
+      pile_height_right: "右桩头高度",
+      frame_top_width: "镜框顶部宽度",
+      lens_width_left: "左镜圈宽度",
+      lens_width_right: "右镜圈宽度",
+      lens_height_left: "左镜圈高度",
+      lens_height_right: "右镜圈高度",
+      lens_diagonal_left: "左镜圈对角线长度",
+      lens_diagonal_right: "右镜圈对角线长度",
+      lens_area_left: "左镜圈面积",
+      lens_area_right: "右镜圈面积",
+      bridge_width: "鼻梁宽度",
+    } as Record<string, string>
+  },
+  sideView: {
+    title: "侧视图参数",
+    params: {
+      vertical_angle: "垂俯角",
+      forward_angle: "前倾角",
+      temple_angle: "镜腿角度",
+      drop_length: "垂长",
+    } as Record<string, string>
+  },
+  topView: {
+    title: "俯视图参数",
+    params: {
+      face_angle: "面弯",
+      sagittal_angle_left: "左垂内角",
+      sagittal_angle_right: "右垂内角",
+      temple_length_left: "左镜腿长度",
+      temple_length_right: "右镜腿长度",
+      temporal_width: "颞距",
+      spread_angle_left: "左镜腿外张角",
+      spread_angle_right: "右镜腿外张角",
+      pile_distance: "桩头距离",
+    } as Record<string, string>
+  }
+};
+
+// 保持向后兼容的扁平结构
+export const EyeGlassDetailFormLabel: Record<string, string> = {
+  ...EyeGlassDetailFormLabelGroups.frontView.params,
+  ...EyeGlassDetailFormLabelGroups.sideView.params,
+  ...EyeGlassDetailFormLabelGroups.topView.params,
 };
 // 镜架详细参数Unit
-export const EyeGlassDetailFormUnit = {
+export const EyeGlassDetailFormUnit: Record<string, string> = {
   frame_height: "mm",
   frame_width: "mm",
   pile_height_left: "mm",
