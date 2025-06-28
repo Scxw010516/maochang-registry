@@ -249,6 +249,16 @@ class MaskType(str, Enum):
     NOSE = "nose"
     FRONT = "front"
 
+
+class BeautyType(str, Enum):
+    """镜架的美化类型"""
+
+    Y0 = "y0"
+    Y1 = "y1"
+    Y2 = "y2"
+    Y3 = "y3"
+
+
 @deconstructible # 使类可序列化
 class EyeglassPathGenerator:
     def __init__(self, base_dir, type_identifier, extension):
@@ -294,9 +304,15 @@ class EyeglassFrameImage(BaseModel):
     ## 镜架美化图
     frontview_beautify = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beautify", ViewType.FRONT.value, "png"), unique=False, blank=False, null=True, verbose_name="正视图美化图")
     sideview_beautify = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beautify", ViewType.SIDE.value, "png"), unique=False, blank=False, null=True, verbose_name="侧视图美化图")
+    # 镜架美图
+    beauty_y0 = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beauty", BeautyType.Y0.value, "jpg"), unique=False, blank=False, null=True, verbose_name="镜架美图y0")
+    beauty_y1 = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beauty", BeautyType.Y1.value, "jpg"), unique=False, blank=False, null=True, verbose_name="镜架美图y1")
+    beauty_y2 = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beauty", BeautyType.Y2.value, "jpg"), unique=False, blank=False, null=True, verbose_name="镜架美图y2")
+    beauty_y3 = models.ImageField(upload_to=EyeglassPathGenerator("images/eyeglassframe_beauty", BeautyType.Y3.value, "jpg"), unique=False, blank=False, null=True, verbose_name="镜架美图y3")
 
     class Meta:
         indexes = [models.Index(fields=["entry"])]
+
 class EyeglassFramePreloadData(BaseModel):
     """镜架预加载数据 从excel加载"""
     # 导入信息字段
@@ -357,140 +373,3 @@ class EyeglassFramePreloadData(BaseModel):
 
     class Meta:
         indexes = [models.Index(fields=["batch_no","sku"])]
-
-# def get_upload_eyeglass_view_path_with_type(view_type: int):
-#     """动态获取镜架三视图保存路径"""
-#     def wrapper(instance, filename):
-#         """闭包函数"""
-#         # 生成sku的hash值
-#         sku_hash = hashlib.md5(instance.entry.sku.encode("utf-8")).hexdigest()
-#         # 使用hash值的前两位作为子目录，避免一个目录下文件过多
-#         sub_dir = os.path.join(str(view_type), sku_hash[:2], sku_hash[2:4], instance.entry.sku)
-#         filename = f"{instance.entry.sku}_{view_type}.jpg"
-#         return os.path.join("images/eyeglassframe/", sub_dir, filename)
-#     return wrapper
-
-# def get_upload_eyeglass_mask_path_with_type(mask_type: str):
-#     """动态获取镜架mask图保存路径"""
-#     def wrapper(instance, filename):
-#         """闭包函数"""
-#         # 生成sku的hash值
-#         sku_hash = hashlib.md5(instance.entry.sku.encode("utf-8")).hexdigest()
-#         # 使用hash值的前两位作为子目录，避免一个目录下文件过多
-#         sub_dir = os.path.join(mask_type, sku_hash[:2], sku_hash[2:4], instance.entry.sku)
-#         filename = f"{instance.entry.sku}_{mask_type}.jpg"
-#         return os.path.join("images/eyeglassframe_mask/", sub_dir, filename)
-#     return wrapper
-
-# def get_upload_eyeglass_seg_path_with_type(seg_type: int):
-#     """动态获取镜架分割图保存路径"""
-#     def wrapper(instance, filename):
-#         """闭包函数"""
-#         # 生成sku的hash值
-#         sku_hash = hashlib.md5(instance.entry.sku.encode("utf-8")).hexdigest()
-#         # 使用hash值的前两位作为子目录，避免一个目录下文件过多
-#         sub_dir = os.path.join(str(seg_type), sku_hash[:2], sku_hash[2:4], instance.entry.sku)
-#         filename = f"{instance.entry.sku}_{seg_type}.jpg"
-#         return os.path.join("images/eyeglassframe_seg/", sub_dir, filename)
-#     return wrapper
-
-# def get_upload_eyeglass_beautify_path_with_type(beautify_type: int):
-#     """动态获取镜架美化图保存路径"""
-#     def wrapper(instance, filename):
-#         """闭包函数"""
-#         # 生成sku的hash值
-#         sku_hash = hashlib.md5(instance.entry.sku.encode("utf-8")).hexdigest()
-#         # 使用hash值的前两位作为子目录，避免一个目录下文件过多
-#         sub_dir = os.path.join(str(beautify_type), sku_hash[:2], sku_hash[2:4], instance.entry.sku)
-#         filename = f"{instance.entry.sku}_{beautify_type}.jpg"
-#         return os.path.join("images/eyeglassframe_beautify/", sub_dir, filename)
-#     return wrapper
-
-# # 镜架扫描结果表
-# class EyeglassFrameDetectionResult(BaseModel):
-#     # 镜架基本信息关联外键
-#     entry = models.OneToOneField(EyeglassFrameEntry, unique=True, blank=False, null=False, on_delete=models.CASCADE, verbose_name="镜架基本信息")
-#     # 镜架图片字段
-#     ## 镜架三视图相对路径
-#     frontview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name="正视图")
-#     sideview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name="侧视图")
-#     topview = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name="俯视图")
-#     ## 正视图分隔结果图像相对路径
-#     frontview_seg = models.ImageField(upload_to=get_upload_eyeglass_seg_path, unique=False, blank=True, null=True, verbose_name="正视图分隔结果")
-#     sideview_seg = models.ImageField(upload_to=get_upload_eyeglass_seg_path, unique=False, blank=True, null=True, verbose_name="侧视图分隔结果")
-#     ## 镜架三视图背景相对路径
-#     frontview_bg = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name="正视图背景")
-#     sideview_bg = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name="侧视图背景")
-#     topview_bg = models.ImageField(upload_to=get_upload_eyeglass_path, unique=False, blank=False, null=False, verbose_name="俯视图背景")
-#     # 镜架参数字段
-#     ## 正视图扫描参数
-#     frame_height = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜框高度")
-#     frame_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜框宽度")
-#     pile_height_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左桩头高度")
-#     pile_height_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右桩头高度")
-#     frame_top_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜框顶部宽度")
-#     lens_width_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈宽度")
-#     lens_width_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈宽度")
-#     lens_height_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈高度")
-#     lens_height_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈高度")
-#     lens_diagonal_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈对角线长度")
-#     lens_diagonal_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈对角线长度")
-#     lens_area_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜圈面积")
-#     lens_area_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜圈面积")
-#     bridge_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="鼻梁宽度")
-#     ## 侧视图扫描参数
-#     vertical_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="垂俯角")
-#     forward_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="前倾角")
-#     temple_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="镜腿角")
-#     drop_length = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="垂长")
-#     ## 俯视图扫描参数
-#     face_angle = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="面弯")
-#     sagittal_angle_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左垂内角")
-#     sagittal_angle_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右垂内角")
-#     temple_length_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜腿长度")
-#     temple_length_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜腿长度")
-#     temporal_width = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="颞距")
-#     spread_angle_left = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="左镜腿外张角")
-#     spread_angle_right = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="右镜腿外张角")
-#     pile_distance = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="桩头距离")
-
-#     top_points = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜框左右最高点坐标（两组）")
-#     frame_rects = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜框左右矩形坐标及宽高（两组）")
-#     lens_center_points = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜圈中心点坐标（两组）")
-#     lens_top_points = models.CharField(max_length=255, unique=False, blank=False, null=False, verbose_name="镜圈顶部点坐标（两组）")
-#     # 镜架重量字段
-#     weight = models.DecimalField(max_digits=15, decimal_places=4, unique=False, blank=False, null=False, verbose_name="重量")
-
-#     class Meta:
-#         indexes = [models.Index(fields=["entry"])]
-
-# """
-# 镜架风格类型表
-# """
-# class EyeglassFrameStyleType(BaseModel):
-#     style = models.CharField(unique=True, blank=False, null=False, max_length=255, verbose_name="风格")
-
-# """
-# 镜架风格关联表
-# """
-# class EyeglassFrameEntryStyle(BaseModel):
-#     entry = models.ForeignKey(EyeglassFrameEntry, unique=False, null=False, blank=False, on_delete=models.CASCADE, verbose_name="镜架基本信息")
-#     style = models.ForeignKey(EyeglassFrameStyleType, unique=False, null=False, blank=False, on_delete=models.CASCADE, verbose_name="镜架风格")
-
-# """
-# 镜架材质表
-# """
-# class EyeglassFrameMaterialType(BaseModel):
-#     material = models.CharField(unique=True, blank=False, null=False, max_length=255, verbose_name="镜架材质")
-
-# """
-# 镜架颜色表
-# """
-# class EyeglassFrameColorType(BaseModel):
-#     color = models.CharField(unique=True, blank=False, null=False, max_length=255, verbose_name="镜架颜色")
-
-# """
-# 镜架形状表
-# """
-# class EyeglassFrameShapeType(BaseModel):
-#     shape = models.CharField(unique=True, blank=False, null=False, max_length=255, verbose_name="镜架形状")

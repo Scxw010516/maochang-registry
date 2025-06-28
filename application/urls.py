@@ -97,7 +97,7 @@ urlpatterns = [
     # 眼镜管理路由
     path('glassmanagement/', include('application.glass_management.urls')),
     # 眼镜推荐路由
-    path('glassrecommendation/', include('application.glass_recommendation.urls')),
+    # path('glassrecommendation/', include('application.glass_recommendation.urls')),
     # 仓库路由
     path('warehouse/', include('application.warehouse.urls')),
 ]

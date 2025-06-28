@@ -9,8 +9,8 @@ from .blend import normal
 def add_shadow(
     image,
     mask=None,
-    offset: Union[Tuple[int], List[int]] = (0, 40),
-    alpha: float = 1,
+    offset: Union[Tuple[int], List[int]] = (0, 20),
+    alpha: float = 0.5,
     expansion: int = 10,
 ):
     assert image.shape[2] == 4, "image must be RGBA"

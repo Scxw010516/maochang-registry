@@ -10,8 +10,6 @@ import numpy as np
 from io import BytesIO
 from PIL import Image
 
-import redis
-
 from utils import R, regular
 from django.db import transaction
 from django.core.files import File
@@ -21,37 +19,19 @@ from application.glass_management import forms
 
 # 引入通用函数
 from application.celery_task.services import (
-    read_image_from_field, # 从数据库读取图片
-    save_output_mask, # 保存mask
-    save_output_images, # 保存images
+    read_image_from_field,  # 从数据库读取图片
+    save_output_mask,  # 保存mask
+    save_output_images,  # 保存images
     save_output_point,  # 保存point
-    save_output_parameter, # 保存parameter
-    save_output_size, # 保存size
-    save_output_shape, # 保存shape
-    search_calc_task, # 搜索重复任务
-    delete_calc_task, # 删除重复任务
+    save_output_parameter,  # 保存parameter
+    save_output_size,  # 保存size
+    save_output_shape,  # 保存shape
+    TaskManager,  # Celery任务管理器（替代了手动Redis操作）
 )
 
 # 引入镜架计算模型
-from .glass_detect.glasses import process,get_models
+from .glass_detect.glasses import process, get_models
 from .glass_detect.glasses import get_capture_images
-
-@shared_task()
-# 测试用函数，正式上线后删除
-def test(sku):
-    try:
-        
-        # 模拟处理过程
-        sleep(10)
-
-        print("执行计算任务：" + sku)
-        # 删除重复任务
-        delete_calc_task(sku)
-        
-        return {'status': 'SUCCESS', 'sku': sku}
-    except Exception as e:
-        print("计算任务失败：" + str(e))
-        raise
 
 
 """
@@ -60,17 +40,71 @@ def test(sku):
 args:
     sku: str, 镜架SKU
 """
-@shared_task()
-def calc(sku):
-    print("执行计算任务："+sku)
+
+
+@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
+def calc(self, sku):
+    """
+    计算眼镜参数并保存计算结果
+
+    Args:
+        sku: str, 镜架SKU
+    """
+    print(f"执行计算任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
+
+    existing_task_id = TaskManager.search_calc_task(sku)
+    if existing_task_id and existing_task_id != self.request.id:
+        print(f"发现重复任务 {existing_task_id}，正在删除...")
+        TaskManager.delete_calc_task(sku)
+
     # 查询镜架基本信息表
-    EyeglassFrameEntry_instance = (
-            models.EyeglassFrameEntry.objects.filter(sku=sku).first()
-        )
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
     if not EyeglassFrameEntry_instance:
         # 镜架基本信息表不存在
-       return  "计算失败：镜架基本信息表不存在"
-            
+        error_msg = f"计算失败：镜架基本信息表不存在，SKU: {sku}"
+        print(error_msg)
+        return error_msg
+
+    # 🔧 重试时的状态恢复逻辑
+    initial_states = None
+    if self.request.retries > 0:
+        print(f"任务重试中，正在恢复初始状态...")
+        # 记录当前状态作为"失败前状态"，用于日志
+        current_states = {
+            'pixel_measurement_state': EyeglassFrameEntry_instance.pixel_measurement_state,
+            'millimeter_measurement_state': EyeglassFrameEntry_instance.millimeter_measurement_state,
+            'calculation_state': EyeglassFrameEntry_instance.calculation_state,
+            'coordinate_state': EyeglassFrameEntry_instance.coordinate_state,
+            'image_mask_state': EyeglassFrameEntry_instance.image_mask_state,
+            'image_seg_state': EyeglassFrameEntry_instance.image_seg_state,
+            'image_beautify_state': EyeglassFrameEntry_instance.image_beautify_state,
+        }
+        print(f"重试前状态: {current_states}")
+
+        # 恢复到初始状态（0=待计算）
+        with transaction.atomic():
+            EyeglassFrameEntry_instance.pixel_measurement_state = 0
+            EyeglassFrameEntry_instance.millimeter_measurement_state = 0
+            EyeglassFrameEntry_instance.calculation_state = 0
+            EyeglassFrameEntry_instance.coordinate_state = 0
+            EyeglassFrameEntry_instance.image_mask_state = 0
+            EyeglassFrameEntry_instance.image_seg_state = 0
+            EyeglassFrameEntry_instance.image_beautify_state = 0
+            EyeglassFrameEntry_instance.save()
+        print("状态已恢复到初始状态(0)")
+    else:
+        # 首次执行，记录初始状态
+        initial_states = {
+            'pixel_measurement_state': EyeglassFrameEntry_instance.pixel_measurement_state,
+            'millimeter_measurement_state': EyeglassFrameEntry_instance.millimeter_measurement_state,
+            'calculation_state': EyeglassFrameEntry_instance.calculation_state,
+            'coordinate_state': EyeglassFrameEntry_instance.coordinate_state,
+            'image_mask_state': EyeglassFrameEntry_instance.image_mask_state,
+            'image_seg_state': EyeglassFrameEntry_instance.image_seg_state,
+            'image_beautify_state': EyeglassFrameEntry_instance.image_beautify_state,
+        }
+        print(f"首次执行，记录初始状态: {initial_states}")
+
     """
     更新计算状态为计算中
     """
@@ -83,7 +117,7 @@ def calc(sku):
         EyeglassFrameEntry_instance.coordinate_state = 1
         EyeglassFrameEntry_instance.image_mask_state = 1
         EyeglassFrameEntry_instance.image_seg_state = 1
-        EyeglassFrameEntry_instance.image_beautify_state = 1 
+        EyeglassFrameEntry_instance.image_beautify_state = 1
         # 保存
         EyeglassFrameEntry_instance.save()
 
@@ -91,9 +125,7 @@ def calc(sku):
     计算参数
     """
     # 获取镜架三视图路径
-    EyeglassFrameImage_instance = (
-            models.EyeglassFrameImage.objects.filter(entry = EyeglassFrameEntry_instance).first()
-        )
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry=EyeglassFrameEntry_instance).first()
     if not EyeglassFrameImage_instance:
         # 三视图不存在，更新计算状态为计算失败
         # 数据库事务处理
@@ -105,11 +137,12 @@ def calc(sku):
             EyeglassFrameEntry_instance.coordinate_state = 3
             EyeglassFrameEntry_instance.image_mask_state = 3
             EyeglassFrameEntry_instance.image_seg_state = 3
-            EyeglassFrameEntry_instance.image_beautify_state = 3 
+            EyeglassFrameEntry_instance.image_beautify_state = 3
             # 保存
             EyeglassFrameEntry_instance.save()
+        print(f"计算失败：镜架三视图不存在，SKU: {sku}")
         return "计算失败：镜架三视图不存在"
-    
+
     try:
         # 读取三视图
         up_image = read_image_from_field(EyeglassFrameImage_instance.topview)
@@ -120,35 +153,51 @@ def calc(sku):
         # 读取模型
         calc_models = get_models()
         # 设置计算参数
-        frame = EyeglassFrameEntry_instance.frame_type # 获取镜架框架类型
-        material = EyeglassFrameEntry_instance.material # 获取镜架材质
-        transparent = EyeglassFrameEntry_instance.is_transparent # 获取镜架透明度
+        frame = EyeglassFrameEntry_instance.frame_type  # 获取镜架框架类型
+        material = EyeglassFrameEntry_instance.material  # 获取镜架材质
+        transparent = EyeglassFrameEntry_instance.is_transparent  # 获取镜架透明度
         options = {
             "types": {
-                "frame": frame, # 对应EyeglassFrameEntry表的frame_type
-                "material": material, # 对应EyeglassFrameEntry表的material
-                "transparent": transparent, # 对应EyeglassFrameEntry表的is_transparent
-                "special": False, # 默认为False
+                "frame": frame,  # 对应EyeglassFrameEntry表的frame_type
+                "material": material,  # 对应EyeglassFrameEntry表的material
+                "transparent": transparent,  # 对应EyeglassFrameEntry表的is_transparent
+                "special": False,  # 默认为False
             }
         }
         # 计算参数
         output = process(images, calc_models, options)
-        print(output)
+        # print(output)
 
     except Exception as e:
+        print(f"计算参数失败: {str(e)}")
+        # 🔧 失败时的状态处理
         with transaction.atomic():
-            # 更新基本信息表 计算状态为 3 计算失败
-            EyeglassFrameEntry_instance.pixel_measurement_state = 3
-            EyeglassFrameEntry_instance.millimeter_measurement_state = 3
-            EyeglassFrameEntry_instance.calculation_state = 3
-            EyeglassFrameEntry_instance.coordinate_state = 3
-            EyeglassFrameEntry_instance.image_mask_state = 3
-            EyeglassFrameEntry_instance.image_seg_state = 3
-            EyeglassFrameEntry_instance.image_beautify_state = 3 
-            # 保存
-            EyeglassFrameEntry_instance.save()
-        return "计算失败：计算参数失败"
-    
+            # 如果是最后一次重试失败，设置为失败状态(3)
+            if self.request.retries >= 2:  # max_retries = 3, 所以最后一次是retries=2
+                print("已达到最大重试次数，设置为失败状态")
+                EyeglassFrameEntry_instance.pixel_measurement_state = 3
+                EyeglassFrameEntry_instance.millimeter_measurement_state = 3
+                EyeglassFrameEntry_instance.calculation_state = 3
+                EyeglassFrameEntry_instance.coordinate_state = 3
+                EyeglassFrameEntry_instance.image_mask_state = 3
+                EyeglassFrameEntry_instance.image_seg_state = 3
+                EyeglassFrameEntry_instance.image_beautify_state = 3
+                EyeglassFrameEntry_instance.save()
+                return f"计算失败：计算参数失败 - {str(e)}"
+            else:
+                # 如果还会重试，恢复到初始状态，让重试逻辑处理
+                print(f"计算失败，准备重试 (当前重试次数: {self.request.retries})")
+                EyeglassFrameEntry_instance.pixel_measurement_state = 0
+                EyeglassFrameEntry_instance.millimeter_measurement_state = 0
+                EyeglassFrameEntry_instance.calculation_state = 0
+                EyeglassFrameEntry_instance.coordinate_state = 0
+                EyeglassFrameEntry_instance.image_mask_state = 0
+                EyeglassFrameEntry_instance.image_seg_state = 0
+                EyeglassFrameEntry_instance.image_beautify_state = 0
+                EyeglassFrameEntry_instance.save()
+                # 抛出异常以触发重试
+                raise self.retry(exc=e, countdown=60)
+
     """
     保存计算结果: mask images point parameter size shape
     数据表：镜架像素测量数据，镜架毫米测量数据，镜架计算数据，镜架坐标数据，镜架图片数据
@@ -161,20 +210,20 @@ def calc(sku):
         """
         try:
             # 如果mask计算成功，保存mask；更新计算状态
-            if output['mask']['state']: 
+            if output['mask']['state']:
                 save_output_mask(output['mask'], EyeglassFrameImage_instance)
                 EyeglassFrameEntry_instance.image_mask_state = 2
             else:
                 EyeglassFrameEntry_instance.image_mask_state = 3
         except Exception as e:
             EyeglassFrameEntry_instance.image_mask_state = 3
-            print("mask处理失败:"+ e)
+            print("mask处理失败:" + e)
 
         """
         images处理
         """
         # 如果images计算成功，保存images；更新计算状态
-        if output['image']['state']: 
+        if output['image']['state']:
             save_output_images(output['image'], EyeglassFrameImage_instance)
             EyeglassFrameEntry_instance.image_seg_state = 2
             EyeglassFrameEntry_instance.image_beautify_state = 2
@@ -185,7 +234,7 @@ def calc(sku):
         """
         point处理: 镜架坐标数据 EyeglassFrameCoordinateForm
         """
-        
+
         try:
             if output['point']['state']:
                 save_output_point(output['point'], EyeglassFrameEntry_instance)
@@ -193,7 +242,7 @@ def calc(sku):
                 EyeglassFrameEntry_instance.coordinate_state = 2
             else:
                 # 处理镜架坐标数据缺失
-               raise ValueError("镜架坐标数据缺失")
+                raise ValueError("镜架坐标数据缺失")
         except Exception as e:
             EyeglassFrameEntry_instance.coordinate_state = 3
             print("point处理失败:" + str(e))
@@ -212,7 +261,7 @@ def calc(sku):
         except Exception as e:
             EyeglassFrameEntry_instance.pixel_measurement_state = 3
             print("parameter处理失败:" + str(e))
-        
+
         """
         size处理: 镜架毫米测量数据 EyeglassFrameMillimeterMeasurement
         """
@@ -241,74 +290,11 @@ def calc(sku):
                 raise ValueError("镜架计算数据缺失")
         except Exception as e:
             EyeglassFrameEntry_instance.calculation_state = 3
-            print("shape处理失败:" + str(e))
-
-        # 删除重复任务
-        delete_calc_task(sku)
+            print("shape处理失败:" + str(e))  # 删除重复任务（如果还有的话）
+        TaskManager.delete_calc_task(sku)
         # 保存镜架基本信息表
-        EyeglassFrameEntry_instance.save()  
-        print("镜架基本信息表已保存")  
+        EyeglassFrameEntry_instance.save()
+        print("镜架基本信息表已保存")
     # 返回
-    print('计算任务执行完毕：'+sku)
+    print('计算任务执行完毕：' + sku)
     return sku
-
-
-"""
-重启计算任务
-"""
-@shared_task()
-def restart_uncalc_frame():
-    """"
-    队列中没有计算任务的时候再添加任务，删除重复的重启任务
-    """
-    # 连接到 Redis
-    # redis_client = redis.Redis(host='redis', port=6379, db=1)
-    # # 查询默认 Celery 队列中的任务
-    # queue_name = 'celery'
-    # tasks = redis_client.lrange(queue_name, 0, -1)
-    # # 解析任务数据
-    # for task in tasks:
-    #         task_data = json.loads(task)
-    #         # 删除重复的重启任务
-    #         if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.restart_uncalc_frame":
-    #                 redis_client.lrem(queue_name, 1, task)
-    #                 continue
-    #         # 如果队列中有calc任务，则不添加任务
-    #         if task_data.get('headers', {}).get('task', '') == "application.celery_task.tasks.calc":
-    #             return
-    
-    # """
-    # 获取所有镜架基础信息，查询状态异常的镜架，生成计算任务
-    # """
-    # try:
-    #     # 获取所有镜架基础信息
-    #     entries = models.EyeglassFrameEntry.objects.all()
-
-    #     # 镜架基础信息列表为空判断
-    #     if not entries:
-    #         return None
-        
-    #     # 任务上限100
-    #     task_num = 100
-        
-    #     for entry in entries:
-    #         # print('check',entry.sku)
-    #         if task_num <= 0:
-    #             break
-    #         # 判断镜架状态是否为计算中
-    #         if entry.pixel_measurement_state == 1 or entry.millimeter_measurement_state == 1 or entry.calculation_state == 1 or entry.coordinate_state == 1 or entry.image_mask_state == 1 or entry.image_seg_state == 1 or entry.image_beautify_state == 1 :
-    #             # 生成计算任务，因为在calc中计算完成时会删除队列中的重复任务，所以不用判断是否真的在计算中
-    #             task_num -= 1
-    #             calc.delay(entry.sku)
-
-    #         # 判断镜架状态是否为待计算
-    #         if entry.pixel_measurement_state == 0 or entry.millimeter_measurement_state == 0 or entry.calculation_state == 0 or entry.coordinate_state == 0 or entry.image_mask_state == 0 or entry.image_seg_state == 0 or entry.image_beautify_state == 0 :
-    #             # 如果redis中没有找到对应任务（返回0），则生成计算任务
-    #             if not search_calc_task(entry.sku):
-    #                 task_num -= 1
-    #                 calc.delay(entry.sku)
-
-    # except Exception as e:
-    #     print("重启计算任务失败："+str(e))
-
-    return None

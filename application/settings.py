@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
+
 import os.path
 import sys
 
@@ -29,6 +30,19 @@ sys.path.insert(1, os.path.join(BASE_DIR, 'apps'))
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = 'django-insecure-!kjxf&e0pn4nrl%0&9sqp7n!ld)(gtw7v@i3fwf3sqcsh4ymat'
 
+# HTTPS配置
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')  # 用于处理代理服务器的SSL请求
+# SECURE_SSL_REDIRECT = True  # 强制使用HTTPS
+# SESSION_COOKIE_SECURE = True  # 会话cookie只能通过HTTPS传输
+# CSRF_COOKIE_SECURE = True  # CSRF cookie只能通过HTTPS传输
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True  # 包含子域名
+SECURE_HSTS_SECONDS = 31536000  # 一年
+SECURE_HSTS_PRELOAD = True  # 启用HSTS预加载
+SECURE_CONTENT_TYPE_NOSNIFF = True  # 防止MIME类型混淆攻击
+
+# 此配置用于解决弹窗被浏览器劫持问题
+X_FRAME_OPTIONS = 'SAMEORIGIN'
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
@@ -36,11 +50,14 @@ DEBUG = True
 CORS_ALLOW_CREDENTIALS = True
 CORS_ORIGIN_ALLOW_ALL = True
 # CORS_ORIGIN_WHITELIST = (
-#     'http://127.0.0.1:8080',
+#     'https://pj.sanlian-sh.com',
+#     'http://115.120.206.46',
+#     'http://210.51.42.140',
+#     'http://192.168.137.1'
 # )
-CORS_ALLOWED_ORIGINS_REGEXES = [
-    r'^http://.*?$',
-]
+# CORS_ALLOWED_ORIGINS_REGEXES = [
+#     r'^http://.*?$',
+# ]
 # CORS_ORIGIN_REGEXES_WHITELIST = (
 #         r'^http://.*?$',
 # )
@@ -117,7 +134,7 @@ INSTALLED_APPS = [
     # Maochang
     # 'application.maochang',
     'application.glass_management',
-    'application.glass_recommendation',
+    # 'application.glass_recommendation',
     'application.warehouse',
     # django_cleanup库，用于删除图片时自动删除对应的文件
     'django_cleanup.apps.CleanupConfig',
@@ -154,8 +171,7 @@ TEMPLATES = [
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
             ],
-            'libraries': {  # Adding this section should work around the issue.
-            },
+            'libraries': {},  # Adding this section should work around the issue.
         },
     },
 ]
@@ -169,7 +185,7 @@ DATABASES = {
     #'default': {
     #    'ENGINE': 'django.db.backends.sqlite3',
     #    'NAME': BASE_DIR / 'db.sqlite3',
-    #}
+    # }
     "default": {
         "ENGINE": env.DATABASE_ENGINE,
         "NAME": env.DATABASE_NAME,
@@ -224,16 +240,14 @@ STATICFILES_DIRS = [
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': ['api.extensions.auth.JwtQueryParamsAuthentication']
-}
+REST_FRAMEWORK = {'DEFAULT_AUTHENTICATION_CLASSES': ['api.extensions.auth.JwtQueryParamsAuthentication']}
 
 # 数据表前缀
 TABLE_PREFIX = locals().get('TABLE_PREFIX', "")
 
 # ======================== 验证码相关配置 ===========================
 CAPTCHA_IMAGE_SIZE = (200, 60)  # 设置 captcha 图片大小
-CAPTCHA_LENGTH = 6  # 字符个数
+CAPTCHA_LENGTH = 4  # 字符个数
 CAPTCHA_TIMEOUT = 1  # 超时(minutes)
 CAPTCHA_OUTPUT_FORMAT = "%(image)s %(text_field)s %(hidden_field)s "
 CAPTCHA_FONT_SIZE = 40  # 字体大小
@@ -253,3 +267,20 @@ CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'  # 字母验�
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public/uploads')
 # 上传文件访问URL
 MEDIA_URL = '/uploads/'
+
+# ======================== Celery配置 ===========================
+# 消息代理
+CELERY_BROKER_URL = 'redis://:{}@{}:{}/0'.format(env.REDIS_PASSWORD, env.REDIS_HOST, env.REDIS_PORT)
+
+# Celery 结果后端（如果需要的话）
+# CELERY_RESULT_BACKEND = 'redis://:{}@{}:{}/1'.format(env.REDIS_PASSWORD, env.REDIS_HOST, env.REDIS_PORT)
+
+# 显式禁用结果后端以提高性能
+CELERY_TASK_IGNORE_RESULT = True
+CELERY_TASK_STORE_EAGER_RESULT = False
+
+# 其他 Celery 配置
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
