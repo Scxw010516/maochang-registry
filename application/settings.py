@@ -135,7 +135,7 @@ INSTALLED_APPS = [
     # 'application.maochang',
     'application.glass_management',
     # 'application.glass_recommendation',
-    'application.warehouse',
+    # 'application.warehouse',
     # django_cleanup库，用于删除图片时自动删除对应的文件
     'django_cleanup.apps.CleanupConfig',
 ]
@@ -266,7 +266,7 @@ CAPTCHA_CHALLENGE_FUNCT = 'captcha.helpers.random_char_challenge'  # 字母验�
 # 上传文件存储目录
 MEDIA_ROOT = os.path.join(BASE_DIR, 'public/uploads')
 # 上传文件访问URL
-MEDIA_URL = '/uploads/'
+# MEDIA_URL = '/uploads/'
 
 # ======================== Celery配置 ===========================
 # 消息代理
@@ -284,3 +284,25 @@ CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
+
+# ======================== 华为云OBS配置 ==========================
+# 配置OBS存储
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+HUAWEI_OBS_CONFIG = {
+    'ACCESS_KEY_ID': env.AWS_ACCESS_KEY_ID, # 华为云AK
+    'SECRET_ACCESS_KEY': env.AWS_SECRET_ACCESS_KEY, # 华为云SK
+    'BUCKET_NAME': env.AWS_STORAGE_BUCKET_NAME, # OBS桶名称
+    'ENDPOINT_URL': 'https://obs.cn-east-3.myhuaweicloud.com', # 终端节点
+    'REGION_NAME': 'cn-east-3', # 区域名称
+}
+# 媒体文件访问URL
+MEDIA_URL = f'https://{HUAWEI_OBS_CONFIG["BUCKET_NAME"]}.obs.{HUAWEI_OBS_CONFIG["REGION_NAME"]}.myhuaweicloud.com/'
+
+# ======================== Redis配置 ===========================
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+        'LOCATION': f'redis://:{env.REDIS_PASSWORD}@{env.REDIS_HOST}:{env.REDIS_PORT}/1',  # Redis服务器地址,docker-compose中服务名称为redis
+        'TIMEOUT': 5000,  # 缓存超时时间
+    },
+}
