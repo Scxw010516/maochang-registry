@@ -538,9 +538,9 @@ def GetEyeglassFrameDetail(request: HttpRequest):
         search_result = dict(
             search_result,
             **{
-                "frontview": utils.getImageURL(str(EyeglassFrameImage_result.frontview)),
-                "sideview": utils.getImageURL(str(EyeglassFrameImage_result.sideview)),
-                "topview": utils.getImageURL(str(EyeglassFrameImage_result.topview)),
+                "frontview": utils.getImageURL(request,str(EyeglassFrameImage_result.frontview)),
+                "sideview": utils.getImageURL(request,str(EyeglassFrameImage_result.sideview)),
+                "topview": utils.getImageURL(request,str(EyeglassFrameImage_result.topview)),
             },
         )
     # 查询镜架扫描结果表

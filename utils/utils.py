@@ -1,11 +1,14 @@
 import os
 import re
 import time
+from typing import Optional
+from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpRequest
 from urllib.parse import urljoin
 
 from config.env import IMAGE_URL, IMAGE_PATH, TEMP_PATH, ATTACHMENT_PATH
 from utils.file import mkdir
 from utils.jwts import parse_payload
+from utils.obs.obs_client import generate_signed_url
 
 
 # 获取用户ID
@@ -56,8 +59,12 @@ def getType(value):
 
 
 # 获取图片地址
-def getImageURL(path):
-    return urljoin(IMAGE_URL, path)
+# def getImageURL(path):
+#     return urljoin(IMAGE_URL, path)
+
+def getImageURL(request: HttpRequest,path:Optional[str]):
+    # 生成签名URL
+    return generate_signed_url(path)
 
 
 def saveImage(url, dirname):
