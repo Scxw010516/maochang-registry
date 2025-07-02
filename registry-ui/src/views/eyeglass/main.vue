@@ -119,16 +119,31 @@
         <scanPage
           :goToManage="
             () => {
-              selectedMenuItem = ['2'];
+              selectedMenuItem = ['3'];
             }
           "
         />
       </a-layout-content>
     </a-layout>
-    <!-- 镜框管理 -->
+    <!-- 镜框验证 -->
     <a-layout
       class="full-height-row"
       v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('2')"
+    >
+      <a-layout-content>
+        <validatePage
+          :goToScan="
+            () => {
+              selectedMenuItem = ['1'];
+            }
+          "
+        />
+      </a-layout-content>
+    </a-layout>
+    <!-- 镜框落库 -->
+    <a-layout
+      class="full-height-row"
+      v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('3')"
     >
       <a-layout-content>
         <ManagePage
@@ -143,7 +158,7 @@
     <!-- 账号中心 -->
     <a-layout
       class="full-height-row"
-      v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('3')"
+      v-if="Array.isArray(selectedMenuItem) && selectedMenuItem.includes('4')"
     >
       <a-layout-content>
         <a-button @click="onClickLogout">退出登录</a-button>
@@ -157,6 +172,7 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useStateStore } from "@/stores/store";
+import validatePage from "./validate.vue";
 import ManagePage from "./manage.vue";
 import ScanPage from "./scan.vue";
 
@@ -166,8 +182,9 @@ const state = useStateStore();
 // 侧边导航栏菜单
 const menuItems = ref([
   { key: "1", label: "镜架采集", title: "镜架采集" },
-  { key: "2", label: "镜架管理", title: "镜架管理" },
-  { key: "3", label: "账号中心", title: "账号中心" },
+  { key: "2", label: "镜架验证", title: "镜架验证" },
+  { key: "3", label: "镜框落库", title: "镜框落库" },
+  { key: "4", label: "账号中心", title: "账号中心" },
 ]);
 
 const selectedMenuItem = ref<string[]>(["1"]); // 选中的菜单项
