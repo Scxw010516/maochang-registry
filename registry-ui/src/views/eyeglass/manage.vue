@@ -239,7 +239,10 @@
       height: 100%;
     "
   >
-    <tryon-page :id="tryonPageState.id" />
+    <tryon-page
+      :id="tryonPageState.id"
+      :getTryOnStateLabel="getTryOnStateLabel"
+    />
   </div>
 </template>
 
@@ -419,7 +422,7 @@ const tryonPageState = reactive<{
   showTryOnPage: boolean; // 试戴弹窗可见状态
   id: number;
 }>({
-  showTryOnPage: false,
+  showTryOnPage: true,
   id: 0,
 });
 
