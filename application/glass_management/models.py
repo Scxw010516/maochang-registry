@@ -83,7 +83,7 @@ class EyeglassFrameEntry(BaseModel):
     # 试戴镜腿处理逻辑
     is_tryon_leg_auto = models.BooleanField(unique=False, blank=False, null=False, default=True, verbose_name="是否自动处理镜腿")
     # 试戴颜色处理逻辑
-    is_tryon_beautify_orgin = models.BooleanField(unique=False, blank=False, null=False, default=True, verbose_name="是否使用原始beautify进行试戴")
+    is_tryon_beautify_origin = models.BooleanField(unique=False, blank=False, null=False, default=True, verbose_name="是否使用原始beautify进行试戴")
     # 是否启用
     is_active = models.BooleanField(default=True, verbose_name="是否启用")
 
