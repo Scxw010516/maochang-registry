@@ -22,8 +22,41 @@
       <!-- 镜架图片 操作按钮   -->
       <a-col span="12">
         <!-- todo：可能要用走马灯展示原始图像和修改后的图像 -->
-        <a-col> 正视图 </a-col>
-        <a-col> 侧视图 </a-col>
+        <a-carousel>
+          <a-col>
+            <p style="font-size: 30px; font-weight: bold; margin: 0">
+              原始镜架图
+            </p>
+            <img
+              :src="eyeglass_frame_image.frontview_beautify"
+              class="eyeglass-frame-img"
+            />
+            <img
+              :src="eyeglass_frame_image.sideview_beautify"
+              class="eyeglass-frame-img"
+            />
+          </a-col>
+          <a-col
+            v-if="
+              processed_frame_images.frontview_beautify_processed ||
+              processed_frame_images.sideview_beautify_processed
+            "
+          >
+            <p style="font-size: 30px; font-weight: bold; margin: 0">
+              处理后镜架图
+            </p>
+            <img
+              v-if="processed_frame_images.frontview_beautify_processed"
+              :src="processed_frame_images.frontview_beautify_processed"
+              class="eyeglass-frame-img"
+            />
+            <img
+              v-if="processed_frame_images.sideview_beautify_processed"
+              :src="processed_frame_images.sideview_beautify_processed"
+              class="eyeglass-frame-img"
+            />
+          </a-col>
+        </a-carousel>
       </a-col>
     </a-row>
     <!-- 操作按钮 -->
@@ -68,11 +101,22 @@
   </div>
 </template>
 <script lang="ts" setup>
+import axios from "axios";
+import { reactive, onMounted } from "vue";
 const props = defineProps<{
   id: number; // 试戴的ID
   getTryOnStateLabel: (state: number) => string; // 功能函数：获取试戴标签
 }>();
-
+// 原始镜架图
+const eyeglass_frame_image = reactive({
+  frontview_beautify: "",
+  sideview_beautify: "",
+});
+// 处理后镜架图
+const processed_frame_images = reactive({
+  frontview_beautify_processed: "",
+  sideview_beautify_processed: "",
+});
 // 试戴图片
 
 // ###########################################点击事件###########################################
@@ -119,6 +163,33 @@ const onClickDownload = () => {
   linkside.click();
   document.body.removeChild(linkside);
 };
+
+// ###########################################生命周期钩子###########################################
+onMounted(() => {
+  // 获取镜架美化图片
+  axios
+    .get("/glassmanagement/api/get-eyeglassframe-tryon-and-beautify", {
+      params: {
+        id: props.id,
+      },
+    })
+    .then((response) => {
+      const data = response.data.data;
+      console.log(data);
+      if (data) {
+        console.log(typeof data.frontview_beautify);
+        eyeglass_frame_image.frontview_beautify = data.frontview_beautify;
+        eyeglass_frame_image.sideview_beautify = data.sideview_beautify;
+        processed_frame_images.frontview_beautify_processed =
+          data.frontview_beautify_processed;
+        processed_frame_images.sideview_beautify_processed =
+          data.sideview_beautify_processed;
+      } else {
+        console.error("未获取到镜架美化图片数据");
+        alert("未获取到镜架美化图片数据");
+      }
+    });
+});
 </script>
 
 <style scoped>
@@ -162,5 +233,10 @@ const onClickDownload = () => {
 
 .tryon-image-col {
   /* top: -100px; */
+}
+
+.eyeglass-frame-img {
+  width: 70%;
+  max-height: 40%;
 }
 </style>

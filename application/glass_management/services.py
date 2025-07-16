@@ -731,6 +731,72 @@ def GetAllCalculateStates(request: HttpRequest):
         return R.failed(msg=f"获取计算状态失败: {str(e)}")
 
 
+def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
+    """
+    获取镜架试戴和美化图片
+
+    参数：
+        request: HttpRequest 请求对象
+
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+    """
+    # 镜架基本信息表id
+    id = request.GET.get("id")
+    print("GetEyeglassFrameTryonAndBeautify:", id)
+    # 参数为空判断
+    if not id:
+        return R.failed(msg="查询参数为空")
+    # 查询镜架图片信息表
+    eyeglassframeentry_result = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
+    if not eyeglassframeentry_result:
+        return R.failed(msg="镜架基本信息不存在")
+
+    # 查询镜架图片表
+    EyeglassFrameImage_result = models.EyeglassFrameImage.objects.filter(entry_id=eyeglassframeentry_result.id, is_delete=False).first()
+    # 镜架图片表实例为空判断
+    if not EyeglassFrameImage_result:
+        return R.failed(msg="镜架图片信息不存在")
+    
+    # 查询试戴图片表
+    EyeglassTryonResult_results = models.EyeglassTryonResult.objects.filter(entry_id=eyeglassframeentry_result.id, is_delete=False)
+    # 构建试戴图片列表
+    tryon_list = []
+    for EyeglassTryonResult_result in EyeglassTryonResult_results:
+        AIFace = models.AIFace.objects.filter(id=EyeglassTryonResult_result.face_id).first()
+        # 判断AI人脸信息为空
+        if not AIFace:
+            tryon_list.append({
+                "face_id": EyeglassTryonResult_result.face_id,
+                "tryon_state": EyeglassTryonResult_result.tryon_state,
+            })
+        # 判断AI人脸已激活
+        elif AIFace.is_active:
+            tryon_list.append({
+                "face_id": EyeglassTryonResult_result.face_id,
+                "tryon_image": utils.getImageURL(request, str(EyeglassTryonResult_result.tryon_image)),
+                "tryon_state": EyeglassTryonResult_result.tryon_state,
+            })
+
+    # 构建返回结果
+    result = {
+        "is_tryon_leg_auto": eyeglassframeentry_result.is_tryon_leg_auto,
+        "is_tryon_beautify_origin": eyeglassframeentry_result.is_tryon_beautify_origin,
+        "frontview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify)),
+        "sideview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify)),
+        "frontview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify_processed)),
+        "sideview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify_processed)),
+        "tryon_list": tryon_list,
+        "tryon_wait_count": EyeglassTryonResult_results.filter(tryon_state=0).count(),
+        "tryon_processing_count": EyeglassTryonResult_results.filter(tryon_state=1).count(),
+        "tryon_success_count": EyeglassTryonResult_results.filter(tryon_state=2).count(),
+        "tryon_fail_count": EyeglassTryonResult_results.filter(tryon_state=3).count(),
+    }
+
+    # 返回成功结果
+    return R.ok(data=result)
+
+
 def GetAllBrands(request: HttpRequest):
     """
     获取所有镜架品牌

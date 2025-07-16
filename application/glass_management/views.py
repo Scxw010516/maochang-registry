@@ -367,6 +367,19 @@ class GetAllCalculateStatesView(View):
 		# 返回结果
 		return result
 
+
+"""
+获取镜架试戴和美化图片
+"""
+class GetEyeglassFrameTryonAndBeautifyView(View):
+	def get(self, request: HttpRequest):
+		# 调用查询镜架试戴和美化图片的服务方法
+		result = services.GetEyeglassFrameTryonAndBeautify(request)
+		# 返回结果
+		return result
+
+
+
 """
 获取所有镜架品牌
 """
