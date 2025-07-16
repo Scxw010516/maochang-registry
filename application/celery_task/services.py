@@ -13,10 +13,15 @@ from utils import R, regular
 from django.db import transaction
 from django.core.files import File
 
+#OBS函数
+from utils.obs.obs_client import get_image_object
+
 from application.glass_management import models
 from application.glass_management import forms
 
 from application.celery import app
+
+
 
 
 def save_output_mask(output_mask, instance):
@@ -195,15 +200,12 @@ def save_output_shape(output_shape, entry_id):
 
 def read_image_from_field(image_field):
     """从Django的ImageField中获得url读取图像并转换为OpenCV格式"""
-    if not image_field or not image_field.url:
+    if not image_field :
         return None
-    image_url = image_field.url
-    # 下载图片内容
-    response = requests.get(image_url)
-    response.raise_for_status()
-    image_array = np.asarray(bytearray(response.content), dtype=np.uint8)
-    open_cv_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
-    return open_cv_image
+    img_path = str(image_field)
+    img = get_image_object(img_path)
+    print("Image path:", img_path)
+    return img
 
 
 # Celery任务管理工具类

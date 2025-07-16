@@ -16,7 +16,6 @@ from django.core.files import File
 
 from application.glass_management import models
 from application.glass_management import forms
-
 # 引入通用函数
 from application.celery_task.services import (
     read_image_from_field,  # 从数据库读取图片
@@ -32,6 +31,7 @@ from application.celery_task.services import (
 # 引入镜架计算模型
 from .glass_detect.glasses import process, get_models
 from .glass_detect.glasses import get_capture_images
+
 
 
 """
