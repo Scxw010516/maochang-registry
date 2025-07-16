@@ -1,7 +1,7 @@
 import cv2
 import os
 import tempfile
-
+import requests
 import json
 
 from django.core.files.base import ContentFile
@@ -90,34 +90,39 @@ def save_output_images(output_images, instance):
     instance.save()
 
 
-def save_output_point(output_point, entry_instance):
+def save_output_point(output_point, entry_id):
     # 查询镜架坐标数据表实例
-    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry=entry_instance).first()
+    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=entry_id).first()
     if not EyeglassFrameCoordinate_instance:
         # 不存在镜架坐标数据表实例，则创建
+        print("Creating new EyeglassFrameCoordinate instance")
         form_EyeglassFrameCoordinate = forms.EyeglassFrameCoordinateForm(output_point['data'])
+
     else:
         # 存在镜架坐标数据表实例，则更新
+        print("Updating existing EyeglassFrameCoordinate instance")
         form_EyeglassFrameCoordinate = forms.EyeglassFrameCoordinateForm(
             output_point['data'], instance=EyeglassFrameCoordinate_instance
         )
+    print("form", form_EyeglassFrameCoordinate)
+    print("Form data:", form_EyeglassFrameCoordinate.data)
     if form_EyeglassFrameCoordinate.is_valid():
         # 构建并保存镜架坐标数据表数据库实例
         EyeglassFrameCoordinate_instance = form_EyeglassFrameCoordinate.save(commit=False)
         # 关联镜架基本信息表外键
-        EyeglassFrameCoordinate_instance.entry = entry_instance
+        EyeglassFrameCoordinate_instance.entry_id = entry_id
         EyeglassFrameCoordinate_instance.save()
     else:
         raise ValueError("镜架坐标数据表表单验证失败")
 
 
-def save_output_parameter(output_parameter, entry_instance):
+def save_output_parameter(output_parameter, entry_id):
     # 数据位数处理：保留到小数点后四位
     for key in output_parameter['data']:
         output_parameter['data'][key] = round(output_parameter['data'][key], 4)
     # 查询镜架像素测量数据表实例
     EyeglassFramePixelMeasurement_instance = models.EyeglassFramePixelMeasurement.objects.filter(
-        entry=entry_instance
+        entry_id=entry_id
     ).first()
     if not EyeglassFramePixelMeasurement_instance:
         # 不存在镜架像素测量数据表实例，则创建
@@ -131,19 +136,19 @@ def save_output_parameter(output_parameter, entry_instance):
         # 构建并保存镜架像素测量数据表数据库实例
         EyeglassFramePixelMeasurement_instance = form_EyeglassFramePixelMeasurement.save(commit=False)
         # 关联镜架基本信息表外键
-        EyeglassFramePixelMeasurement_instance.entry = entry_instance
+        EyeglassFramePixelMeasurement_instance.entry_id = entry_id
         EyeglassFramePixelMeasurement_instance.save()
     else:
         raise ValueError("镜架像素测量数据表表单验证失败")
 
 
-def save_output_size(output_size, entry_instance):
+def save_output_size(output_size, entry_id):
     # 数据位数处理：保留到小数点后四位
     for key in output_size['data']:
         output_size['data'][key] = round(output_size['data'][key], 4)
     # 查询镜架毫米测量数据表实例
     EyeglassFrameMillimeterMeasurement_instance = models.EyeglassFrameMillimeterMeasurement.objects.filter(
-        entry=entry_instance
+        entry_id=entry_id
     ).first()
     if not EyeglassFrameMillimeterMeasurement_instance:
         # 不存在镜架毫米测量数据表实例，则创建
@@ -157,19 +162,19 @@ def save_output_size(output_size, entry_instance):
         # 构建并保存镜架毫米测量数据表数据库实例
         EyeglassFrameMillimeterMeasurement_instance = form_EyeglassFrameMillimeterMeasurement.save(commit=False)
         # 关联镜架基本信息表外键
-        EyeglassFrameMillimeterMeasurement_instance.entry = entry_instance
+        EyeglassFrameMillimeterMeasurement_instance.entry_id = entry_id
         EyeglassFrameMillimeterMeasurement_instance.save()
     else:
         raise ValueError("镜架毫米测量数据表表单验证失败")
 
 
-def save_output_shape(output_shape, entry_instance):
+def save_output_shape(output_shape, entry_id):
     # 数据位数处理：保留到小数点后四位
     for key in output_shape['data']:
         if key != 'frame_size':
             output_shape['data'][key] = round(output_shape['data'][key], 4)
     # 查询镜架计算数据表实例
-    EyeglassFrameCalculation_instance = models.EyeglassFrameCalculation.objects.filter(entry=entry_instance).first()
+    EyeglassFrameCalculation_instance = models.EyeglassFrameCalculation.objects.filter(entry_id=entry_id).first()
     if not EyeglassFrameCalculation_instance:
         # 不存在镜架计算数据表实例，则创建
         form_EyeglassFrameCalculation = forms.EyeglassFrameCalculationForm(output_shape['data'])
@@ -182,33 +187,22 @@ def save_output_shape(output_shape, entry_instance):
         # 构建并保存镜架计算数据表数据库实例
         EyeglassFrameCalculation_instance = form_EyeglassFrameCalculation.save(commit=False)
         # 关联镜架基本信息表外键
-        EyeglassFrameCalculation_instance.entry = entry_instance
+        EyeglassFrameCalculation_instance.entry_id = entry_id
         EyeglassFrameCalculation_instance.save()
     else:
         raise ValueError("镜架计算数据表表单验证失败")
 
 
 def read_image_from_field(image_field):
-    """从Django的ImageField中读取图像并转换为OpenCV格式"""
-    if not image_field:
+    """从Django的ImageField中获得url读取图像并转换为OpenCV格式"""
+    if not image_field or not image_field.url:
         return None
-
-    # 打开图像文件
-    with image_field.open() as f:
-        # 读取文件内容到内存中
-        image_data = f.read()
-
-    # 使用PIL读取图像
-    pil_image = Image.open(BytesIO(image_data))
-
-    # 转换为OpenCV格式
-    open_cv_image = np.array(pil_image)
-    # 如果图像是灰度图，则转换为RGB
-    if len(open_cv_image.shape) == 2:
-        open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_GRAY2BGR)
-    else:
-        # 转换为BGR格式（OpenCV默认）
-        open_cv_image = cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
+    image_url = image_field.url
+    # 下载图片内容
+    response = requests.get(image_url)
+    response.raise_for_status()
+    image_array = np.asarray(bytearray(response.content), dtype=np.uint8)
+    open_cv_image = cv2.imdecode(image_array, cv2.IMREAD_COLOR)
     return open_cv_image
 
 

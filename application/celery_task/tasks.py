@@ -124,8 +124,9 @@ def calc(self, sku):
     """
     计算参数
     """
+    entry_id = EyeglassFrameEntry_instance.id  # 获取镜架基本信息表ID
     # 获取镜架三视图路径
-    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry=EyeglassFrameEntry_instance).first()
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=entry_id).first()
     if not EyeglassFrameImage_instance:
         # 三视图不存在，更新计算状态为计算失败
         # 数据库事务处理
@@ -166,7 +167,7 @@ def calc(self, sku):
         }
         # 计算参数
         output = process(images, calc_models, options)
-        # print(output)
+        print(output)
 
     except Exception as e:
         print(f"计算参数失败: {str(e)}")
@@ -222,14 +223,19 @@ def calc(self, sku):
         """
         images处理
         """
-        # 如果images计算成功，保存images；更新计算状态
-        if output['image']['state']:
-            save_output_images(output['image'], EyeglassFrameImage_instance)
-            EyeglassFrameEntry_instance.image_seg_state = 2
-            EyeglassFrameEntry_instance.image_beautify_state = 2
-        else:
+        try:
+            # 如果images计算成功，保存images；更新计算状态
+            if output['image']['state']:
+                save_output_images(output['image'], EyeglassFrameImage_instance)
+                EyeglassFrameEntry_instance.image_seg_state = 2
+                EyeglassFrameEntry_instance.image_beautify_state = 2
+            else:
+                EyeglassFrameEntry_instance.image_seg_state = 3
+                EyeglassFrameEntry_instance.image_beautify_state = 3
+        except Exception as e:
             EyeglassFrameEntry_instance.image_seg_state = 3
             EyeglassFrameEntry_instance.image_beautify_state = 3
+            print("images处理失败:" + str(e))
 
         """
         point处理: 镜架坐标数据 EyeglassFrameCoordinateForm
@@ -237,7 +243,7 @@ def calc(self, sku):
 
         try:
             if output['point']['state']:
-                save_output_point(output['point'], EyeglassFrameEntry_instance)
+                save_output_point(output['point'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.coordinate_state = 2
             else:
@@ -252,7 +258,7 @@ def calc(self, sku):
         """
         try:
             if output['parameter']['state']:
-                save_output_parameter(output['parameter'], EyeglassFrameEntry_instance)
+                save_output_parameter(output['parameter'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.pixel_measurement_state = 2
             else:
@@ -267,7 +273,7 @@ def calc(self, sku):
         """
         try:
             if output['size']['state']:
-                save_output_size(output['size'], EyeglassFrameEntry_instance)
+                save_output_size(output['size'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.millimeter_measurement_state = 2
             else:
@@ -282,7 +288,7 @@ def calc(self, sku):
         """
         try:
             if output['shape']['state']:
-                save_output_shape(output['shape'], EyeglassFrameEntry_instance)
+                save_output_shape(output['shape'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.calculation_state = 2
             else:
