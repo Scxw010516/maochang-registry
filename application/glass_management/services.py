@@ -796,6 +796,27 @@ def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
     # 返回成功结果
     return R.ok(data=result)
 
+def UploadAIFace(request: HttpRequest):
+    """
+    保存新的ai人脸图片
+
+    参数：
+        request: HttpRequest 请求对象
+
+    返回：
+    - result: 人脸数据id
+    """
+    face_img = request.FILES.get("face_img")
+    if not face_img:
+        return R.failed(msg="人脸图片未上传")
+
+    # 保存人脸图片
+    AIFace_instance = models.AIFace.objects.create(name=request.POST.get("name", "Unnamed Face"))
+    AIFace_instance.pupil_distance=request.POST.get("pupil_distance")
+    AIFace_instance.image = face_img
+    AIFace_instance.save()
+    return R.ok(data={"face_id": AIFace_instance.id})
+
 
 def GetAllBrands(request: HttpRequest):
     """

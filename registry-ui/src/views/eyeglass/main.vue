@@ -162,6 +162,7 @@
     >
       <a-layout-content>
         <a-button @click="onClickLogout">退出登录</a-button>
+        <acount />
       </a-layout-content>
     </a-layout>
   </a-layout>
@@ -175,6 +176,7 @@ import { useStateStore } from "@/stores/store";
 import validatePage from "./validate.vue";
 import ManagePage from "./manage.vue";
 import ScanPage from "./scan.vue";
+import acount from "./acount.vue";
 
 //#########################################参数初始化###########################################
 const router = useRouter();

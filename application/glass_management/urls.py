@@ -33,6 +33,7 @@ urlpatterns = [
     path('api/get-all-calculate-states', views.GetAllCalculateStatesView.as_view()), # get: 获取所有计算状态
     # 用于镜架落库-试戴
     path('api/get-eyeglassframe-tryon-and-beautify', views.GetEyeglassFrameTryonAndBeautifyView.as_view()), # get: 获取镜架试戴和美化图片
+    path('api/upload-ai-face', views.UploadAIFaceView.as_view()),
 
     path('api/get-all-brands', views.GetAllBrandsView.as_view()), # get: 获取所有品牌
     path('api/get-all-model-types', views.GetAllModelTypesView.as_view()), # get: 获取所有型号

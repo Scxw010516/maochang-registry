@@ -379,6 +379,16 @@ class GetEyeglassFrameTryonAndBeautifyView(View):
 		return result
 
 
+"""
+上传人脸图片
+"""
+class UploadAIFaceView(View):
+	def post(self, request: HttpRequest):
+		# 调用上传人脸图片的服务方法
+		result = services.UploadAIFace(request)
+		# 返回结果
+		return result
+
 
 """
 获取所有镜架品牌
