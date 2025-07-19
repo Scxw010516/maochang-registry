@@ -96,29 +96,49 @@ def save_output_images(output_images, instance):
 
 
 def save_output_point(output_point, entry_id):
-    # 查询镜架坐标数据表实例
-    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=entry_id).first()
-    if not EyeglassFrameCoordinate_instance:
-        # 不存在镜架坐标数据表实例，则创建
-        print("Creating new EyeglassFrameCoordinate instance")
-        form_EyeglassFrameCoordinate = forms.EyeglassFrameCoordinateForm(output_point['data'])
+    # 清洗数据：将 numpy 类型转为 Python 原生类型
+    def convert(data):
+        if isinstance(data, np.integer):
+            return int(data)
+        elif isinstance(data, np.floating):
+            return float(data)
+        elif isinstance(data, np.ndarray):
+            return data.tolist()
+        elif isinstance(data, dict):
+            return {k: convert(v) for k, v in data.items()}
+        elif isinstance(data, list):
+            return [convert(v) for v in data]
+        else:
+            return data
+    try:
+        # 重构output_point['data']，确保数据格式正确
+        cleaned_data = convert(output_point['data'])
 
-    else:
-        # 存在镜架坐标数据表实例，则更新
-        print("Updating existing EyeglassFrameCoordinate instance")
-        form_EyeglassFrameCoordinate = forms.EyeglassFrameCoordinateForm(
-            output_point['data'], instance=EyeglassFrameCoordinate_instance
-        )
-    print("form", form_EyeglassFrameCoordinate)
-    print("Form data:", form_EyeglassFrameCoordinate.data)
-    if form_EyeglassFrameCoordinate.is_valid():
-        # 构建并保存镜架坐标数据表数据库实例
-        EyeglassFrameCoordinate_instance = form_EyeglassFrameCoordinate.save(commit=False)
-        # 关联镜架基本信息表外键
-        EyeglassFrameCoordinate_instance.entry_id = entry_id
-        EyeglassFrameCoordinate_instance.save()
-    else:
-        raise ValueError("镜架坐标数据表表单验证失败")
+        front_points = cleaned_data.get('front', {})
+        left_points = cleaned_data.get('left', {})
+        up_points = cleaned_data.get('up', {})
+        EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=entry_id).first()
+        if not EyeglassFrameCoordinate_instance:
+            # 不存在镜架坐标数据表实例，则创建
+            print("Creating new EyeglassFrameCoordinate instance")
+            EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.create(
+                entry_id=entry_id,
+                front_points=front_points,
+                left_points=left_points,
+                up_points=up_points,
+            )
+            EyeglassFrameCoordinate_instance.save()
+
+        else:
+            # 存在镜架坐标数据表实例，则更新
+            print("Updating existing EyeglassFrameCoordinate instance")
+            EyeglassFrameCoordinate_instance.front_points = front_points
+            EyeglassFrameCoordinate_instance.left_points = left_points
+            EyeglassFrameCoordinate_instance.up_points = up_points
+            EyeglassFrameCoordinate_instance.save()
+    except Exception as e:
+        raise ValueError("保存镜架坐标数据失败", e)
+
 
 
 def save_output_parameter(output_parameter, entry_id):
@@ -204,7 +224,7 @@ def read_image_from_field(image_field):
         return None
     img_path = str(image_field)
     img = get_image_object(img_path)
-    print("Image path:", img_path)
+    # print("Image path:", img_path)
     return img
 
 
