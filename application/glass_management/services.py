@@ -761,36 +761,38 @@ def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
     # 查询试戴图片表
     EyeglassTryonResult_results = models.EyeglassTryonResult.objects.filter(entry_id=eyeglassframeentry_result.id, is_delete=False)
     # 构建试戴图片列表
-    tryon_list = []
-    for EyeglassTryonResult_result in EyeglassTryonResult_results:
-        AIFace = models.AIFace.objects.filter(id=EyeglassTryonResult_result.face_id).first()
-        # 判断AI人脸信息为空
-        if not AIFace:
-            tryon_list.append({
-                "face_id": EyeglassTryonResult_result.face_id,
-                "tryon_state": EyeglassTryonResult_result.tryon_state,
-            })
-        # 判断AI人脸已激活
-        elif AIFace.is_active:
-            tryon_list.append({
-                "face_id": EyeglassTryonResult_result.face_id,
+    tryon_images = [] # face_name, tryon_image, tryon_state
+    AIFaces = models.AIFace.objects.filter(is_delete=False, is_active=True)
+    for AIFace in AIFaces:
+        EyeglassTryonResult_result = EyeglassTryonResult_results.filter(face_id=AIFace.id).first()
+        if EyeglassTryonResult_result and EyeglassTryonResult_result.tryon_image:
+            tryon_images.append({
+                "face_name": AIFace.name,
                 "tryon_image": utils.getImageURL(request, str(EyeglassTryonResult_result.tryon_image)),
                 "tryon_state": EyeglassTryonResult_result.tryon_state,
             })
-
+        else:
+            # 如果没有试戴结果，则添加一个空的试戴结果
+            tryon_images.append({
+                "face_name": AIFace.name,
+                "tryon_image": utils.getImageURL(request, str(AIFace.image)),
+                "tryon_state": EyeglassTryonResult_result.tryon_state if EyeglassTryonResult_result else -1,  # -1表示没有试戴结果
+            })
     # 构建返回结果
     result = {
+        "sku": eyeglassframeentry_result.sku,
         "is_tryon_leg_auto": eyeglassframeentry_result.is_tryon_leg_auto,
         "is_tryon_beautify_origin": eyeglassframeentry_result.is_tryon_beautify_origin,
         "frontview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify)),
         "sideview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify)),
         "frontview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify_processed)),
         "sideview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify_processed)),
-        "tryon_list": tryon_list,
+        "tryon_images": tryon_images,
         "tryon_wait_count": EyeglassTryonResult_results.filter(tryon_state=0).count(),
         "tryon_processing_count": EyeglassTryonResult_results.filter(tryon_state=1).count(),
         "tryon_success_count": EyeglassTryonResult_results.filter(tryon_state=2).count(),
-        "tryon_fail_count": EyeglassTryonResult_results.filter(tryon_state=3).count(),
+        "tryon_failed_count": EyeglassTryonResult_results.filter(tryon_state=3).count(),
+        "tryon_undealt_count": sum(1 for img in tryon_images if img.get("tryon_state") == -1),
     }
 
     # 返回成功结果
@@ -817,6 +819,105 @@ def UploadAIFace(request: HttpRequest):
     AIFace_instance.save()
     return R.ok(data={"face_id": AIFace_instance.id})
 
+def UploadProcessedBeautifyImage(request: HttpRequest):
+    """
+    上传处理后的镜架美化图片
+
+    参数: 
+        image: 处理后的镜架图片
+        type: 图片类型（如：frontview, sideview）
+        id: 镜架基本信息表ID
+
+    返回:
+        result: 镜架美化数据id
+    """
+    image = request.FILES.get("image")
+    if not image:
+        return R.failed(msg="镜架美化图片未上传")
+    # 保存镜架美化图片
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=request.POST.get("id")).first()
+    if not EyeglassFrameImage_instance:
+        return R.failed(msg="未找到该镜架")
+    type = request.POST.get("type")
+    if type == "front":
+        EyeglassFrameImage_instance.frontview_beautify_processed = image
+    elif type == "side":
+        EyeglassFrameImage_instance.sideview_beautify_processed = image
+    else:
+        return R.failed(msg="未知的镜架类型")
+    EyeglassFrameImage_instance.save()
+    return R.ok(msg="镜架美化图片上传成功")
+
+def UpdateAnnotationLeg(request: HttpRequest):
+    """
+    更新镜腿标注
+
+    参数：
+        request: HttpRequest 请求对象
+        id: 镜架基本信息表ID
+        annotation_result: 镜腿标注结果 json Array<{ x: number; y: number }>
+
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+    """
+    # 获取请求参数
+    annotation_result = request.POST.get("annotation_result")
+    if not annotation_result:
+        return R.failed(msg="镜腿标注数据为空")
+
+    # 更新镜腿标注
+    result = models.EyeglassFrameCoordinate.objects.filter(entry_id=request.POST.get("id")).first()
+    if not result:
+        return R.failed(msg="镜腿标注更新失败")
+    original_data = result.left_points
+    # 合并json数据
+    try:
+        # 将字符串转换为列表
+        annotation_result = json.loads(annotation_result)  
+        print("annotation_result:", annotation_result)
+        leg_data = {
+            "top_left_point": [annotation_result[0]["x"], annotation_result[0]["y"]],
+            "top_right_point": [annotation_result[1]["x"], annotation_result[1]["y"]],
+            "bottom_left_point": [annotation_result[2]["x"], annotation_result[2]["y"]],
+            "bottom_right_point": [annotation_result[3]["x"], annotation_result[3]["y"]],
+        }
+        left_points = {**original_data, **leg_data}
+        result.left_points = left_points
+        result.save()
+        # print(left_points)
+    except json.JSONDecodeError:
+        return R.failed(msg="镜腿标注数据格式错误")
+    
+    return R.ok(msg="镜腿标注更新成功")
+
+def UpdateTryonMode(request: HttpRequest):
+    """
+    更新镜架试戴模式
+
+    参数：
+        request: HttpRequest 请求对象
+        id: 镜架基本信息表ID
+        is_tryon_leg_auto：number 是否自动处理镜腿
+        is_tryon_beautify_origin：number 是否使用原始beautify进行试戴
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+    """
+    is_tryon_leg_auto = request.POST.get("is_tryon_leg_auto", 0)
+    is_tryon_beautify_origin = request.POST.get("is_tryon_beautify_origin", 0)
+    id = request.POST.get("id")
+    if not id:
+        return R.failed(msg="镜架ID为空")
+    # 查询镜架基本信息表实例
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
+    # 镜架基本信息表实例为空判断
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="未找到该镜架")
+    # 更新镜架试戴模式
+    EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
+    EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin
+    EyeglassFrameEntry_instance.save()
+    # 返回成功结果
+    return R.ok(msg="镜架试戴模式更新成功")
 
 def GetAllBrands(request: HttpRequest):
     """

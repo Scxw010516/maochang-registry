@@ -389,6 +389,35 @@ class UploadAIFaceView(View):
 		# 返回结果
 		return result
 
+"""
+上传处理后的镜架美化图
+"""
+class UploadProcessedBeautifyImageView(View):
+	def post(self, request: HttpRequest):
+		# 调用上传处理后的镜架美化图的服务方法
+		result = services.UploadProcessedBeautifyImage(request)
+		# 返回结果
+		return result
+	
+"""
+更新镜腿标注
+"""
+class UpdateAnnotationLegView(View):
+	def post(self, request: HttpRequest):
+		# 调用更新镜腿标注的服务方法
+		result = services.UpdateAnnotationLeg(request)
+		# 返回结果
+		return result
+	
+"""
+更新试戴模式
+"""
+class UpdateTryonModeView(View):
+	def post(self, request: HttpRequest):
+		# 调用更新试戴模式的服务方法
+		result = services.UpdateTryonMode(request)
+		# 返回结果
+		return result
 
 """
 获取所有镜架品牌

@@ -167,7 +167,7 @@ def calc(self, sku):
         }
         # 计算参数
         output = process(images, calc_models, options)
-        print(output)
+        # print(output)
 
     except Exception as e:
         print(f"计算参数失败: {str(e)}")
