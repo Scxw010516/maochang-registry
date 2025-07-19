@@ -241,7 +241,11 @@
   >
     <tryon-page
       :id="tryonPageState.id"
-      :getTryOnStateLabel="getTryOnStateLabel"
+      :onClickBack="
+        () => {
+          tryonPageState.showTryOnPage = false;
+        }
+      "
     />
   </div>
 </template>
@@ -422,7 +426,7 @@ const tryonPageState = reactive<{
   showTryOnPage: boolean; // 试戴弹窗可见状态
   id: number;
 }>({
-  showTryOnPage: true,
+  showTryOnPage: false,
   id: 0,
 });
 

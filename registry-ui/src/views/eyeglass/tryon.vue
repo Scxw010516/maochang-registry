@@ -6,6 +6,13 @@
       }}个、处理完成：{{ tryon_count.success }}个、处理失败：{{
         tryon_count.failed
       }}个、未进行试戴：{{ tryon_count.undealt }}个
+      <a-button
+        type="default"
+        @click="props.onClickBack"
+        style="position: relative; right: 0"
+      >
+        返回
+      </a-button>
     </p>
     <a-row class="full-height align-center">
       <!-- 试戴图片 -->
@@ -138,10 +145,14 @@
 import axios from "axios";
 import { reactive, onMounted, ref } from "vue";
 import { message, Modal } from "ant-design-vue";
-const props = defineProps<{
+interface TryonPageProps {
   id: number; // 试戴的ID
-  getTryOnStateLabel: (state: number) => string; // 功能函数：获取试戴标签
-}>();
+  onClickBack: () => void; // 功能函数：返回
+}
+const props = withDefaults(defineProps<TryonPageProps>(), {
+  onClickBack: () => {},
+  id: 0,
+});
 // 原始镜架图
 const eyeglass_info = reactive({
   id: props.id,
