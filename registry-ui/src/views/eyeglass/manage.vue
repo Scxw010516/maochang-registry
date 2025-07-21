@@ -403,6 +403,7 @@ interface searchForm {
   searchMinPrice?: number | undefined;
   searchMaxPrice?: number | undefined;
   material?: number[];
+  calculation_state: number | undefined;
 }
 
 // 镜架搜索数据表单数据
@@ -413,6 +414,7 @@ const searchFormState = reactive<searchForm>({
   searchMinPrice: undefined,
   searchMaxPrice: undefined,
   material: [],
+  calculation_state: 2,
 });
 
 // select和autocompe下拉框选项接口定义
@@ -461,6 +463,7 @@ onMounted(async () => {
     run({
       page: 1,
       pageSize: 10,
+      calculation_state: 2, // 在manage中只显示计算成功的镜架
     });
   }
   timer = setInterval(() => {
@@ -579,6 +582,8 @@ const searchFormFilter = computed(() => {
     // 将material的键值对加入searchForm
     searchForm.material = searchFormState.material;
   }
+  // 将calculation_state的键值对加入searchForm
+  searchForm.calculation_state = searchFormState.calculation_state;
   return searchForm;
 });
 
@@ -662,7 +667,6 @@ const refreshTryOnStates = async () => {
 const getIsActiveLabelFromId = (id: number) => {
   // 遍历tryOnStates，找到id对应的试戴状态
   const tryOnState = tryOnStates.value.find((item) => item.id === id);
-  console.log(tryOnState);
   // 如果找到，返回对应的标签
   if (tryOnState) {
     if (tryOnState.is_active) {
@@ -718,11 +722,13 @@ const onClickReset = () => {
   run({
     page: 1,
     pageSize: 10,
+    calculation_state: 2, // 在manage中只显示计算成功的镜架
   });
 };
 
 // 搜索栏搜索按钮点击事件
 const onClickSearch = () => {
+  console.log(searchFormFilter.value);
   // 通过搜索栏表单数据请求Table
   run({
     page: 1,

@@ -34,9 +34,6 @@
             <p class="image-title">
               原始镜架图：
               {{ eyeglass_info.is_tryon_beautify_origin ? "启用" : "未启用" }}
-              <a-button size="large" @click="onClickChangeTryonMode(1, 0)">
-                切换镜架图
-              </a-button>
             </p>
             <img
               :src="eyeglass_frame_image.frontview_beautify"
@@ -56,9 +53,6 @@
             <p class="image-title">
               处理后镜架图：
               {{ eyeglass_info.is_tryon_beautify_origin ? "未启用" : "启用" }}
-              <a-button size="large" @click="onClickChangeTryonMode(1, 0)">
-                切换镜架图
-              </a-button>
             </p>
             <img
               v-if="processed_beautify_images.frontview_beautify_processed"
@@ -112,26 +106,38 @@
           镜腿标注
         </a-button>
       </a-col>
+      <a-col>
+        <a-button
+          type="primary"
+          class="operation-button"
+          @click="onClickChangeTryonMode"
+        >
+          修改试戴模式
+        </a-button>
+      </a-col>
     </a-row>
   </div>
   <a-modal
-    v-model:visible="annotate_modal.show_annotate_modal"
+    v-model:open="annotate_modal.show_annotate_modal"
     width="80%"
     :footer="null"
   >
     <a-space class="page-title">
-      镜腿标注步骤：{{ annotate_steps_options[annotate_modal.annotate_step] }}
+      镜腿标注步骤：{{ annotation_steps_options[annotate_modal.annotate_step] }}
       <a-button size="large" @click="onClickAnnotatePrev"> 上一步 </a-button>
       <a-button size="large" @click="onClickAnnotateNext"> 下一步 </a-button>
 
       <a-button type="primary" size="large" @click="onClickAnnotateConfirm">
         确定
       </a-button>
-      <a-button size="large" @click="onClickChangeTryonMode(0, 1)">
-        {{ eyeglass_info.is_tryon_leg_auto ? "使用标注" : "使用自动" }}
-      </a-button>
     </a-space>
     <div style="position: relative">
+      <div
+        v-for="(item, index) in annotation_steps_options.length - 1"
+        :key="index"
+        class="annotation"
+        :data-annotation="index"
+      ></div>
       <img
         :src="eyeglass_frame_image.sideview_beautify"
         alt=""
@@ -140,11 +146,30 @@
       />
     </div>
   </a-modal>
+  <a-modal
+    v-model:open="change_tryon_mode_modal.show_change_tryon_mode_modal"
+    centered
+    title="修改试戴模式"
+    okText="修改并生成试戴任务"
+    cancelText="取消"
+    :confirm-loading="change_tryon_mode_modal.confirm_loading"
+    @ok="onClickGenerateTryonTask"
+  >
+    <a-form-item label="是否自动处理镜腿">
+      <a-switch v-model:checked="change_tryon_mode_modal.is_tryon_leg_auto" />
+    </a-form-item>
+    <a-form-item label="是否使用原始美化图像">
+      <a-switch
+        v-model:checked="change_tryon_mode_modal.is_tryon_beautify_origin"
+      />
+    </a-form-item>
+  </a-modal>
 </template>
 <script lang="ts" setup>
 import axios from "axios";
 import { reactive, onMounted, ref } from "vue";
 import { message, Modal } from "ant-design-vue";
+import { set } from "nprogress";
 interface TryonPageProps {
   id: number; // 试戴的ID
   onClickBack: () => void; // 功能函数：返回
@@ -154,11 +179,11 @@ const props = withDefaults(defineProps<TryonPageProps>(), {
   id: 0,
 });
 // 原始镜架图
-const eyeglass_info = reactive({
+const eyeglass_info = ref({
   id: props.id,
   sku: "",
-  is_tryon_leg_auto: 1, // 是否自动试戴镜腿
-  is_tryon_beautify_origin: 1, // 是否使用原始美化图像
+  is_tryon_leg_auto: true, // 是否自动试戴镜腿
+  is_tryon_beautify_origin: true, // 是否使用原始美化图像
 });
 const eyeglass_frame_image = reactive({
   frontview_beautify: "",
@@ -184,18 +209,22 @@ const tryon_count = reactive({
   failed: 0, // 处理失败
   undealt: 0, // 未进行试戴
 });
-const annotate_steps_options = ["左上", "右上", "左下", "右下", "完成"];
+const annotation_steps_options = ["左上", "右上", "左下", "右下", "完成"];
 // 镜腿标注modal
 const annotate_modal = ref({
   show_annotate_modal: false,
   annotate_step: 0, // 镜腿标注步骤 0 左上 1 右上 2 左下 3 右下 4 完成
   annotation_result: [] as Array<{ x: number; y: number }>,
 });
+
+// 修改试戴模式modal
+const change_tryon_mode_modal = ref({
+  show_change_tryon_mode_modal: false,
+  confirm_loading: false,
+  is_tryon_leg_auto: true, // 是否自动试戴镜腿
+  is_tryon_beautify_origin: true, // 是否使用原始美化图像
+});
 // ###########################################点击事件###########################################
-const onClickAnnotateLegs = () => {
-  // 展开标注modal
-  annotate_modal.value.show_annotate_modal = true;
-};
 const onClickUpload = (type: "front" | "side") => {
   // 打开上传窗口
   const input = document.createElement("input");
@@ -209,7 +238,7 @@ const onClickUpload = (type: "front" | "side") => {
       const formData = new FormData();
       formData.append("image", file);
       formData.append("type", type);
-      formData.append("id", eyeglass_info.id.toString());
+      formData.append("id", eyeglass_info.value.id.toString());
       axios
         .post("glassmanagement/api/upload-processed-beautify-image", formData)
         .then((response) => {
@@ -247,8 +276,54 @@ const onClickDownload = () => {
     document.body.removeChild(linkside);
   }, 500); // 延迟500毫秒
 };
-// 点击图片标注：获取点击位置并显示
+// 点击镜腿标注：展开标注modal
+const onClickAnnotateLegs = () => {
+  // 展开标注modal
+  annotate_modal.value.show_annotate_modal = true;
+  const form = new FormData();
+  form.append("id", eyeglass_info.value.id.toString());
+  axios.post("glassmanagement/api/get-annotate-leg-data", form).then((res) => {
+    // 获取标注数据
+    console.log(res.data);
+    const data = res.data.data;
+    console.log(typeof data["top_left_point"][0]);
+    if (data) {
+      annotate_modal.value.annotation_result[0] = {
+        x: data["top_left_point"][0],
+        y: data["top_left_point"][1],
+      };
+      annotate_modal.value.annotation_result[1] = {
+        x: data["top_right_point"][0],
+        y: data["top_right_point"][1],
+      };
+      annotate_modal.value.annotation_result[2] = {
+        x: data["bottom_left_point"][0],
+        y: data["bottom_left_point"][1],
+      };
+      annotate_modal.value.annotation_result[3] = {
+        x: data["bottom_right_point"][0],
+        y: data["bottom_right_point"][1],
+      };
+      console.log(annotate_modal.value.annotation_result);
+      // 将标注数据赋值给标注modal
+      for (const [
+        index,
+        item,
+      ] of annotate_modal.value.annotation_result.entries()) {
+        setAnnotationDot(item.x, item.y, index);
+      }
+      annotate_modal.value.annotate_step = 4; // 标注完成
+    }
+  });
+};
+// 点击图片位置进行标注：获取点击位置并显示
 const onClickImageToAnnotate = (event: MouseEvent) => {
+  if (
+    annotate_modal.value.annotate_step >=
+    annotation_steps_options.length - 1
+  ) {
+    return;
+  }
   // 获取点击位置并显示
   if (event.target) {
     // 获取点击位置
@@ -263,29 +338,7 @@ const onClickImageToAnnotate = (event: MouseEvent) => {
         y: y,
       };
     // 在图片上显示标注
-    // 删除之前的标注
-    const annotations = document.querySelectorAll(".annotation");
-    annotations.forEach((annotation) => {
-      const el = annotation as HTMLElement; // 断言为 HTMLElement
-      if (el.dataset.annotation === `${annotate_modal.value.annotate_step}`) {
-        el.remove();
-      }
-    });
-    const annotation = document.createElement("div");
-    annotation.className = "annotation active"; // 添加激活样式
-    annotation.dataset.annotation = `${annotate_modal.value.annotate_step}`;
-    const parent = img.parentElement;
-    if (!parent) {
-      console.error("图片没有父元素，无法添加标注");
-      return;
-    }
-    //
-    const offset_rect = parent.getBoundingClientRect();
-    const x_offset = event.clientX - offset_rect.left;
-    const y_offset = event.clientY - offset_rect.top;
-    annotation.style.left = `${x_offset}px`;
-    annotation.style.top = `${y_offset}px`;
-    parent?.appendChild(annotation);
+    setAnnotationDot(x, y, annotate_modal.value.annotate_step);
   }
 };
 
@@ -306,11 +359,6 @@ const onClickAnnotateNext = () => {
       }
     });
     annotate_modal.value.annotate_step++;
-  } else {
-    // 完成标注
-    annotate_modal.value.show_annotate_modal = false;
-    // 提交标注结果
-    console.log("提交标注结果：", annotate_modal.value.annotation_result);
   }
 };
 // 点击标注上一步
@@ -338,47 +386,70 @@ const onClickAnnotatePrev = () => {
 // 点击标注确认
 const onClickAnnotateConfirm = () => {
   console.log("确认标注结果：", annotate_modal.value.annotation_result);
-  // 构建表单
-  const formData = new FormData();
-  formData.append(
-    "annotation_result",
-    JSON.stringify(annotate_modal.value.annotation_result),
-  );
-  formData.append("id", eyeglass_info.id.toString());
-  axios
-    .post("/glassmanagement/api/update-annotation-leg", formData)
-    .then((response) => {
-      console.log(response);
-    });
+  // 检查标注结果
+  if (
+    annotate_modal.value.annotation_result[0] &&
+    annotate_modal.value.annotation_result[1] &&
+    annotate_modal.value.annotation_result[2] &&
+    annotate_modal.value.annotation_result[3]
+  ) {
+    // 构建表单
+    const formData = new FormData();
+    formData.append(
+      "annotation_result",
+      JSON.stringify(annotate_modal.value.annotation_result),
+    );
+    formData.append("id", eyeglass_info.value.id.toString());
+    axios
+      .post("/glassmanagement/api/update-annotation-leg", formData)
+      .then((response) => {
+        console.log(response);
+        message.success(response.data.msg);
+      });
+  } else {
+    message.error("请标注完整4个镜腿位置");
+  }
 };
 
-// 点击修改试戴模式：切换是否使用美化镜架 ， 切换是否使用自动镜腿
-const onClickChangeTryonMode = (changeBeautify: number, changeAuto: number) => {
-  if (changeBeautify === 1) {
-    // 将布尔值转换为 0 或 1
-    eyeglass_info.is_tryon_beautify_origin =
-      eyeglass_info.is_tryon_beautify_origin ? 0 : 1;
-  }
-  if (changeAuto === 1) {
-    eyeglass_info.is_tryon_leg_auto = eyeglass_info.is_tryon_leg_auto ? 0 : 1;
-  }
-  // 创建表单
+// 点击修改试戴模式：展开修改试戴模式modal
+const onClickChangeTryonMode = () => {
+  // 展开修改试戴模式modal
+  change_tryon_mode_modal.value.show_change_tryon_mode_modal = true;
+  change_tryon_mode_modal.value.is_tryon_leg_auto =
+    eyeglass_info.value.is_tryon_leg_auto;
+  change_tryon_mode_modal.value.is_tryon_beautify_origin =
+    eyeglass_info.value.is_tryon_beautify_origin;
+};
+
+// 点击更新试戴模式并生成试戴任务：更新试戴模式并生成试戴任务
+const onClickGenerateTryonTask = () => {
+  change_tryon_mode_modal.value.confirm_loading = true;
+  // 构建表单
   const form = new FormData();
-  form.append("id", eyeglass_info.id.toString());
+  form.append("id", eyeglass_info.value.id.toString());
   form.append(
     "is_tryon_beautify_origin",
-    eyeglass_info.is_tryon_beautify_origin.toString(),
+    change_tryon_mode_modal.value.is_tryon_beautify_origin.toString(),
   );
-  form.append("is_tryon_leg_auto", eyeglass_info.is_tryon_leg_auto.toString());
-  console.log("提交试戴模式修改：", {
-    id: eyeglass_info.id,
-    is_tryon_beautify_origin: eyeglass_info.is_tryon_beautify_origin,
-    is_tryon_leg_auto: eyeglass_info.is_tryon_leg_auto,
-  });
+  form.append(
+    "is_tryon_leg_auto",
+    change_tryon_mode_modal.value.is_tryon_leg_auto.toString(),
+  );
   axios
     .post("/glassmanagement/api/update-tryon-mode", form)
     .then((response) => {
-      console.log(response);
+      // console.log(response);
+      const data = response.data.data;
+      if (data.data) {
+        eyeglass_info.value.is_tryon_beautify_origin =
+          data.data.is_tryon_beautify_origin;
+        eyeglass_info.value.is_tryon_leg_auto = data.data.is_tryon_leg_auto;
+        message.success(data.msg);
+      } else {
+        message.error(data.msg);
+      }
+      change_tryon_mode_modal.value.show_change_tryon_mode_modal = false;
+      change_tryon_mode_modal.value.confirm_loading = false;
     });
 };
 
@@ -400,6 +471,35 @@ const getTryOnStateLabel = (state: number) => {
   }
 };
 
+const setAnnotationDot = (x: number, y: number, annotate_step: number) => {
+  const img = document.querySelector(".modal-image") as HTMLImageElement;
+  const rect = img.getBoundingClientRect();
+  // 在图片上显示标注
+  // 删除之前的标注
+  const annotations = document.querySelectorAll(".annotation");
+  annotations.forEach((annotation) => {
+    const el = annotation as HTMLElement; // 断言为 HTMLElement
+    if (el.dataset.annotation === `${annotate_step}`) {
+      el.remove();
+    }
+  });
+  const annotation = document.createElement("div");
+  annotation.className = "annotation active"; // 添加激活样式
+  annotation.dataset.annotation = `${annotate_step}`;
+  const parent = img.parentElement;
+  if (!parent) {
+    console.error("图片没有父元素，无法添加标注");
+    return;
+  }
+  //
+  const offset_rect = parent.getBoundingClientRect();
+  const x_offset = x + rect.left - offset_rect.left;
+  const y_offset = y + rect.top - offset_rect.top;
+  annotation.style.left = `${x_offset}px`;
+  annotation.style.top = `${y_offset}px`;
+  parent?.appendChild(annotation);
+};
+
 // ###########################################生命周期钩子###########################################
 onMounted(() => {
   // 获取镜架美化图片
@@ -413,11 +513,10 @@ onMounted(() => {
       const data = response.data.data;
       console.log(data);
       if (data) {
-        eyeglass_info.sku = data.sku;
-        eyeglass_info.is_tryon_beautify_origin = data.is_tryon_beautify_origin
-          ? 1
-          : 0;
-        eyeglass_info.is_tryon_leg_auto = data.is_tryon_leg_auto ? 1 : 0;
+        eyeglass_info.value.sku = data.sku;
+        eyeglass_info.value.is_tryon_beautify_origin =
+          data.is_tryon_beautify_origin;
+        eyeglass_info.value.is_tryon_leg_auto = data.is_tryon_leg_auto;
         tryon_count.wait = data.tryon_wait_count;
         tryon_count.processing = data.tryon_processing_count;
         tryon_count.success = data.tryon_success_count;
@@ -429,7 +528,6 @@ onMounted(() => {
           data.frontview_beautify_processed;
         processed_beautify_images.sideview_beautify_processed =
           data.sideview_beautify_processed;
-        eyeglass_info.sku = data.sku;
         tryon_images.length = 0; // 清空之前的试戴图片
         for (let i = 0; i < data.tryon_images.length; i++) {
           tryon_images.push({

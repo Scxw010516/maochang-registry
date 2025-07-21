@@ -1024,6 +1024,7 @@ interface searchForm {
   searchMinPrice?: number | undefined;
   searchMaxPrice?: number | undefined;
   material?: number[];
+  calculation_state: number | undefined;
 }
 
 // 镜架搜索数据表单数据
@@ -1034,6 +1035,7 @@ const searchFormState = reactive<searchForm>({
   searchMinPrice: undefined,
   searchMaxPrice: undefined,
   material: [],
+  calculation_state: 0,
 });
 
 // 镜架表格项选择
@@ -1627,6 +1629,10 @@ const searchFormFilter = computed(() => {
   if (searchFormState.material) {
     // 将material的键值对加入searchForm
     searchForm.material = searchFormState.material;
+  }
+  if (searchFormState.calculation_state) {
+    // 将calculation_state的键值对加入searchForm
+    searchForm.calculation_state = searchFormState.calculation_state;
   }
   return searchForm;
 });

@@ -428,7 +428,7 @@ class UpdateAnnotationLegView(View):
 		return result
 	
 """
-更新试戴模式
+更新试戴模式并生成试戴任务
 """
 class UpdateTryonModeView(View):
 	def post(self, request: HttpRequest):
@@ -437,6 +437,15 @@ class UpdateTryonModeView(View):
 		# 返回结果
 		return result
 
+"""
+获取镜腿标注数据
+"""
+class GetAnnotateLegDataView(View):
+	def post(self, request: HttpRequest):
+		# 调用获取镜腿标注数据的服务方法
+		result = services.GetAnnotateLegData(request)
+		# 返回结果
+		return result
 """
 获取所有镜架品牌
 """
