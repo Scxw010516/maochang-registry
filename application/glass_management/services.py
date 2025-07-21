@@ -339,16 +339,16 @@ def GenerateCalculateTask(request: HttpRequest):
     if search_calc_task(EyeglassFrameEntry_instance.sku):
         return R.failed(msg="镜架已在计算队列中")
     # 判断镜架是否正在计算中
-    if (
-        EyeglassFrameEntry_instance.pixel_measurement_state == 1
-        or EyeglassFrameEntry_instance.millimeter_measurement_state == 1
-        or EyeglassFrameEntry_instance.calculation_state == 1
-        or EyeglassFrameEntry_instance.coordinate_state == 1
-        or EyeglassFrameEntry_instance.image_mask_state == 1
-        or EyeglassFrameEntry_instance.image_seg_state == 1
-        or EyeglassFrameEntry_instance.image_beautify_state == 1
-    ):
-        return R.failed(msg="镜架正在计算中")
+    # if (
+    #     EyeglassFrameEntry_instance.pixel_measurement_state == 1
+    #     or EyeglassFrameEntry_instance.millimeter_measurement_state == 1
+    #     or EyeglassFrameEntry_instance.calculation_state == 1
+    #     or EyeglassFrameEntry_instance.coordinate_state == 1
+    #     or EyeglassFrameEntry_instance.image_mask_state == 1
+    #     or EyeglassFrameEntry_instance.image_seg_state == 1
+    #     or EyeglassFrameEntry_instance.image_beautify_state == 1
+    # ):
+    #     return R.failed(msg="镜架正在计算中")
     # 添加镜架到计算队列中
     try:
         # 数据库事务处理
@@ -613,6 +613,7 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     search_key_max_price = request.GET.get("searchMaxPrice")  # 镜架最高价格
     search_key_max_price = decimal.Decimal(search_key_max_price) if search_key_max_price else None
     search_key_material = request.GET.getlist("material[]")  # 镜架材质id列表
+    search_calculation_state = request.GET.get("calculation_state")  # 镜架参数计算状态
 
     # 查询所有镜架基本信息表
     entrys = models.EyeglassFrameEntry.objects.filter(is_delete=False)
@@ -636,7 +637,18 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
         entrys = entrys.filter(price__lte=search_key_max_price)
     if search_key_material:
         entrys = entrys.filter(material__in=search_key_material)
-
+    # 查询计算完成的结果
+    print(search_calculation_state)
+    if search_calculation_state:
+        entrys = entrys.filter(
+            pixel_measurement_state=2,
+            millimeter_measurement_state=2,
+            calculation_state=2,
+            coordinate_state=2,
+            image_mask_state=2,
+            image_seg_state=2,
+            image_beautify_state=2,
+        )
     # 排序
     if sort_order == "descend":
         entrys = entrys.order_by(f"-{sort_field}")
@@ -974,28 +986,122 @@ def UpdateTryonMode(request: HttpRequest):
     参数：
         request: HttpRequest 请求对象
         id: 镜架基本信息表ID
-        is_tryon_leg_auto：number 是否自动处理镜腿
-        is_tryon_beautify_origin：number 是否使用原始beautify进行试戴
+        is_tryon_leg_auto：boolean 是否自动处理镜腿
+        is_tryon_beautify_origin：boolean  是否使用原始beautify进行试戴
     返回：
-        HttpResponse: JSON格式的响应对象, {code,data,msg}
+        HttpResponse: JSON格式的响应对象, {data,msg}
+        成功时：data: {is_tryon_leg_auto: boolean, is_tryon_beautify_origin: boolean}
+                msg: "镜架试戴模式更新成功"
+        失败时：data: null
+                msg: "镜架试戴模式更新失败"
     """
-    is_tryon_leg_auto = request.POST.get("is_tryon_leg_auto", 0)
-    is_tryon_beautify_origin = request.POST.get("is_tryon_beautify_origin", 0)
+    is_tryon_leg_auto = request.POST.get("is_tryon_leg_auto", "true")
+    is_tryon_beautify_origin = request.POST.get("is_tryon_beautify_origin", "true")
     id = request.POST.get("id")
     if not id:
         return R.failed(msg="镜架ID为空")
+    # 转换参数
+    if is_tryon_leg_auto == "true":
+        is_tryon_leg_auto = True
+    elif is_tryon_leg_auto == "false":
+        is_tryon_leg_auto = False
+    else:
+        return R.failed(msg="参数错误")
+    if is_tryon_beautify_origin == "true":
+        is_tryon_beautify_origin = True
+    elif is_tryon_beautify_origin == "false":
+        is_tryon_beautify_origin = False
+    else:
+        return R.failed(msg="参数错误")
     # 查询镜架基本信息表实例
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
     # 镜架基本信息表实例为空判断
     if not EyeglassFrameEntry_instance:
         return R.failed(msg="未找到该镜架")
-    # 更新镜架试戴模式
-    EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
-    EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin
+    # 更新是否自动处理镜腿
+    if is_tryon_leg_auto:
+        EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
+    else:
+        # 手动处理镜腿，则检查是否标注了镜腿
+        EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=id,is_delete=False).first()
+        if not EyeglassFrameCoordinate_instance:
+            return R.failed(msg="未找到该镜架标点数据")
+        else:
+            if not EyeglassFrameCoordinate_instance.left_points:
+                return R.failed(msg="未标注镜腿")
+            else: 
+                top_left_point = EyeglassFrameCoordinate_instance.left_points.get("top_left_point")
+                top_right_point = EyeglassFrameCoordinate_instance.left_points.get("top_right_point")
+                bottom_left_point = EyeglassFrameCoordinate_instance.left_points.get("bottom_left_point")
+                bottom_right_point = EyeglassFrameCoordinate_instance.left_points.get("bottom_right_point")
+                if not (top_left_point or top_right_point or bottom_left_point or bottom_right_point):
+                    return R.failed(msg="未标注镜腿")
+                else:
+                     EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
+    # 更新是否使用原始beautify进行试戴
+    if is_tryon_beautify_origin:
+        EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin
+    else: 
+        # 使用处理后beautify进行试戴，则检查是否上传了处理后的beautify图片
+        EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=id,is_delete=False).first()
+        if not EyeglassFrameImage_instance:
+            return R.failed(msg="未找到该镜架美化图片")
+        else:
+            if not EyeglassFrameImage_instance.frontview_beautify_processed or not EyeglassFrameImage_instance.sideview_beautify_processed:
+                return R.failed(msg="未上传处理后的beautify图片")
+            else:
+                EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin
     EyeglassFrameEntry_instance.save()
+    """
+    生成试戴任务
+    """
+    # todo增加试戴逻辑
     # 返回成功结果
-    return R.ok(msg="镜架试戴模式更新成功")
+    result = {"is_tryon_leg_auto": EyeglassFrameEntry_instance.is_tryon_leg_auto, "is_tryon_beautify_origin": EyeglassFrameEntry_instance.is_tryon_beautify_origin}
+    return R.ok({"msg": "生成试戴任务任务", "data": result})
 
+def GetAnnotateLegData(request: HttpRequest):
+    """
+    获取镜腿标注数据
+
+    参数：
+        request: HttpRequest 请求对象
+        id: 镜架基本信息表ID
+
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+        data: {
+            top_left_point: [number, number],
+            top_right_point: [number, number],
+            bottom_left_point: [number, number],
+            bottom_right_point: [number, number],
+        }
+    """
+    # 获取请求参数
+    id = request.POST.get("id")
+    if not id:
+        return R.failed(msg="参数为空")
+    # 查询镜腿标注数据
+    result = models.EyeglassFrameCoordinate.objects.filter(entry_id=id, is_delete=False).first()
+    if not result:
+        return R.failed(msg="未找到该镜架标点数据")
+    else:
+        if not result.left_points:
+            return R.failed(msg="未标注镜腿")
+        else:
+            top_left_point = result.left_points.get("top_left_point")
+            top_right_point = result.left_points.get("top_right_point")
+            bottom_left_point = result.left_points.get("bottom_left_point")
+            bottom_right_point = result.left_points.get("bottom_right_point")
+            if not (top_left_point or top_right_point or bottom_left_point or bottom_right_point):
+                return R.failed(msg="未标注镜腿")
+            else:
+                return R.ok(data={
+                    "top_left_point": top_left_point,
+                    "top_right_point": top_right_point,
+                    "bottom_left_point": bottom_left_point,
+                    "bottom_right_point": bottom_right_point,
+                })
 def GetAllBrands(request: HttpRequest):
     """
     获取所有镜架品牌
