@@ -32,8 +32,9 @@ urlpatterns = [
     path('api/get-all-eyeglassframes_entrys', views.GetAllEyeglassFrameEntryView.as_view()), # get: 获取所有镜架基本信息
     path('api/get-all-calculate-states', views.GetAllCalculateStatesView.as_view()), # get: 获取所有计算状态
     # 用于镜架落库-试戴
+    path('api/get-all-try-on-states-and-is-active', views.GetAllTryOnStatesAndIsActiveView.as_view()), # get: 获取镜架试戴状态和是否启用
     path('api/get-eyeglassframe-tryon-and-beautify', views.GetEyeglassFrameTryonAndBeautifyView.as_view()), # get: 获取镜架试戴和美化图片
-    path('api/upload-ai-face', views.UploadAIFaceView.as_view()),# post: 上传AI人脸图
+    path('api/update-eyeglassesframe-is-active', views.UpdateEyeglassFrameIsActiveView.as_view()),# post: 更新镜架启动状态
     path('api/upload-processed-beautify-image', views.UploadProcessedBeautifyImageView.as_view()), # post: 上传处理后的镜架图
     path('api/update-annotation-leg', views.UpdateAnnotationLegView.as_view()), # post: 更新镜腿标注
     path('api/update-tryon-mode', views.UpdateTryonModeView.as_view()), # post: 更新试戴模式
@@ -45,8 +46,9 @@ urlpatterns = [
     path('api/get-all-shapes', views.GetAllShapesView.as_view()), # get: 获取所有形状
     path('api/get-all-is-transparent', views.GetAllIsTransparenrView.as_view()), # get: 获取所有透明度
     path('api/get-all-frame-types', views.GetAllFrameTypesView.as_view()), # get: 获取所有形状
-    
+  
     ###################以下为测试用####################
+    path('api/upload-ai-face', views.UploadAIFaceView.as_view()),# post: 上传AI人脸图
     # path('api/add-style', views.AddStyle), # post: 添加风格
     # path('api/add-style-list', views.AddStyleList), # post: 添加风格列表
     # path('api/add-material', views.AddMaterial), # post: 添加材质

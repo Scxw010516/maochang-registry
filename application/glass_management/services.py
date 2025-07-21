@@ -677,6 +677,9 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
                 "image_beautify_state": entry.image_beautify_state,
                 "create_time": entry.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "update_time": entry.update_time.strftime("%Y-%m-%d %H:%M:%S"),
+                # 试戴
+                "aiface_tryon_state": entry.aiface_tryon_state,
+                "is_active": entry.is_active,
             }
             for entry in entry_list
         ]
@@ -730,6 +733,46 @@ def GetAllCalculateStates(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=f"获取计算状态失败: {str(e)}")
 
+
+def GetAllTryOnStatesAndIsActive(request: HttpRequest):
+    """
+    获取所有镜架试戴状态和是否启用
+    Args:
+        request: HTTP 请求对象
+        ids: 镜架ID列表
+
+    Returns:
+        JSON响应：包含计算状态的列表
+    """
+    try:
+        # 获取 ID 列表
+        ids = request.GET.get("ids", "")
+        if not ids:
+            return R.failed(msg="未指定镜架 ID")
+        # 将字符串转换为列表
+        try:
+            ids = [int(id) for id in ids.split(",")]
+        except ValueError:
+            return R.failed(msg="无效的镜架 ID")
+
+        # 查询指定 ID 的镜架
+        entries = models.EyeglassFrameEntry.objects.filter(id__in=ids, is_delete=False)
+
+        # 构建返回数据
+        if len(entries) > 0:
+            search_result = [
+                {
+                    "id": entry.id,
+                    "is_active": entry.is_active,
+                    "aiface_tryon_state": entry.aiface_tryon_state,
+                }
+                for entry in entries
+            ]
+
+        return R.ok(data=search_result)
+
+    except Exception as e:
+        return R.failed(msg=f"获取计算状态失败: {str(e)}")
 
 def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
     """
@@ -797,6 +840,40 @@ def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
 
     # 返回成功结果
     return R.ok(data=result)
+
+def UpdateEyeglassFrameIsActive(request: HttpRequest):
+    """
+    更新镜架是否启用
+
+    参数：
+        request: HttpRequest 请求对象
+        id: 镜架基本信息表ID
+        is_active：number 是否启用
+    返回：
+        HttpResponse: JSON格式的响应对象, {code,data,msg}
+    """
+    # 获取请求参数
+    id = request.POST.get("id")
+    is_active = request.POST.get("is_active")
+    if not id or not is_active:
+        return R.failed(msg="参数为空")
+    #  转换is_active参数
+    if is_active == "true":
+        is_active = True
+    elif is_active == "false":
+        is_active = False
+    else:
+        return R.failed(msg="参数错误")
+    # 查询镜架基本信息表实例
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
+    # 镜架基本信息表实例为空判断
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="未找到该镜架")
+    # 更新镜架是否启用
+    EyeglassFrameEntry_instance.is_active = is_active
+    EyeglassFrameEntry_instance.save()
+    # 返回成功结果
+    return R.ok(msg="镜架是否启用更新成功")
 
 def UploadAIFace(request: HttpRequest):
     """

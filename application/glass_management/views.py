@@ -369,6 +369,16 @@ class GetAllCalculateStatesView(View):
 
 
 """
+获取镜架试戴状态和是否启用
+"""
+class GetAllTryOnStatesAndIsActiveView(View):
+	def get(self, request: HttpRequest):
+		# 调用查询镜架试戴状态和是否启用的服务方法
+		result = services.GetAllTryOnStatesAndIsActive(request)
+		# 返回结果
+		return result
+	
+"""
 获取镜架试戴和美化图片
 """
 class GetEyeglassFrameTryonAndBeautifyView(View):
@@ -377,7 +387,15 @@ class GetEyeglassFrameTryonAndBeautifyView(View):
 		result = services.GetEyeglassFrameTryonAndBeautify(request)
 		# 返回结果
 		return result
-
+"""
+更新镜架是否启用状态
+"""
+class UpdateEyeglassFrameIsActiveView(View):
+	def post(self, request: HttpRequest):
+		# 调用更新镜架是否启用状态的服务方法
+		result = services.UpdateEyeglassFrameIsActive(request)
+		# 返回结果
+		return result
 
 """
 上传人脸图片

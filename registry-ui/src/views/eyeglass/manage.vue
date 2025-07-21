@@ -222,8 +222,18 @@
           <template v-if="column.key === 'tryon'">
             <span>
               <a-button type="primary" ghost @click="onClickTryOn(record.id)">{{
-                getTryOnStateLabel(record.id)
+                getTryOnStateLabelFromId(record.id)
               }}</a-button>
+            </span>
+          </template>
+          <template v-if="column.key === 'is_active'">
+            <span>
+              <a-button
+                type="primary"
+                ghost
+                @click="onClickIsActive(record.id)"
+                >{{ getIsActiveLabelFromId(record.id) }}</a-button
+              >
             </span>
           </template>
         </template>
@@ -274,6 +284,7 @@ import { Key } from "ant-design-vue/lib/_util/type";
 import { initFormOptions } from "./utils";
 import { Item } from "ant-design-vue/es/menu";
 import tryonPage from "./tryon.vue";
+import { modalProps } from "ant-design-vue/es/modal/Modal";
 //#########################################参数初始化###########################################
 // const router = useRouter();
 const options = useOptionStore();
@@ -366,7 +377,7 @@ type getAllEyeglassFrameEntryAPIResult = {
     material: number;
     update_time: string;
     aiface_tryon_state: number; // 试戴状态
-    is_active: number; // 启用状态
+    is_active: boolean; // 启用状态
   }[];
   count: number;
 };
@@ -375,7 +386,7 @@ type getAllEyeglassFrameEntryAPIResult = {
 interface try_on_state {
   id: number;
   aiface_tryon_state: number;
-  is_active: number;
+  is_active: boolean;
 }
 
 // 镜架试戴状态数组
@@ -593,6 +604,111 @@ const onSelectChange = (selectedRowKeys: Key[]) => {
   tableSelectionState.selectedRowKeys = selectedRowKeys;
 };
 
+// 试戴状态相关
+// 功能函数：获取试戴状态标签
+const getTryOnStateLabel = (state: number) => {
+  if (state == 0) {
+    return "待处理";
+  } else if (state == 1) {
+    return "处理中";
+  } else if (state == 2) {
+    return "处理成功";
+  } else if (state == 3) {
+    return "处理失败";
+  } else {
+    return "无";
+  }
+};
+
+// 功能函数：从id获取试戴状态标签
+const getTryOnStateLabelFromId = (id: number) => {
+  // 遍历tryOnStates，找到id对应的试戴状态
+  const tryOnState = tryOnStates.value.find((item) => item.id === id);
+  // 如果找到，返回对应的标签
+  if (tryOnState) {
+    return getTryOnStateLabel(tryOnState.aiface_tryon_state);
+  } else {
+    return getTryOnStateLabel(-1);
+  }
+};
+
+// 功能函数: 只获取试戴状态数据
+const refreshTryOnStates = async () => {
+  try {
+    const ids = tryOnStates.value.map((item) => item.id);
+    const response = await axios.get(
+      "/glassmanagement/api/get-all-try-on-states-and-is-active",
+      {
+        params: {
+          ids: ids.join(","), // 将数组转换为逗号分隔的字符串
+        },
+      },
+    );
+    if (response.data.code === 0) {
+      // console.log(response.data.data);
+      tryOnStates.value = response.data.data.map((item: try_on_state) => ({
+        id: item.id,
+        aiface_tryon_state: item.aiface_tryon_state,
+        is_active: item.is_active,
+      }));
+      // console.log(tryOnStates.value);
+    }
+  } catch (error) {
+    console.error("获取试戴状态失败:", error);
+  }
+};
+
+// 功能函数：从id获取启用状态标签
+const getIsActiveLabelFromId = (id: number) => {
+  // 遍历tryOnStates，找到id对应的试戴状态
+  const tryOnState = tryOnStates.value.find((item) => item.id === id);
+  console.log(tryOnState);
+  // 如果找到，返回对应的标签
+  if (tryOnState) {
+    if (tryOnState.is_active) {
+      return "启用";
+    } else {
+      return "未启用";
+    }
+  } else {
+    return "无";
+  }
+};
+
+// 功能函数：修改启用状态
+const updateIsActive = (id: number, is_active: boolean) => async () => {
+  // 反转is_active的值
+  is_active = !is_active;
+  // 构造post请求表单formdata
+  const formData = new FormData();
+  // 将待修改的表格项的key存入formdata
+  formData.append("id", id.toString());
+  formData.append("is_active", is_active.toString());
+  console.log(is_active.toString());
+  // 修改启用状态
+  await axios
+    .post("/glassmanagement/api/update-eyeglassesframe-is-active", formData)
+    .then((response) => {
+      // 请求成功
+      if (response.data.code === 0) {
+        // 修改成功
+        message.success(response.data.msg); // 提示修改成功
+        // 重新请求Table，定位在当前页
+        run({
+          page: current.value,
+          pageSize: pageSize.value,
+          ...searchFormFilter.value,
+        });
+      } else {
+        // 修改失败
+        message.error(response.data.msg); // 提示修改失败
+      }
+    })
+    .catch((error) => {
+      // 请求失败
+      console.log(error);
+    });
+};
 // #########################################onClick函数定义#########################################
 // 搜索栏重置按钮点击事件
 const onClickReset = () => {
@@ -709,47 +825,38 @@ const onClickDelete = async (id: number) => {
   });
 };
 
-// 试戴状态相关
-// 功能函数：获取试戴状态标签
-const getTryOnStateLabel = (state: number) => {
-  if (state == 0) {
-    return "待处理";
-  } else if (state == 1) {
-    return "处理中";
-  } else if (state == 2) {
-    return "处理成功";
-  } else if (state == 3) {
-    return "处理失败";
-  } else {
-    return "无";
-  }
-};
-
-// 功能函数: 只获取试戴状态数据
-const refreshTryOnStates = async () => {
-  try {
-    const ids = tryOnStates.value.map((item) => item.id);
-    const response = await axios.get(
-      "/glassmanagement/api/get-all-try-on-states",
-      {
-        params: {
-          ids: ids.join(","), // 将数组转换为逗号分隔的字符串
-        },
-      },
-    );
-    if (response.data.code === 0) {
-      // console.log(response.data.data);
-      tryOnStates.value = response.data.data.map((item: try_on_state) => ({
-        id: item.id,
-        aiface_tryon_state: item.aiface_tryon_state,
-        is_active: item.is_active,
-      }));
+const onClickIsActive = (id: number) => {
+  const sku = dataSource.value.find((item) => item.id === id)?.sku;
+  const is_active =
+    tryOnStates.value.find((item) => item.id === id)?.is_active || false;
+  const try_on_state = getTryOnStateLabelFromId(id);
+  let content = `当前状态：${getIsActiveLabelFromId(id)}，`;
+  if (try_on_state === "处理成功") {
+    if (is_active) {
+      content += "试戴已完成，是否禁用？";
+    } else {
+      content += "试戴已完成，是否启用？";
     }
-  } catch (error) {
-    console.error("获取试戴状态失败:", error);
+  } else {
+    content += "试戴未完成，无法启用";
+    Modal.info({
+      title: `${sku}的启用状态`,
+      content: content,
+      centered: true,
+      okText: "确认",
+    });
+    return;
   }
+  // 打开修改启用状态的modal
+  Modal.confirm({
+    title: `${sku}的启用状态`,
+    content: content,
+    okText: "确认",
+    cancelText: "取消",
+    centered: true,
+    onOk: updateIsActive(id, is_active),
+  });
 };
-
 // #########################################监视函数#########################################
 watch(dataSource, () => {
   // 清空试戴状态
