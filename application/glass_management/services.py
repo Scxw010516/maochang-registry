@@ -981,7 +981,7 @@ def UpdateAnnotationLeg(request: HttpRequest):
 
 def UpdateTryonMode(request: HttpRequest):
     """
-    更新镜架试戴模式
+    更新镜架试戴模式，为所有启用人脸生成试戴任务
 
     参数：
         request: HttpRequest 请求对象
@@ -1055,6 +1055,7 @@ def UpdateTryonMode(request: HttpRequest):
     """
     生成试戴任务
     """
+    tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
     # todo增加试戴逻辑
     # 返回成功结果
     result = {"is_tryon_leg_auto": EyeglassFrameEntry_instance.is_tryon_leg_auto, "is_tryon_beautify_origin": EyeglassFrameEntry_instance.is_tryon_beautify_origin}

@@ -14,7 +14,7 @@ from django.db import transaction
 from django.core.files import File
 
 #OBS函数
-from utils.obs.obs_client import get_image_object
+from utils.obs.obs_client import get_image_object,get_image_object_raw,get_image_object_as_3channel_bytes
 
 from application.glass_management import models
 from application.glass_management import forms
@@ -227,7 +227,24 @@ def read_image_from_field(image_field):
     # print("Image path:", img_path)
     return img
 
+def read_image_from_field_to_raw(image_field):
+    """从Django的ImageField中获得url读取图像并返回原始字节流"""
+    if not image_field :
+        return None
+    img_path = str(image_field)
+    img = get_image_object_raw(img_path)
+    # print("Image path:", img_path)
+    return img
 
+def read_image_from_field_as_3channel_bytes(image_field):
+    """从Django的ImageField中获得url读取图像并强制转换为3通道，然后返回原始字节流"""
+    if not image_field :
+        return None
+    img_path = str(image_field)
+    img = get_image_object_as_3channel_bytes(img_path)
+    # print("Image path:", img_path)
+    return img
+    
 # Celery任务管理工具类
 class TaskManager:
     """使用Celery原生API管理任务队列，避免直接操作Redis"""

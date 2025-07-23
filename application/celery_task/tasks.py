@@ -2,6 +2,7 @@ from celery import shared_task
 
 import json
 import cv2
+import requests
 import os
 from time import sleep
 
@@ -19,6 +20,8 @@ from application.glass_management import forms
 # 引入通用函数
 from application.celery_task.services import (
     read_image_from_field,  # 从数据库读取图片
+    read_image_from_field_to_raw,  # 从数据库读取图片（返回原始字节数据）
+    read_image_from_field_as_3channel_bytes,# 从数据库读取图片（返回3通道字节数据）
     save_output_mask,  # 保存mask
     save_output_images,  # 保存images
     save_output_point,  # 保存point
@@ -303,4 +306,202 @@ def calc(self, sku):
         print("镜架基本信息表已保存")
     # 返回
     print('计算任务执行完毕：' + sku)
+    """
+    生成试戴任务
+    """
+    tryon.delay_on_commit(sku)
     return sku
+
+"""
+镜架试戴任务
+    args:sku
+"""
+@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
+def tryon(self, sku):
+    print(f"执行试戴任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
+
+    # existing_task_id = TaskManager.search_calc_task(sku)
+    # if existing_task_id and existing_task_id != self.request.id:
+    #     print(f"发现重复任务 {existing_task_id}，正在删除...")
+        # TaskManager.delete_calc_task(sku)
+
+    # 查询镜架基本信息表
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
+    if not EyeglassFrameEntry_instance:
+        # 镜架基本信息表不存在
+        error_msg = f"试戴失败：镜架基本信息表不存在，SKU: {sku}"
+        print(error_msg)
+        return error_msg
+    
+    # 查询镜架图片数据表
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=EyeglassFrameEntry_instance.id).first()
+    if not EyeglassFrameImage_instance:
+        # 镜架图片数据表不存在  
+        error_msg = f"试戴失败：镜架图片数据表不存在，SKU: {sku}"
+        print(error_msg)
+        return error_msg
+    
+    # 处理图片不存在的情况
+    if not EyeglassFrameImage_instance.frontview_beautify or not EyeglassFrameImage_instance.front or not EyeglassFrameImage_instance.sideview_beautify:
+        # 镜架图片数据表不存在  
+        error_msg = f"试戴失败：镜架图片数据表不存在，SKU: {sku}"
+        print(error_msg)
+        return error_msg
+    # 读取镜架图片和信息
+    eyeglass_image = read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify) # 眼镜正面照片
+    eyeglass_mask = read_image_from_field_to_raw(EyeglassFrameImage_instance.front) # 眼镜正面黑白图
+    eyeglass_leg = read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify) # 眼镜侧面照片
+    is_transparent = EyeglassFrameEntry_instance.is_transparent # 透明度：0-不透明，1-全透明，2-有色透明
+
+    # 🔧 重试时的状态恢复逻辑
+    initial_states = None
+    if self.request.retries > 0:
+        print(f"任务重试中，正在恢复初始状态...")
+        # 记录当前状态作为"失败前状态"，用于日志
+        current_states = {
+            "aiface_tryon_state": EyeglassFrameEntry_instance.aiface_tryon_state,
+        }
+        print(f"重试前状态: {current_states}")
+
+        # 恢复到初始状态（0=待计算）
+        with transaction.atomic():
+            EyeglassFrameEntry_instance.aiface_tryon_state = 0
+            EyeglassFrameEntry_instance.save()
+        print("状态已恢复到初始状态(0)")
+    else:
+        # 首次执行，记录初始状态
+        initial_states = {
+            "aiface_tryon_state": EyeglassFrameEntry_instance.aiface_tryon_state,
+        }
+        print(f"首次执行，记录初始状态: {initial_states}")
+
+    """
+    更新试戴状态为处理中
+    """
+    # 数据库事务处理
+    with transaction.atomic():
+        # 更新镜架基本信息表 计算状态为 1 计算中
+        EyeglassFrameEntry_instance.aiface_tryon_state = 1
+        # 保存
+        EyeglassFrameEntry_instance.save()
+        # 更新试戴结果表
+        # 获取所有的试戴结果表实例
+        eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
+        # 读取所有启用的人脸
+        aiface_entrys = models.AIFace.objects.filter(is_active=True)
+        for aiface_entry in aiface_entrys:
+            # 查询人脸对应的试戴结果表实例
+            eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
+            # 判断试戴结果表实例为空
+            if not eyeglassTryonResult_instance:
+                # 创建试戴结果表实例
+                eyeglassTryonResult_instance = models.EyeglassTryonResult.objects.create(
+                    entry_id=EyeglassFrameEntry_instance.id,
+                    face_id=aiface_entry.id,
+                    tryon_state=0, # 待处理
+                )
+                eyeglassTryonResult_instance.save()
+            else: # 存在试戴结果表实例，则更新
+                eyeglassTryonResult_instance.tryon_state = 0 # 待处理
+                eyeglassTryonResult_instance.save()
+
+    """
+    所有启用的人脸依次试戴
+    """
+    try:
+        tryon_success_flag = True
+        # 遍历所有启用的人脸
+        for aiface_entry in aiface_entrys:
+            # 读取人脸图片
+            face_name = aiface_entry.name # 人脸名称
+            if not aiface_entry.image:
+                # 人脸图片数据表不存在  
+                error_msg = f"试戴失败：{face_name}人脸图片不存在，SKU: {sku}"
+                print(error_msg)
+                continue
+            aiface_image = read_image_from_field_as_3channel_bytes(aiface_entry.image) # 人脸正面照片
+            pupillary_distance = aiface_entry.pupil_distance # 瞳距(毫米)
+           
+            # 构建请求参数
+            files =  {
+                "face_image": aiface_image,
+                "eyeglass_image": eyeglass_image,
+                "eyeglass_mask": eyeglass_mask,
+                "eyeglass_leg": eyeglass_leg,
+            }
+            data = {
+                "pupillary_distance": pupillary_distance,
+                "is_transparent": is_transparent,  # 1表示全透明
+            }
+            # 查询试戴结果示例
+            eyeglassTryonResult_instance =  models.EyeglassTryonResult.objects.filter(
+                entry_id=EyeglassFrameEntry_instance.id,
+                face_id=aiface_entry.id,
+                is_delete=False
+            ).first()
+            # 不存在，则创建试戴结果示例
+            if not eyeglassTryonResult_instance:
+                eyeglassTryonResult_instance = models.EyeglassTryonResult.objects.create(
+                    entry_id=EyeglassFrameEntry_instance.id,
+                    face_id=aiface_entry.id,
+                )
+            eyeglassTryonResult_instance.tryon_state=1 # 处理中
+            eyeglassTryonResult_instance.save()
+            # API服务地址
+            # API_URL = "http://localhost:9100"
+            API_URL = "http://maochang-microservices:9100"
+            # 发送试戴请求
+            response = requests.post(f"{API_URL}/try-on",files=files,data=data)
+            # 处理响应，处理成功
+            if response.status_code == 200:
+                content_type = response.headers.get('Content-Type', '')
+                if 'image' in content_type.lower():
+                    # 保存试戴结果
+                    eyeglassTryonResult_instance.tryon_image.save(
+                        f'image.jpg',
+                        ContentFile(response.content),
+                        save=False
+                    )
+                    eyeglassTryonResult_instance.tryon_state=2 # 处理成功
+                    eyeglassTryonResult_instance.save()
+                    continue
+            # 返回错误，试戴失败
+            print("试戴失败")
+            eyeglassTryonResult_instance.tryon_state=3 # 处理失败
+            print(f"{face_name} 试戴失败，状态码: {response.status_code}")
+            tryon_success_flag = False
+    except Exception as e:
+        print(f"计算参数失败: {str(e)}")
+        # 🔧 失败时的状态处理
+        with transaction.atomic():
+            # 如果是最后一次重试失败，设置为失败状态(3)
+            if self.request.retries >= 2:  # max_retries = 3, 所以最后一次是retries=2
+                print("已达到最大重试次数，设置为失败状态")
+                EyeglassFrameEntry_instance.aiface_tryon_state = 3
+                EyeglassFrameEntry_instance.save()
+                return f"计算失败：计算参数失败 - {str(e)}"
+            else:
+                # 如果还会重试，恢复到初始状态，让重试逻辑处理
+                print(f"计算失败，准备重试 (当前重试次数: {self.request.retries})")
+                EyeglassFrameEntry_instance.aiface_tryon_state = 0
+                EyeglassFrameEntry_instance.save()
+                # 抛出异常以触发重试
+                raise self.retry(exc=e, countdown=60)
+
+    """
+    镜架基本信息表：更新试戴状态
+    """
+    # 数据库事务处理
+    with transaction.atomic():
+       
+        # TaskManager.delete_calc_task(sku)
+        if(tryon_success_flag):
+            EyeglassFrameEntry_instance.aiface_tryon_state = 2 # 处理成功
+        else:
+            EyeglassFrameEntry_instance.aiface_tryon_state = 3 # 处理失败
+        # 保存镜架基本信息表
+        EyeglassFrameEntry_instance.save()
+        # print("镜架基本信息表已保存")
+    # 返回
+    return sku
+
