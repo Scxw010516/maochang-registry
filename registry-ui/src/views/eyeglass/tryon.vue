@@ -1,18 +1,18 @@
 <template>
   <div class="full-height-row">
     <p class="page-title">
+      <a-button
+        type="default"
+        size="large"
+        @click="props.onClickBack"
+        style="height: 100%; margin-right: 30px"
+        :icon="h(LeftOutlined)"
+      />
       {{ eyeglass_info.sku }} 待处理：{{ tryon_count.wait }}个 、处理中：{{
         tryon_count.processing
       }}个、处理完成：{{ tryon_count.success }}个、处理失败：{{
         tryon_count.failed
       }}个、未进行试戴：{{ tryon_count.undealt }}个
-      <a-button
-        type="default"
-        @click="props.onClickBack"
-        style="position: relative; right: 0"
-      >
-        返回
-      </a-button>
     </p>
     <a-row class="full-height align-center">
       <!-- 试戴图片 -->
@@ -611,6 +611,8 @@ onMounted(() => {
   padding: 40px 39.5px;
   font-size: 30px;
   font-weight: bold;
+  display: flex;
+  align-items: center;
 }
 
 .operation-row {
