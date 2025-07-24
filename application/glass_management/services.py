@@ -934,13 +934,30 @@ def UploadProcessedBeautifyImage(request: HttpRequest):
         return R.failed(msg="未找到该镜架")
     type = request.POST.get("type")
     if type == "front":
+        origin_image = get_image_object(str(EyeglassFrameImage_instance.frontview_beautify))
         EyeglassFrameImage_instance.frontview_beautify_processed = image
     elif type == "side":
+        origin_image = get_image_object(EyeglassFrameImage_instance.sideview_beautify)
         EyeglassFrameImage_instance.sideview_beautify_processed = image
     else:
         return R.failed(msg="未知的镜架类型")
-    EyeglassFrameImage_instance.save()
-    return R.ok(msg="镜架美化图片上传成功")
+    # 将上传的图片转换为numpy数组进行尺寸比较
+    try:
+        # 读取上传的图像文件
+        image.seek(0)  # 确保文件指针在开始位置
+        file_bytes = np.frombuffer(image.read(), np.uint8)
+        processed_image = cv2.imdecode(file_bytes, cv2.IMREAD_UNCHANGED)
+        
+        if processed_image is None:
+            return R.failed(msg="无法解码上传的图像文件")    
+        # 比较图像尺寸
+        if processed_image.shape == origin_image.shape:
+            EyeglassFrameImage_instance.save()
+            return R.ok(msg="镜架美化图片上传成功")
+        else:
+            return R.failed(msg="处理后的图片尺寸与原始图片尺寸不一致")
+    except Exception as e:
+        return R.failed(msg=f"处理图像时发生错误: {str(e)}")
 
 def UpdateAnnotationLeg(request: HttpRequest):
     """

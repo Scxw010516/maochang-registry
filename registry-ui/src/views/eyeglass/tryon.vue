@@ -167,10 +167,11 @@
 </template>
 <script lang="ts" setup>
 import axios from "axios";
-import { reactive, onMounted, ref } from "vue";
+import { reactive, onMounted, ref, h } from "vue";
 import { message, Modal } from "ant-design-vue";
 import { set } from "nprogress";
 import { siderProps } from "ant-design-vue/es/layout/Sider";
+import { LeftOutlined } from "@ant-design/icons-vue";
 interface TryonPageProps {
   id: number; // 试戴的ID
   onClickBack: () => void; // 功能函数：返回
@@ -245,10 +246,15 @@ const onClickUpload = (type: "front" | "side") => {
       axios
         .post("glassmanagement/api/upload-processed-beautify-image", formData)
         .then((response) => {
-          console.log("上传成功:", response.data);
+          if (response.data.code === 0) {
+            message.success(response.data.msg);
+          } else {
+            message.error(response.data.msg);
+          }
         })
         .catch((error) => {
           console.error("上传失败:", error);
+          message.error(error);
         });
     }
   };
