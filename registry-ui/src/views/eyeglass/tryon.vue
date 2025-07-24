@@ -139,7 +139,7 @@
         :data-annotation="index"
       ></div>
       <img
-        :src="eyeglass_frame_image.sideview_beautify"
+        :src="eyeglass_frame_image.sideview_seg"
         alt=""
         class="modal-image"
         @click="onClickImageToAnnotate"
@@ -170,6 +170,7 @@ import axios from "axios";
 import { reactive, onMounted, ref } from "vue";
 import { message, Modal } from "ant-design-vue";
 import { set } from "nprogress";
+import { siderProps } from "ant-design-vue/es/layout/Sider";
 interface TryonPageProps {
   id: number; // 试戴的ID
   onClickBack: () => void; // 功能函数：返回
@@ -188,6 +189,8 @@ const eyeglass_info = ref({
 const eyeglass_frame_image = reactive({
   frontview_beautify: "",
   sideview_beautify: "",
+  sideview_seg: "",
+  contour_points: [],
 });
 // 处理后镜架图
 const processed_beautify_images = reactive({
@@ -286,23 +289,30 @@ const onClickAnnotateLegs = () => {
     // 获取标注数据
     console.log(res.data);
     const data = res.data.data;
-    console.log(typeof data["top_left_point"][0]);
-    if (data) {
+    if (!data) {
+      message.error(res.data.msg);
+      return;
+    }
+    // 解析返回数据
+    eyeglass_frame_image.contour_points = data.contour_points;
+    // 获取标注结果
+    const annotation_result = data.annotation_result;
+    if (annotation_result) {
       annotate_modal.value.annotation_result[0] = {
-        x: data["top_left_point"][0],
-        y: data["top_left_point"][1],
+        x: annotation_result["top_left_point"][0],
+        y: annotation_result["top_left_point"][1],
       };
       annotate_modal.value.annotation_result[1] = {
-        x: data["top_right_point"][0],
-        y: data["top_right_point"][1],
+        x: annotation_result["top_right_point"][0],
+        y: annotation_result["top_right_point"][1],
       };
       annotate_modal.value.annotation_result[2] = {
-        x: data["bottom_left_point"][0],
-        y: data["bottom_left_point"][1],
+        x: annotation_result["bottom_left_point"][0],
+        y: annotation_result["bottom_left_point"][1],
       };
       annotate_modal.value.annotation_result[3] = {
-        x: data["bottom_right_point"][0],
-        y: data["bottom_right_point"][1],
+        x: annotation_result["bottom_right_point"][0],
+        y: annotation_result["bottom_right_point"][1],
       };
       console.log(annotate_modal.value.annotation_result);
       // 将标注数据赋值给标注modal
@@ -332,13 +342,19 @@ const onClickImageToAnnotate = (event: MouseEvent) => {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     console.log(`点击位置：(${x}, ${y})`);
+    // 转化为对于图片的坐标
+    let x_real = (x / rect.width) * img.naturalWidth;
+    let y_real = (y / rect.height) * img.naturalHeight;
+    // 吸附到轮廓上
+    ({ x_real, y_real } = findNearestPoint(x_real, y_real));
     annotate_modal.value.annotation_result[annotate_modal.value.annotate_step] =
       {
-        x: x,
-        y: y,
+        x: x_real,
+        y: y_real,
       };
-    // 在图片上显示标注
-    setAnnotationDot(x, y, annotate_modal.value.annotate_step);
+    console.log("吸附转化后实际坐标", x_real, y_real);
+    // 在图片上显示标注点
+    setAnnotationDot(x_real, y_real, annotate_modal.value.annotate_step);
   }
 };
 
@@ -471,9 +487,15 @@ const getTryOnStateLabel = (state: number) => {
   }
 };
 
-const setAnnotationDot = (x: number, y: number, annotate_step: number) => {
+const setAnnotationDot = (
+  x_real: number,
+  y_real: number,
+  annotate_step: number,
+) => {
   const img = document.querySelector(".modal-image") as HTMLImageElement;
   const rect = img.getBoundingClientRect();
+  const x = (x_real / img.naturalWidth) * rect.width;
+  const y = (y_real / img.naturalHeight) * rect.height;
   // 在图片上显示标注
   // 删除之前的标注
   const annotations = document.querySelectorAll(".annotation");
@@ -498,6 +520,26 @@ const setAnnotationDot = (x: number, y: number, annotate_step: number) => {
   annotation.style.left = `${x_offset}px`;
   annotation.style.top = `${y_offset}px`;
   parent?.appendChild(annotation);
+};
+
+const findNearestPoint = (x_real: number, y_real: number) => {
+  const contour_points = eyeglass_frame_image.contour_points;
+  let x_counter = x_real;
+  let y_counter = y_real;
+  if (contour_points.length > 0) {
+    let minDistance = Infinity;
+    // 遍历所有轮廓点找到最近的点
+    for (let point of contour_points) {
+      const distance =
+        Math.pow(point[0] - x_real, 2) + Math.pow(point[1] - y_real, 2);
+      if (distance < minDistance) {
+        minDistance = distance;
+        x_counter = point[0];
+        y_counter = point[1];
+      }
+    }
+  }
+  return { x_real: x_counter, y_real: y_counter };
 };
 
 // ###########################################生命周期钩子###########################################
@@ -528,6 +570,7 @@ onMounted(() => {
           data.frontview_beautify_processed;
         processed_beautify_images.sideview_beautify_processed =
           data.sideview_beautify_processed;
+        eyeglass_frame_image.sideview_seg = data.sideview_seg;
         tryon_images.length = 0; // 清空之前的试戴图片
         for (let i = 0; i < data.tryon_images.length; i++) {
           tryon_images.push({

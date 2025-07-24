@@ -1,5 +1,7 @@
 import json
 import decimal
+import cv2
+import numpy as np
 from utils import R, regular
 from utils import utils
 from django.db import transaction
@@ -11,6 +13,8 @@ from application.glass_management import forms
 
 from application.celery_task import tasks
 from application.celery_task.services import search_calc_task
+from utils.obs.obs_client import get_image_object
+
 
 
 # 镜架采集端
@@ -842,6 +846,7 @@ def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
         "sideview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify)),
         "frontview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify_processed)),
         "sideview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify_processed)),
+        "sideview_seg":  utils.getImageURL(request,str(EyeglassFrameImage_result.sideview_seg)),
         "tryon_images": tryon_images,
         "tryon_wait_count": EyeglassTryonResult_results.filter(tryon_state=0).count(),
         "tryon_processing_count": EyeglassTryonResult_results.filter(tryon_state=1).count(),
@@ -1076,33 +1081,55 @@ def GetAnnotateLegData(request: HttpRequest):
             top_right_point: [number, number],
             bottom_left_point: [number, number],
             bottom_right_point: [number, number],
+            
         }
     """
     # 获取请求参数
     id = request.POST.get("id")
     if not id:
         return R.failed(msg="参数为空")
+    result = {}
+    annotation_result={}
     # 查询镜腿标注数据
-    result = models.EyeglassFrameCoordinate.objects.filter(entry_id=id, is_delete=False).first()
-    if not result:
-        return R.failed(msg="未找到该镜架标点数据")
+    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=id, is_delete=False).first()
+    if not EyeglassFrameCoordinate_instance:
+        return R.failed(msg="未找到该镜架坐标数据")
     else:
-        if not result.left_points:
-            return R.failed(msg="未标注镜腿")
+        if not EyeglassFrameCoordinate_instance.left_points:
+            return R.failed(msg="未找到该镜架坐标数据")
         else:
-            top_left_point = result.left_points.get("top_left_point")
-            top_right_point = result.left_points.get("top_right_point")
-            bottom_left_point = result.left_points.get("bottom_left_point")
-            bottom_right_point = result.left_points.get("bottom_right_point")
-            if not (top_left_point or top_right_point or bottom_left_point or bottom_right_point):
-                return R.failed(msg="未标注镜腿")
-            else:
-                return R.ok(data={
-                    "top_left_point": top_left_point,
-                    "top_right_point": top_right_point,
-                    "bottom_left_point": bottom_left_point,
-                    "bottom_right_point": bottom_right_point,
-                })
+            # 有标点数据
+            if EyeglassFrameCoordinate_instance.left_points.get("top_left_point"):
+                top_left_point = EyeglassFrameCoordinate_instance.left_points.get("top_left_point")
+                top_right_point = EyeglassFrameCoordinate_instance.left_points.get("top_right_point")
+                bottom_left_point = EyeglassFrameCoordinate_instance.left_points.get("bottom_left_point")
+                bottom_right_point = EyeglassFrameCoordinate_instance.left_points.get("bottom_right_point")
+                annotation_result = {
+                        "top_left_point": top_left_point, 
+                        "top_right_point": top_right_point , 
+                        "bottom_left_point": bottom_left_point , 
+                        "bottom_right_point": bottom_right_point}
+    result = {"annotation_result": annotation_result or None}       
+    # 计算镜架轮廓点
+    EyeglassFrameImage_instance =  models.EyeglassFrameImage.objects.get(entry_id=id)
+    # 选择分割图像
+    sideview_seg = EyeglassFrameImage_instance.sideview_seg
+    img_path = str(sideview_seg)
+    img = get_image_object(img_path)
+    print(img.shape)
+    if img.shape[2] == 4: # 4通道图片 
+        alpha = img[:, :, 3]
+        mask = (alpha > 0).astype(np.uint8) * 255
+        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+        contour_points = np.vstack(contours).squeeze().tolist() if contours else []        
+        # print(contour_points)
+        result = {
+            "contour_points": contour_points,
+            **result
+        }
+    else: 
+        return R.failed("分割图像错误，请重新计算")
+    return R.ok(data=result)
 def GetAllBrands(request: HttpRequest):
     """
     获取所有镜架品牌
