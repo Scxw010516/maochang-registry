@@ -521,8 +521,8 @@ const setAnnotationDot = (
   }
   //
   const offset_rect = parent.getBoundingClientRect();
-  const x_offset = x + rect.left - offset_rect.left;
-  const y_offset = y + rect.top - offset_rect.top;
+  const x_offset = x + rect.left - offset_rect.left - 5;
+  const y_offset = y + rect.top - offset_rect.top - 5;
   annotation.style.left = `${x_offset}px`;
   annotation.style.top = `${y_offset}px`;
   parent?.appendChild(annotation);
