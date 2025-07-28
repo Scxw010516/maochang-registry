@@ -2,11 +2,13 @@ import numpy as np
 
 default_options = {
     "types": {
-        "frame": 0, # 对应EyeglassFrameEntry表的frame_type
-        "material": 2, # 对应EyeglassFrameEntry表的material
-        "transparent": 0, # 对应EyeglassFrameEntry表的is_transparent
-        "special": False, # 默认为False
-    }
+        "frame": 0,  # 对应EyeglassFrameEntry表的frame_type
+        "material": 2,  # 对应EyeglassFrameEntry表的material
+        "transparent": 0,  # 对应EyeglassFrameEntry表的is_transparent
+        "special": False,  # 默认为False
+    },
+    # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
+    "standard_size": [53, 16, 145],
 }
 
 default_front_points = {

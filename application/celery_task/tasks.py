@@ -160,13 +160,21 @@ def calc(self, sku):
         frame = EyeglassFrameEntry_instance.frame_type  # 获取镜架框架类型
         material = EyeglassFrameEntry_instance.material  # 获取镜架材质
         transparent = EyeglassFrameEntry_instance.is_transparent  # 获取镜架透明度
+        lens_width_st = EyeglassFrameEntry_instance.lens_width_st
+        bridge_width_st = EyeglassFrameEntry_instance.bridge_width_st
+        temple_length_st = EyeglassFrameEntry_instance.temple_length_st
         options = {
             "types": {
                 "frame": frame,  # 对应EyeglassFrameEntry表的frame_type
                 "material": material,  # 对应EyeglassFrameEntry表的material
                 "transparent": transparent,  # 对应EyeglassFrameEntry表的is_transparent
                 "special": False,  # 默认为False
-            }
+            },
+            # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
+            "standard_size": [ 
+                float(lens_width_st) if lens_width_st is not None else 0.0,
+                float(bridge_width_st) if bridge_width_st is not None else 0.0,
+                float(temple_length_st) if temple_length_st is not None else 0.0],
         }
         # 计算参数
         output = process(images, calc_models, options)
@@ -309,7 +317,15 @@ def calc(self, sku):
     """
     生成试戴任务
     """
-    tryon.delay_on_commit(sku)
+    # 计算任务正确完成
+    if output['shape']['state'] and output['point']['state'] and output['parameter']['state'] and output['size']['state'] and output['mask']['state'] and output['image']['state']:
+        """
+        生成试戴任务：传递镜架基本信息表的sku值
+        """
+        tryon.delay_on_commit(sku)
+        print("生成试戴任务成功：" + str(sku))
+    else:
+        print("生成试戴任务失败：" + str(sku))
     return sku
 
 """

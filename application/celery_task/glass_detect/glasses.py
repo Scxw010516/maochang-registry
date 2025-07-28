@@ -120,7 +120,7 @@ def process(images: dict, models: dict, options: dict=default_options):
 
     ## 获取前景和美化
     try:
-        types = options["types"]
+        types = options.get("types", {})
         front_mask = get_front_mask(
             frame_mask,
             lens_mask,
@@ -146,6 +146,8 @@ def process(images: dict, models: dict, options: dict=default_options):
             image={
                 "foreground": foreground_left,
                 "mask": templeWf_mask,
+                "front_foreground": beauty_front,
+                "front_mask": front_mask,
             },
             types=types,
         )
@@ -203,7 +205,7 @@ def process(images: dict, models: dict, options: dict=default_options):
 
     # 计算尺寸
     try:
-        pc = ParamsConverter(parameters)
+        pc = ParamsConverter(parameters, standard_size=options.get("standard_size", []))
         sizes = pc.convert()
         output["size"]["state"] = 1
         output["size"]["data"] = sizes
@@ -226,7 +228,11 @@ def process(images: dict, models: dict, options: dict=default_options):
 
 
 if __name__ == "__main__":
-    images = get_capture_images("201300053024730270")
-    models = get_models()
-    output = process(images, models, default_options)
-    print(output)
+    try:
+        images = get_capture_images("201300053024730500")
+        models = get_models()
+        output = process(images, models, default_options)
+        print(output)
+    except Exception as e:
+        print(traceback.format_exc())
+    # test_lru_cache()

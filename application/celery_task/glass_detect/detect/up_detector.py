@@ -1,5 +1,5 @@
 from typing import Optional, List
-
+import os
 import numpy as np
 import torch
 from torch import nn
@@ -13,7 +13,6 @@ class UpDetector(ImageDetector):
     def __init__(self, net: Optional[nn.Module] = None, device: str = "cpu"):
         if net is None:
             net = get_model(num_keypoints=9, model="resnet101")
-            import os
             current_dir = os.path.dirname(os.path.abspath(__file__))
             weights_path = os.path.join(current_dir, "checkpoints", "up_keypointsrcnn_resnet101_9.pth")
             weights = torch.load(

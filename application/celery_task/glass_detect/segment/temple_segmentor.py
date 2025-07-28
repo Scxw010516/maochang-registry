@@ -1,5 +1,5 @@
 from typing import Optional
-
+import os
 import numpy as np
 import torch
 from torch import nn
@@ -15,7 +15,7 @@ class TempleSegmentor(ImageSegmentor):
             from .unet.utils.create_unet import create_unet
 
             net = create_unet(num_classes=2)
-            import os
+            
             current_dir = os.path.dirname(os.path.abspath(__file__))
             checkpoint_path = os.path.join(current_dir, "checkpoints", "temple.pth")
             checkpoint = torch.load(

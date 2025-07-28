@@ -1,5 +1,5 @@
 from typing import Optional
-
+import os
 import numpy as np
 import torch
 from torch import nn
@@ -29,7 +29,6 @@ class NoseSegmentor(ImageSegmentor):
                 ],
             )
             # 使用 os.path
-            import os
             current_dir = os.path.dirname(os.path.abspath(__file__))
             checkpoint_path = os.path.join(current_dir, "checkpoints", "nose.pth")
             checkpoint = torch.load(

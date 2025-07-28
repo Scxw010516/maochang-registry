@@ -1,5 +1,5 @@
 import random
-
+import os
 import cv2
 import numpy as np
 
@@ -59,7 +59,6 @@ def get_lens_contours(mask):
 
 
 def get_reflection(mask, ratio=0.3, alpha=1):
-    import os
     current_dir = os.path.dirname(os.path.abspath(__file__))
     lens_path = os.path.join(os.path.dirname(current_dir), "reflection","lens.png")
     lens = cv2.imread(lens_path, cv2.IMREAD_UNCHANGED)
@@ -130,14 +129,14 @@ def add_lens(
     return glasses
 
 
-def main():
-    import os
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-    glasses_path = "glasses.png"
-    mask_path = "mask.png"
+def main():  
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    glasses_path = os.path.join(os.path.dirname(current_dir), "glasses.png")
+    mask_path = os.path.join(os.path.dirname(current_dir), "mask.png")
     glasses = cv2.imread(glasses_path, cv2.IMREAD_UNCHANGED)
     mask = cv2.imread(mask_path, cv2.IMREAD_UNCHANGED)
-    # reflection = cv2.imread("reflection/lens.png", cv2.IMREAD_UNCHANGED)
+    reflections_path = os.path.join(os.path.dirname(current_dir), "reflection","lens.png")
+    reflection = cv2.imread(reflections_path, cv2.IMREAD_UNCHANGED)
     # print(reflection.shape)
     # glasses = add_lens(glasses, mask, reflections=reflection)
     glasses = add_lens(glasses, mask)
