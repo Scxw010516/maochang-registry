@@ -33,7 +33,7 @@ from application.celery_task.services import (
 
 # 引入镜架计算模型
 from .glass_detect.glasses import process, get_models
-from .glass_detect.glasses import get_capture_images
+# from .glass_detect.glasses import get_capture_images
 
 
 
@@ -44,8 +44,8 @@ args:
     sku: str, 镜架SKU
 """
 
-
-@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
+# 重试四次，第四次不进行业务逻辑，仅失败处理
+@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 4, 'countdown': 60})
 def calc(self, sku):
     """
     计算眼镜参数并保存计算结果
@@ -67,7 +67,20 @@ def calc(self, sku):
         error_msg = f"计算失败：镜架基本信息表不存在，SKU: {sku}"
         print(error_msg)
         return error_msg
-
+    
+    if self.request.retries >= 3: # 第四次重试，则取消任务
+        EyeglassFrameEntry_instance.pixel_measurement_state = 3
+        EyeglassFrameEntry_instance.millimeter_measurement_state = 3
+        EyeglassFrameEntry_instance.calculation_state = 3
+        EyeglassFrameEntry_instance.coordinate_state = 3
+        EyeglassFrameEntry_instance.image_mask_state = 3
+        EyeglassFrameEntry_instance.image_seg_state = 3
+        EyeglassFrameEntry_instance.image_beautify_state = 3
+        # 保存
+        EyeglassFrameEntry_instance.save()
+        print("以达到最大重试次数，计算失败")
+        return 
+    
     # 🔧 重试时的状态恢复逻辑
     initial_states = None
     if self.request.retries > 0:
@@ -160,9 +173,6 @@ def calc(self, sku):
         frame = EyeglassFrameEntry_instance.frame_type  # 获取镜架框架类型
         material = EyeglassFrameEntry_instance.material  # 获取镜架材质
         transparent = EyeglassFrameEntry_instance.is_transparent  # 获取镜架透明度
-        lens_width_st = EyeglassFrameEntry_instance.lens_width_st
-        bridge_width_st = EyeglassFrameEntry_instance.bridge_width_st
-        temple_length_st = EyeglassFrameEntry_instance.temple_length_st
         options = {
             "types": {
                 "frame": frame,  # 对应EyeglassFrameEntry表的frame_type
@@ -170,12 +180,27 @@ def calc(self, sku):
                 "transparent": transparent,  # 对应EyeglassFrameEntry表的is_transparent
                 "special": False,  # 默认为False
             },
-            # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
-            "standard_size": [ 
-                float(lens_width_st) if lens_width_st is not None else 0.0,
-                float(bridge_width_st) if bridge_width_st is not None else 0.0,
-                float(temple_length_st) if temple_length_st is not None else 0.0],
         }
+        lens_width_st = EyeglassFrameEntry_instance.lens_width_st
+        bridge_width_st = EyeglassFrameEntry_instance.bridge_width_st
+        temple_length_st = EyeglassFrameEntry_instance.temple_length_st
+        if lens_width_st and bridge_width_st and temple_length_st:
+            options = {
+               **options,
+                # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
+                **{"standard_size": [ 
+                    float(lens_width_st) if lens_width_st is not None else 0.0,
+                    float(bridge_width_st) if bridge_width_st is not None else 0.0,
+                    float(temple_length_st) if temple_length_st is not None else 0.0],
+                    }
+            }
+        else:
+            options = {
+                **options,
+                # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
+                **{"standard_size":None,}
+            }
+        print(f"计算参数: {options}")
         # 计算参数
         output = process(images, calc_models, options)
         # print(output)
@@ -185,7 +210,7 @@ def calc(self, sku):
         # 🔧 失败时的状态处理
         with transaction.atomic():
             # 如果是最后一次重试失败，设置为失败状态(3)
-            if self.request.retries >= 2:  # max_retries = 3, 所以最后一次是retries=2
+            if self.request.retries >= 2:  # max_retries = 3, 所以最后一次是retries=2, 第四次只用于报错
                 print("已达到最大重试次数，设置为失败状态")
                 EyeglassFrameEntry_instance.pixel_measurement_state = 3
                 EyeglassFrameEntry_instance.millimeter_measurement_state = 3
@@ -251,7 +276,6 @@ def calc(self, sku):
         """
         point处理: 镜架坐标数据 EyeglassFrameCoordinateForm
         """
-
         try:
             if output['point']['state']:
                 save_output_point(output['point'], entry_id)
@@ -309,9 +333,6 @@ def calc(self, sku):
             EyeglassFrameEntry_instance.calculation_state = 3
             print("shape处理失败:" + str(e))  # 删除重复任务（如果还有的话）
         TaskManager.delete_calc_task(sku)
-        # 保存镜架基本信息表
-        EyeglassFrameEntry_instance.save()
-        print("镜架基本信息表已保存")
     # 返回
     print('计算任务执行完毕：' + sku)
     """
@@ -322,24 +343,34 @@ def calc(self, sku):
         """
         生成试戴任务：传递镜架基本信息表的sku值
         """
+        EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
         tryon.delay_on_commit(sku)
         print("生成试戴任务成功：" + str(sku))
     else:
         print("生成试戴任务失败：" + str(sku))
+    # 保存镜架基本信息表
+    EyeglassFrameEntry_instance.save()
+    print("镜架基本信息表已保存")
+
+    """
+    发送镜架参数
+    """
+    
     return sku
 
 """
 镜架试戴任务
     args:sku
 """
-@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 3, 'countdown': 60})
+# 重试四次，第四次不进行业务逻辑，仅失败处理
+@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 4, 'countdown': 60})
 def tryon(self, sku):
     print(f"执行试戴任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
 
-    # existing_task_id = TaskManager.search_calc_task(sku)
-    # if existing_task_id and existing_task_id != self.request.id:
-    #     print(f"发现重复任务 {existing_task_id}，正在删除...")
-        # TaskManager.delete_calc_task(sku)
+    existing_task_id = TaskManager.search_tryon_task(sku)
+    if existing_task_id and existing_task_id != self.request.id:
+        print(f"发现重复任务 {existing_task_id}，正在删除...")
+        TaskManager.delete_calc_task(sku)
 
     # 查询镜架基本信息表
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
@@ -349,6 +380,19 @@ def tryon(self, sku):
         print(error_msg)
         return error_msg
     
+    if self.request.retries >=4:
+        EyeglassFrameEntry_instance.aiface_tryon_state = 3 # 试戴失败
+        EyeglassFrameEntry_instance.save()
+        print("以达到最大重试次数，试戴失败")
+        return
+    
+    # 检查计算状态
+    calculate_state =  EyeglassFrameEntry_instance.pixel_measurement_state == 2 and EyeglassFrameEntry_instance.millimeter_measurement_state == 2 and EyeglassFrameEntry_instance.calculation_state  == 2 and EyeglassFrameEntry_instance.coordinate_state  == 2  and EyeglassFrameEntry_instance.image_mask_state  == 2 and EyeglassFrameEntry_instance.image_seg_state  == 2  and EyeglassFrameEntry_instance.image_beautify_state  == 2 
+    if calculate_state == False:
+        print("参数计算未完成，无法试戴")
+        EyeglassFrameEntry_instance.aiface_tryon_state = 3 # 试戴失败
+        EyeglassFrameEntry_instance.save()
+        return
     # 查询镜架图片数据表
     EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=EyeglassFrameEntry_instance.id).first()
     if not EyeglassFrameImage_instance:

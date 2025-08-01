@@ -1073,10 +1073,12 @@ def UpdateTryonMode(request: HttpRequest):
                 return R.failed(msg="未上传处理后的beautify图片")
             else:
                 EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin
-    EyeglassFrameEntry_instance.save()
     """
     生成试戴任务
     """
+    EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
+    EyeglassFrameEntry_instance.save()
+
     tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
     # todo增加试戴逻辑
     # 返回成功结果

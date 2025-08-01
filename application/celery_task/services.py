@@ -347,9 +347,112 @@ class TaskManager:
             return False
 
     @staticmethod
-    def check_task_exists(sku):
+    def check_calc_task_exists(sku):
         """检查指定SKU的任务是否存在"""
         return TaskManager.search_calc_task(sku) is not None
+    
+    
+    @staticmethod
+    def get_tryon_queue():
+        """获取所有计算任务"""
+        try:
+            # 使用Celery的inspect API获取队列信息
+            inspector = app.control.inspect()
+
+            # 获取排队中的任务
+            scheduled_tasks = inspector.scheduled()
+            reserved_tasks = inspector.reserved()
+            active_tasks = inspector.active()
+
+            tryon_tasks = []
+
+            # 检查所有类型的任务
+            for worker_name, tasks in (scheduled_tasks or {}).items():
+                for task in tasks:
+                    if task.get('name') == 'application.celery_task.tasks.tryon':
+                        tryon_tasks.append(
+                            {
+                                'id': task.get('id'),
+                                'args': task.get('args', []),
+                                'state': 'scheduled',
+                                'worker': worker_name,
+                            }
+                        )
+
+            for worker_name, tasks in (reserved_tasks or {}).items():
+                for task in tasks:
+                    if task.get('name') == 'application.celery_task.tasks.tryon':
+                        tryon_tasks.append(
+                            {
+                                'id': task.get('id'),
+                                'args': task.get('args', []),
+                                'state': 'reserved',
+                                'worker': worker_name,
+                            }
+                        )
+
+            for worker_name, tasks in (active_tasks or {}).items():
+                for task in tasks:
+                    if task.get('name') == 'application.celery_task.tasks.tryon':
+                        tryon_tasks.append(
+                            {
+                                'id': task.get('id'),
+                                'args': task.get('args', []),
+                                'state': 'active',
+                                'worker': worker_name,
+                            }
+                        )
+
+            return tryon_tasks
+
+        except Exception as e:
+            print(f"获取任务队列失败: {str(e)}")
+            return []
+
+    @staticmethod
+    def search_tryon_task(sku):
+        """搜索指定SKU的计算任务"""
+        try:
+            tryon_tasks = TaskManager.get_tryon_queue()
+
+            for task in tryon_tasks:
+                # 检查任务参数中是否包含指定的SKU
+                args = task.get('args', [])
+                if args and len(args) > 0 and sku in str(args[0]):
+                    print(f"找到任务: {task['id']}, SKU: {sku}, 状态: {task['state']}")
+                    return task['id']
+
+            print(f"未找到匹配的任务: {sku}")
+            return None
+
+        except Exception as e:
+            print(f"搜索任务失败: {str(e)}")
+            return None
+
+    @staticmethod
+    def delete_tryon_task(sku):
+        """删除指定SKU的计算任务"""
+        try:
+            # 先搜索任务
+            task_id = TaskManager.search_tryon_task(sku)
+
+            if task_id:
+                # 使用Celery的revoke方法撤销任务
+                app.control.revoke(task_id, terminate=True)
+                print(f"任务已删除: {task_id}")
+                return True
+            else:
+                print(f"未找到要删除的任务: {sku}")
+                return False
+
+        except Exception as e:
+            print(f"删除任务失败: {str(e)}")
+            return False
+
+    @staticmethod
+    def check_tryon_task_exists(sku):
+        """检查指定SKU的任务是否存在"""
+        return TaskManager.search_tryon_task(sku) is not None
 
 
 # 保持向后兼容的函数接口
