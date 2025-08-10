@@ -355,6 +355,7 @@ def calc(self, sku):
     """
     发送镜架参数
     """
+    # 获取token
     
     return sku
 
@@ -408,9 +409,15 @@ def tryon(self, sku):
         print(error_msg)
         return error_msg
     # 读取镜架图片和信息
-    eyeglass_image = read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify) # 眼镜正面照片
+    if EyeglassFrameEntry_instance.is_tryon_beautify_origin:
+        # 使用原始美化图片
+        eyeglass_image = read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify) # 眼镜正面照片
+        eyeglass_leg = read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify) # 眼镜侧面照片
+    else:
+        # 使用处理后美化图片
+        eyeglass_image = read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify_processed) # 眼镜正面照片
+        eyeglass_leg = read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify_processed) # 眼镜侧面照片
     eyeglass_mask = read_image_from_field_to_raw(EyeglassFrameImage_instance.front) # 眼镜正面黑白图
-    eyeglass_leg = read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify) # 眼镜侧面照片
     is_transparent = EyeglassFrameEntry_instance.is_transparent # 透明度：0-不透明，1-全透明，2-有色透明
 
     # 🔧 重试时的状态恢复逻辑

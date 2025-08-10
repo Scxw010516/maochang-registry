@@ -918,46 +918,54 @@ def UploadProcessedBeautifyImage(request: HttpRequest):
     上传处理后的镜架美化图片
 
     参数: 
-        image: 处理后的镜架图片
-        type: 图片类型（如：frontview, sideview）
+        frontview_beautify_processed: 处理后的正式图片
+        sideview_beautify_processed: 处理后的侧视图片
         id: 镜架基本信息表ID
 
     返回:
         result: 镜架美化数据id
     """
-    image = request.FILES.get("image")
-    if not image:
+    frontview_beautify_processed = request.FILES.get("frontview_beautify_processed")
+    sideview_beautify_processed = request.FILES.get("sideview_beautify_processed")
+    id = request.POST.get("id")
+    if not id:
+        return R.failed(msg="镜架id为空")
+    if not frontview_beautify_processed or not sideview_beautify_processed:
         return R.failed(msg="镜架美化图片未上传")
     # 保存镜架美化图片
-    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=request.POST.get("id")).first()
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=id).first()
     if not EyeglassFrameImage_instance:
         return R.failed(msg="未找到该镜架")
-    type = request.POST.get("type")
-    if type == "front":
-        origin_image = get_image_object(str(EyeglassFrameImage_instance.frontview_beautify))
-        EyeglassFrameImage_instance.frontview_beautify_processed = image
-    elif type == "side":
-        origin_image = get_image_object(EyeglassFrameImage_instance.sideview_beautify)
-        EyeglassFrameImage_instance.sideview_beautify_processed = image
-    else:
-        return R.failed(msg="未知的镜架类型")
+    frontview_beautify = get_image_object(str(EyeglassFrameImage_instance.frontview_beautify))
+    EyeglassFrameImage_instance.frontview_beautify_processed = frontview_beautify_processed
+    sideview_beautify = get_image_object(EyeglassFrameImage_instance.sideview_beautify)
+    EyeglassFrameImage_instance.sideview_beautify_processed = sideview_beautify_processed
+
     # 将上传的图片转换为numpy数组进行尺寸比较
-    try:
-        # 读取上传的图像文件
-        image.seek(0)  # 确保文件指针在开始位置
-        file_bytes = np.frombuffer(image.read(), np.uint8)
-        processed_image = cv2.imdecode(file_bytes, cv2.IMREAD_UNCHANGED)
-        
-        if processed_image is None:
-            return R.failed(msg="无法解码上传的图像文件")    
-        # 比较图像尺寸
-        if processed_image.shape == origin_image.shape:
-            EyeglassFrameImage_instance.save()
-            return R.ok(msg="镜架美化图片上传成功")
-        else:
-            return R.failed(msg="处理后的图片尺寸与原始图片尺寸不一致")
-    except Exception as e:
-        return R.failed(msg=f"处理图像时发生错误: {str(e)}")
+    for origin_image,image in [(frontview_beautify, frontview_beautify_processed), (sideview_beautify, sideview_beautify_processed)]:
+        try:
+            # 读取上传的图像文件
+            image.seek(0)  # 确保文件指针在开始位置
+            file_bytes = np.frombuffer(image.read(), np.uint8)
+            processed_image = cv2.imdecode(file_bytes, cv2.IMREAD_UNCHANGED)
+            
+            if processed_image is None:
+                return R.failed(msg="无法解码上传的图像文件")    
+            # 比较图像尺寸
+            if processed_image.shape != origin_image.shape:
+                return R.failed(msg="处理后的图片尺寸与原始图片尺寸不一致")
+        except Exception as e:
+            return R.failed(msg=f"处理图像时发生错误: {str(e)}")
+
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=EyeglassFrameImage_instance.entry_id).first()
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="未找到该镜架")
+    EyeglassFrameEntry_instance.is_tryon_beautify_origin = False
+    EyeglassFrameEntry_instance.save()
+    EyeglassFrameImage_instance.save()
+    # 生成镜架试戴任务
+    tasks.tryon.delay_on_commit(EyeglassFrameEntry_instance.sku)
+    return R.ok({"msg": "美化图保存成功，生成试戴任务成功"})
 
 def UpdateAnnotationLeg(request: HttpRequest):
     """
@@ -1080,7 +1088,6 @@ def UpdateTryonMode(request: HttpRequest):
     EyeglassFrameEntry_instance.save()
 
     tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
-    # todo增加试戴逻辑
     # 返回成功结果
     result = {"is_tryon_leg_auto": EyeglassFrameEntry_instance.is_tryon_leg_auto, "is_tryon_beautify_origin": EyeglassFrameEntry_instance.is_tryon_beautify_origin}
     return R.ok({"msg": "生成试戴任务任务", "data": result})

@@ -83,12 +83,12 @@
         <a-button
           type="primary"
           class="operation-button"
-          @click="onClickUpload('front')"
+          @click="onClickUpload"
         >
-          上传镜架正视图
+          上传美化图
         </a-button>
       </a-col>
-      <a-col>
+      <!-- <a-col>
         <a-button
           type="primary"
           class="operation-button"
@@ -96,7 +96,7 @@
         >
           上传镜架侧视图
         </a-button>
-      </a-col>
+      </a-col> -->
       <a-col>
         <a-button
           type="primary"
@@ -106,20 +106,58 @@
           镜腿标注
         </a-button>
       </a-col>
-      <a-col>
-        <a-button
-          type="primary"
-          class="operation-button"
-          @click="onClickChangeTryonMode"
-        >
-          修改试戴模式
-        </a-button>
-      </a-col>
     </a-row>
   </div>
+  <!-- 上传图片MODAL -->
+  <a-modal
+    v-model:open="beautify_modal.visible"
+    width="1050px"
+    :closable="false"
+    centered
+    :maskClosable="true"
+    okText="上传美化图"
+    cancelText="取消"
+    @ok="onClickUploadImage"
+    :confirm-loading="beautify_modal.loading"
+  >
+    <a-row>
+      <!-- <p class="page-title" style="padding: 20px">镜架美化图</p> -->
+      <a-col :span="24">
+        <a-button
+          @click="onClickChoseBeautifyImage('front')"
+          style="margin-bottom: 10px"
+          size="large"
+        >
+          选择正视图
+        </a-button>
+        <div v-if="beautify_modal.tempUploadFiles.front.file">
+          <img
+            :src="beautify_modal.tempUploadFiles.front.url"
+            style="width: 100%; max-height: 400px; object-fit: contain"
+          />
+        </div>
+      </a-col>
+      <a-col :span="24">
+        <a-button
+          @click="onClickChoseBeautifyImage('side')"
+          style="margin-bottom: 10px"
+          size="large"
+        >
+          选择侧视图
+        </a-button>
+        <div v-if="beautify_modal.tempUploadFiles.side.file">
+          <img
+            :src="beautify_modal.tempUploadFiles.side.url"
+            style="width: 100%; max-height: 400px; object-fit: contain"
+          />
+        </div>
+      </a-col>
+    </a-row>
+  </a-modal>
+  <!-- 镜腿标注MODAL -->
   <a-modal
     v-model:open="annotate_modal.show_annotate_modal"
-    width="80%"
+    width="1050px"
     :footer="null"
   >
     <a-space class="page-title">
@@ -146,32 +184,16 @@
       />
     </div>
   </a-modal>
-  <a-modal
-    v-model:open="change_tryon_mode_modal.show_change_tryon_mode_modal"
-    centered
-    title="修改试戴模式"
-    okText="修改并生成试戴任务"
-    cancelText="取消"
-    :confirm-loading="change_tryon_mode_modal.confirm_loading"
-    @ok="onClickGenerateTryonTask"
-  >
-    <a-form-item label="是否自动处理镜腿">
-      <a-switch v-model:checked="change_tryon_mode_modal.is_tryon_leg_auto" />
-    </a-form-item>
-    <a-form-item label="是否使用原始美化图像">
-      <a-switch
-        v-model:checked="change_tryon_mode_modal.is_tryon_beautify_origin"
-      />
-    </a-form-item>
-  </a-modal>
 </template>
 <script lang="ts" setup>
 import axios from "axios";
 import { reactive, onMounted, ref, h } from "vue";
 import { message, Modal } from "ant-design-vue";
+import { Button, Space, Row, Col } from "ant-design-vue";
 import { set } from "nprogress";
 import { siderProps } from "ant-design-vue/es/layout/Sider";
 import { LeftOutlined } from "@ant-design/icons-vue";
+
 interface TryonPageProps {
   id: number; // 试戴的ID
   onClickBack: () => void; // 功能函数：返回
@@ -180,13 +202,15 @@ const props = withDefaults(defineProps<TryonPageProps>(), {
   onClickBack: () => {},
   id: 0,
 });
-// 原始镜架图
+// 镜架基本信息
 const eyeglass_info = ref({
   id: props.id,
   sku: "",
+  model: "",
   is_tryon_leg_auto: true, // 是否自动试戴镜腿
   is_tryon_beautify_origin: true, // 是否使用原始美化图像
 });
+// 原始镜架图
 const eyeglass_frame_image = reactive({
   frontview_beautify: "",
   sideview_beautify: "",
@@ -198,6 +222,21 @@ const processed_beautify_images = reactive({
   frontview_beautify_processed: "",
   sideview_beautify_processed: "",
 });
+// 上传镜架美化图modal
+const beautify_modal = reactive({
+  visible: false,
+  loading: false,
+  tempUploadFiles: {
+    front: {
+      file: null as File | null,
+      url: "",
+    },
+    side: {
+      file: null as File | null,
+      url: "",
+    },
+  },
+});
 // 试戴图片
 interface TryOnImage {
   face_name: string;
@@ -205,7 +244,6 @@ interface TryOnImage {
   tryon_state: number; // 试戴状态
 }
 const tryon_images = reactive<TryOnImage[]>([]);
-
 const tryon_count = reactive({
   wait: 0, // 待处理
   processing: 0, // 处理中
@@ -229,7 +267,11 @@ const change_tryon_mode_modal = ref({
   is_tryon_beautify_origin: true, // 是否使用原始美化图像
 });
 // ###########################################点击事件###########################################
-const onClickUpload = (type: "front" | "side") => {
+// 点击上传美化图：打开上传镜架美化图modal
+const onClickUpload = () => {
+  beautify_modal.visible = true;
+};
+const onClickChoseBeautifyImage = (type: "front" | "side") => {
   // 打开上传窗口
   const input = document.createElement("input");
   input.type = "file";
@@ -238,24 +280,16 @@ const onClickUpload = (type: "front" | "side") => {
     const target = event.target as HTMLInputElement;
     if (target.files && target.files.length > 0) {
       const file = target.files[0];
-      // 构建FormData对象
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("type", type);
-      formData.append("id", eyeglass_info.value.id.toString());
-      axios
-        .post("glassmanagement/api/upload-processed-beautify-image", formData)
-        .then((response) => {
-          if (response.data.code === 0) {
-            message.success(response.data.msg);
-          } else {
-            message.error(response.data.msg);
-          }
-        })
-        .catch((error) => {
-          console.error("上传失败:", error);
-          message.error(error);
-        });
+      // 保存文件到临时变量
+      beautify_modal.tempUploadFiles[type].file = file;
+      // 创建预览URL
+      const previewUrl = URL.createObjectURL(file);
+      // 更新预览图片显示
+      if (type === "front") {
+        beautify_modal.tempUploadFiles.front.url = previewUrl;
+      } else {
+        beautify_modal.tempUploadFiles.side.url = previewUrl;
+      }
     }
   };
   input.click();
@@ -268,6 +302,46 @@ const onClickUpload = (type: "front" | "side") => {
   }
 };
 
+// 点击模态框上传美化图:上传处理后图片到服务器并生成试戴任务
+const onClickUploadImage = () => {
+  beautify_modal.loading = true;
+  // 检查两张图片是否都上传了
+  if (!beautify_modal.tempUploadFiles.front.file) {
+    message.error("请上传正视图");
+    return;
+  }
+  if (!beautify_modal.tempUploadFiles.side.file) {
+    message.error("请上传侧视图");
+    return;
+  }
+  // 构建FormData对象
+  const formData = new FormData();
+  formData.append(
+    "frontview_beautify_processed",
+    beautify_modal.tempUploadFiles.front.file as File,
+  );
+  formData.append(
+    "sideview_beautify_processed",
+    beautify_modal.tempUploadFiles.side.file as File,
+  );
+  formData.append("id", eyeglass_info.value.id.toString());
+  axios
+    .post("glassmanagement/api/upload-processed-beautify-image", formData)
+    .then((response) => {
+      if (response.data.code === 0) {
+        message.success(response.data.msg);
+      } else {
+        message.error(response.data.msg);
+      }
+    })
+    .catch((error) => {
+      console.error("上传失败:", error);
+      message.error(error);
+    })
+    .finally(() => {
+      beautify_modal.loading = false;
+    });
+};
 // 点击下载镜架图：下载侧视图和正视图
 const onClickDownload = () => {
   // 下载镜架图
