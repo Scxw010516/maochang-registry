@@ -37,7 +37,7 @@ urlpatterns = [
     path('api/update-eyeglassesframe-is-active', views.UpdateEyeglassFrameIsActiveView.as_view()),# post: 更新镜架启动状态
     path('api/upload-processed-beautify-image', views.UploadProcessedBeautifyImageView.as_view()), # post: 上传处理后的镜架图
     path('api/update-annotation-leg', views.UpdateAnnotationLegView.as_view()), # post: 更新镜腿标注
-    path('api/update-tryon-mode', views.UpdateTryonModeView.as_view()), # post: 更新试戴模式并生成试戴任务
+    path('api/reset-tryon-mode', views.ResetTryonModeView.as_view()), # post: 更新试戴模式并生成试戴任务
     path('api/get-annotate-leg-data', views.GetAnnotateLegDataView.as_view()), # post: 获取镜腿标注数据
 
     path('api/get-all-brands', views.GetAllBrandsView.as_view()), # get: 获取所有品牌

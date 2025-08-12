@@ -28,7 +28,6 @@
       </a-col>
       <!-- 镜架图片 操作按钮   -->
       <a-col span="12">
-        <!-- todo：可能要用走马灯展示原始图像和修改后的图像 -->
         <a-carousel>
           <a-col>
             <p class="image-title">
@@ -106,11 +105,25 @@
           镜腿标注
         </a-button>
       </a-col>
+      <a-col>
+        <!-- 复原 -->
+        <a-dropdown overlayClassName="operation-dropdown">
+          <template #overlay>
+            <a-menu @click="onClickReset">
+              <a-menu-item key="1"> 复原镜腿标注 </a-menu-item>
+              <a-menu-item key="2"> 复原镜架美化图 </a-menu-item>
+              <a-menu-item key="3"> 全部复原 </a-menu-item>
+            </a-menu>
+          </template>
+          <a-button type="primary" class="operation-button"> 复原 </a-button>
+        </a-dropdown>
+      </a-col>
     </a-row>
   </div>
   <!-- 上传图片MODAL -->
   <a-modal
     v-model:open="beautify_modal.visible"
+    title="上传美化图"
     width="1050px"
     :closable="false"
     centered
@@ -188,8 +201,8 @@
 <script lang="ts" setup>
 import axios from "axios";
 import { reactive, onMounted, ref, h } from "vue";
-import { message, Modal } from "ant-design-vue";
-import { Button, Space, Row, Col } from "ant-design-vue";
+import { message, Modal, Button, Space, Row, Col } from "ant-design-vue";
+import type { MenuProps } from "ant-design-vue";
 import { set } from "nprogress";
 import { siderProps } from "ant-design-vue/es/layout/Sider";
 import { LeftOutlined } from "@ant-design/icons-vue";
@@ -258,14 +271,7 @@ const annotate_modal = ref({
   annotate_step: 0, // 镜腿标注步骤 0 左上 1 右上 2 左下 3 右下 4 完成
   annotation_result: [] as Array<{ x: number; y: number }>,
 });
-
-// 修改试戴模式modal
-const change_tryon_mode_modal = ref({
-  show_change_tryon_mode_modal: false,
-  confirm_loading: false,
-  is_tryon_leg_auto: true, // 是否自动试戴镜腿
-  is_tryon_beautify_origin: true, // 是否使用原始美化图像
-});
+const reset_confirm_loading = ref(false);
 // ###########################################点击事件###########################################
 // 点击上传美化图：打开上传镜架美化图modal
 const onClickUpload = () => {
@@ -507,46 +513,92 @@ const onClickAnnotateConfirm = () => {
   }
 };
 
-// 点击修改试戴模式：展开修改试戴模式modal
-const onClickChangeTryonMode = () => {
-  // 展开修改试戴模式modal
-  change_tryon_mode_modal.value.show_change_tryon_mode_modal = true;
-  change_tryon_mode_modal.value.is_tryon_leg_auto =
-    eyeglass_info.value.is_tryon_leg_auto;
-  change_tryon_mode_modal.value.is_tryon_beautify_origin =
-    eyeglass_info.value.is_tryon_beautify_origin;
+// 点击复原：展开复原确认modal
+const onClickReset: MenuProps["onClick"] = (e) => {
+  console.log("click", e.key); // 获取点击的菜单项的 key
+  // 在这里添加你想要执行的逻辑，例如根据 key 值进行不同的操作
+  switch (e.key) {
+    case "1":
+      // 处理 "复原镜腿标注" 逻辑
+      Modal.confirm({
+        title: "确认复原镜腿标注",
+        centered: true,
+        okText: "确认并生成试戴任务",
+        cancelText: "取消",
+        onOk: () => {
+          onClickResetAndGenerateTryonTask("reset_leg");
+        },
+        okButtonProps: {
+          loading: reset_confirm_loading.value,
+        },
+      });
+      break;
+    case "2":
+      // 处理 "复原镜架美化图" 逻辑
+      Modal.confirm({
+        title: "确认复原镜架美化图",
+        centered: true,
+        okText: "确认并生成试戴任务",
+        cancelText: "取消",
+        onOk: () => {
+          onClickResetAndGenerateTryonTask("reset_beautify_image");
+        },
+        okButtonProps: {
+          loading: reset_confirm_loading.value,
+        },
+      });
+      break;
+    default:
+      // 处理 "全部复原"
+      Modal.confirm({
+        title: "确认全部复原",
+        centered: true,
+        okText: "确认并生成试戴任务",
+        cancelText: "取消",
+        onOk: () => {
+          onClickResetAndGenerateTryonTask("reset_all");
+        },
+        okButtonProps: {
+          loading: reset_confirm_loading.value,
+        },
+      });
+      break;
+  }
 };
 
 // 点击更新试戴模式并生成试戴任务：更新试戴模式并生成试戴任务
-const onClickGenerateTryonTask = () => {
-  change_tryon_mode_modal.value.confirm_loading = true;
+const onClickResetAndGenerateTryonTask = (
+  reset_type: "reset_leg" | "reset_beautify_image" | "reset_all",
+) => {
+  reset_confirm_loading.value = true;
   // 构建表单
   const form = new FormData();
   form.append("id", eyeglass_info.value.id.toString());
-  form.append(
-    "is_tryon_beautify_origin",
-    change_tryon_mode_modal.value.is_tryon_beautify_origin.toString(),
-  );
-  form.append(
-    "is_tryon_leg_auto",
-    change_tryon_mode_modal.value.is_tryon_leg_auto.toString(),
-  );
-  axios
-    .post("/glassmanagement/api/update-tryon-mode", form)
-    .then((response) => {
-      // console.log(response);
-      const data = response.data.data;
-      if (data.data) {
-        eyeglass_info.value.is_tryon_beautify_origin =
-          data.data.is_tryon_beautify_origin;
-        eyeglass_info.value.is_tryon_leg_auto = data.data.is_tryon_leg_auto;
-        message.success(data.msg);
-      } else {
-        message.error(data.msg);
-      }
-      change_tryon_mode_modal.value.show_change_tryon_mode_modal = false;
-      change_tryon_mode_modal.value.confirm_loading = false;
-    });
+  switch (reset_type) {
+    case "reset_leg":
+      form.append("is_tryon_leg_auto", true.toString());
+      break;
+    case "reset_beautify_image":
+      form.append("is_tryon_beautify_origin", true.toString());
+      break;
+    case "reset_all":
+      form.append("is_tryon_beautify_origin", true.toString());
+      form.append("is_tryon_leg_auto", true.toString());
+      break;
+  }
+  axios.post("/glassmanagement/api/reset-tryon-mode", form).then((response) => {
+    // console.log(response);
+    const data = response.data.data;
+    if (data.data) {
+      eyeglass_info.value.is_tryon_beautify_origin =
+        data.data.is_tryon_beautify_origin;
+      eyeglass_info.value.is_tryon_leg_auto = data.data.is_tryon_leg_auto;
+      message.success(data.msg);
+    } else {
+      message.error(data.msg);
+    }
+    reset_confirm_loading.value = false;
+  });
 };
 
 // ###########################################静态函数###########################################
@@ -697,6 +749,12 @@ onMounted(() => {
 }
 
 .operation-button {
+  width: 250px;
+  height: 75px;
+  font-size: 24px;
+}
+
+.operation-dropdown {
   width: 250px;
   height: 75px;
   font-size: 24px;

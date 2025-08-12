@@ -428,12 +428,12 @@ class UpdateAnnotationLegView(View):
 		return result
 	
 """
-更新试戴模式并生成试戴任务
+重置试戴模式并生成试戴任务
 """
-class UpdateTryonModeView(View):
+class ResetTryonModeView(View):
 	def post(self, request: HttpRequest):
-		# 调用更新试戴模式的服务方法
-		result = services.UpdateTryonMode(request)
+		# 调用重置试戴模式的服务方法
+		result = services.ResetTryonMode(request)
 		# 返回结果
 		return result
 

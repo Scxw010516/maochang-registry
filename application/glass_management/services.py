@@ -1009,15 +1009,15 @@ def UpdateAnnotationLeg(request: HttpRequest):
     
     return R.ok(msg="镜腿标注更新成功")
 
-def UpdateTryonMode(request: HttpRequest):
+def ResetTryonMode(request: HttpRequest):
     """
-    更新镜架试戴模式，为所有启用人脸生成试戴任务
+    重置镜架试戴模式，为所有启用人脸生成试戴任务
 
     参数：
         request: HttpRequest 请求对象
         id: 镜架基本信息表ID
-        is_tryon_leg_auto：boolean 是否自动处理镜腿
-        is_tryon_beautify_origin：boolean  是否使用原始beautify进行试戴
+        is_tryon_leg_auto：boolean 是否自动处理镜腿（可选）
+        is_tryon_beautify_origin：boolean  是否使用原始beautify进行试戴（可选）
     返回：
         HttpResponse: JSON格式的响应对象, {data,msg}
         成功时：data: {is_tryon_leg_auto: boolean, is_tryon_beautify_origin: boolean}
@@ -1030,27 +1030,42 @@ def UpdateTryonMode(request: HttpRequest):
     id = request.POST.get("id")
     if not id:
         return R.failed(msg="镜架ID为空")
-    # 转换参数
-    if is_tryon_leg_auto == "true":
-        is_tryon_leg_auto = True
-    elif is_tryon_leg_auto == "false":
-        is_tryon_leg_auto = False
-    else:
-        return R.failed(msg="参数错误")
-    if is_tryon_beautify_origin == "true":
-        is_tryon_beautify_origin = True
-    elif is_tryon_beautify_origin == "false":
-        is_tryon_beautify_origin = False
-    else:
-        return R.failed(msg="参数错误")
     # 查询镜架基本信息表实例
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
     # 镜架基本信息表实例为空判断
     if not EyeglassFrameEntry_instance:
         return R.failed(msg="未找到该镜架")
-    # 更新是否自动处理镜腿
-    if is_tryon_leg_auto:
+    # 转换参数
+    if not is_tryon_leg_auto:
+        is_tryon_leg_auto = EyeglassFrameEntry_instance.is_tryon_leg_auto
+    elif is_tryon_leg_auto == "true":
+        is_tryon_leg_auto = True
         EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
+    else:
+        return R.failed(msg="参数错误")
+    
+    if not is_tryon_beautify_origin:
+        is_tryon_beautify_origin = EyeglassFrameEntry_instance.is_tryon_beautify_origin
+    elif is_tryon_beautify_origin == "true":
+        is_tryon_beautify_origin = True
+        EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin 
+    else:
+        return R.failed(msg="参数错误")
+    
+    # 判断是否自动处理镜腿
+    if  is_tryon_leg_auto:
+        # 自动处理镜腿，删除镜腿标注信息
+        EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=id,is_delete=False).first()
+        if not EyeglassFrameCoordinate_instance:
+            return R.failed(msg="未找到该镜架标点数据")
+        else:
+            # 判断是否有镜腿标记数据
+            if EyeglassFrameCoordinate_instance.left_points:
+                # 删除镜腿标注信息
+                keys_to_remove = ["top_left_point", "top_right_point", "bottom_left_point", "bottom_right_point"]
+                for key in keys_to_remove:
+                    EyeglassFrameCoordinate_instance.left_points.pop(key, None)  # 使用pop删除，避免KeyError
+                EyeglassFrameCoordinate_instance.save()
     else:
         # 手动处理镜腿，则检查是否标注了镜腿
         EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=id,is_delete=False).first()
@@ -1066,11 +1081,18 @@ def UpdateTryonMode(request: HttpRequest):
                 bottom_right_point = EyeglassFrameCoordinate_instance.left_points.get("bottom_right_point")
                 if not (top_left_point or top_right_point or bottom_left_point or bottom_right_point):
                     return R.failed(msg="未标注镜腿")
-                else:
-                     EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
-    # 更新是否使用原始beautify进行试戴
+                
+    # 判断是否使用原始beautify进行试戴
     if is_tryon_beautify_origin:
-        EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin
+        # 使用原始beautify进行试戴，删除处理后的美化图片
+        EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=id,is_delete=False).first()
+        if not EyeglassFrameImage_instance:
+            return R.failed(msg="未找到该镜架美化图片")
+        else:
+            # 删除处理后的美化图片
+            EyeglassFrameImage_instance.frontview_beautify_processed = None
+            EyeglassFrameImage_instance.sideview_beautify_processed = None
+            EyeglassFrameImage_instance.save()
     else: 
         # 使用处理后beautify进行试戴，则检查是否上传了处理后的beautify图片
         EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=id,is_delete=False).first()
