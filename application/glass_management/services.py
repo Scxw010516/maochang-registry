@@ -840,19 +840,18 @@ def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
     # 构建返回结果
     result = {
         "sku": eyeglassframeentry_result.sku,
+        "model_type": eyeglassframeentry_result.model_type,
         "is_tryon_leg_auto": eyeglassframeentry_result.is_tryon_leg_auto,
         "is_tryon_beautify_origin": eyeglassframeentry_result.is_tryon_beautify_origin,
+        "is_active": eyeglassframeentry_result.is_active,
+        "aiface_tryon_state": eyeglassframeentry_result.aiface_tryon_state,
         "frontview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify)),
         "sideview_beautify": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify)),
         "frontview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.frontview_beautify_processed)),
         "sideview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify_processed)),
         "sideview_seg":  utils.getImageURL(request,str(EyeglassFrameImage_result.sideview_seg)),
         "tryon_images": tryon_images,
-        "tryon_wait_count": EyeglassTryonResult_results.filter(tryon_state=0).count(),
-        "tryon_processing_count": EyeglassTryonResult_results.filter(tryon_state=1).count(),
-        "tryon_success_count": EyeglassTryonResult_results.filter(tryon_state=2).count(),
-        "tryon_failed_count": EyeglassTryonResult_results.filter(tryon_state=3).count(),
-        "tryon_undealt_count": sum(1 for img in tryon_images if img.get("tryon_state") == -1),
+
     }
 
     # 返回成功结果
@@ -964,7 +963,29 @@ def UploadProcessedBeautifyImage(request: HttpRequest):
     EyeglassFrameEntry_instance.save()
     EyeglassFrameImage_instance.save()
     # 生成镜架试戴任务
-    tasks.tryon.delay_on_commit(EyeglassFrameEntry_instance.sku)
+    EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
+    EyeglassFrameEntry_instance.is_active = False # 禁用镜架
+    EyeglassFrameEntry_instance.save()
+    # 更新试戴结果表
+    # 获取所有的试戴结果表实例
+    eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
+    aiface_entrys = models.AIFace.objects.filter(is_active=True)
+    for aiface_entry in aiface_entrys:
+        # 查询人脸对应的试戴结果表实例
+        eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
+        # 判断试戴结果表实例为空
+        if not eyeglassTryonResult_instance:
+            # 创建试戴结果表实例
+            eyeglassTryonResult_instance = models.EyeglassTryonResult.objects.create(
+                entry_id=EyeglassFrameEntry_instance.id,
+                face_id=aiface_entry.id,
+                tryon_state=0, # 待处理
+            )
+            eyeglassTryonResult_instance.save()
+        else: # 存在试戴结果表实例，则更新
+            eyeglassTryonResult_instance.tryon_state = 0 # 待处理
+            eyeglassTryonResult_instance.save()
+    tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
     return R.ok({"msg": "美化图保存成功，生成试戴任务成功"})
 
 def UpdateAnnotationLeg(request: HttpRequest):
@@ -1006,7 +1027,35 @@ def UpdateAnnotationLeg(request: HttpRequest):
         # print(left_points)
     except json.JSONDecodeError:
         return R.failed(msg="镜腿标注数据格式错误")
-    
+    """
+    生成试戴任务
+    """
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="未找到该镜架，生成试戴任务失败")
+    EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
+    EyeglassFrameEntry_instance.is_active = False # 禁用镜架
+    EyeglassFrameEntry_instance.save()
+    # 更新试戴结果表
+    # 获取所有的试戴结果表实例
+    eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
+    aiface_entrys = models.AIFace.objects.filter(is_active=True)
+    for aiface_entry in aiface_entrys:
+        # 查询人脸对应的试戴结果表实例
+        eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
+        # 判断试戴结果表实例为空
+        if not eyeglassTryonResult_instance:
+            # 创建试戴结果表实例
+            eyeglassTryonResult_instance = models.EyeglassTryonResult.objects.create(
+                entry_id=EyeglassFrameEntry_instance.id,
+                face_id=aiface_entry.id,
+                tryon_state=0, # 待处理
+            )
+            eyeglassTryonResult_instance.save()
+        else: # 存在试戴结果表实例，则更新
+            eyeglassTryonResult_instance.tryon_state = 0 # 待处理
+            eyeglassTryonResult_instance.save()
+    tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
     return R.ok(msg="镜腿标注更新成功")
 
 def ResetTryonMode(request: HttpRequest):
@@ -1107,8 +1156,27 @@ def ResetTryonMode(request: HttpRequest):
     生成试戴任务
     """
     EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
+    EyeglassFrameEntry_instance.is_active = False # 禁用镜架
     EyeglassFrameEntry_instance.save()
-
+    # 更新试戴结果表
+    # 获取所有的试戴结果表实例
+    eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
+    aiface_entrys = models.AIFace.objects.filter(is_active=True)
+    for aiface_entry in aiface_entrys:
+        # 查询人脸对应的试戴结果表实例
+        eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
+        # 判断试戴结果表实例为空
+        if not eyeglassTryonResult_instance:
+            # 创建试戴结果表实例
+            eyeglassTryonResult_instance = models.EyeglassTryonResult.objects.create(
+                entry_id=EyeglassFrameEntry_instance.id,
+                face_id=aiface_entry.id,
+                tryon_state=0, # 待处理
+            )
+            eyeglassTryonResult_instance.save()
+        else: # 存在试戴结果表实例，则更新
+            eyeglassTryonResult_instance.tryon_state = 0 # 待处理
+            eyeglassTryonResult_instance.save()
     tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
     # 返回成功结果
     result = {"is_tryon_leg_auto": EyeglassFrameEntry_instance.is_tryon_leg_auto, "is_tryon_beautify_origin": EyeglassFrameEntry_instance.is_tryon_beautify_origin}

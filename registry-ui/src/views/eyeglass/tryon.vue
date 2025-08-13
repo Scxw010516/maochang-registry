@@ -8,11 +8,7 @@
         style="height: 100%; margin-right: 30px"
         :icon="h(LeftOutlined)"
       />
-      {{ eyeglass_info.sku }} 待处理：{{ tryon_count.wait }}个 、处理中：{{
-        tryon_count.processing
-      }}个、处理完成：{{ tryon_count.success }}个、处理失败：{{
-        tryon_count.failed
-      }}个、未进行试戴：{{ tryon_count.undealt }}个
+      {{ eyeglass_info.sku }} - {{ eyeglass_info.model_type }}
     </p>
     <a-row class="full-height align-center">
       <!-- 试戴图片 -->
@@ -118,6 +114,15 @@
           <a-button type="primary" class="operation-button"> 复原 </a-button>
         </a-dropdown>
       </a-col>
+      <a-col>
+        <a-button
+          type="primary"
+          class="operation-button"
+          @click="onClickIsActive"
+        >
+          {{ eyeglass_info.is_active ? "禁用" : "启用" }}
+        </a-button>
+      </a-col>
     </a-row>
   </div>
   <!-- 上传图片MODAL -->
@@ -128,7 +133,7 @@
     :closable="false"
     centered
     :maskClosable="true"
-    okText="上传美化图"
+    okText="上传美化图并生成试戴任务"
     cancelText="取消"
     @ok="onClickUploadImage"
     :confirm-loading="beautify_modal.loading"
@@ -179,7 +184,7 @@
       <a-button size="large" @click="onClickAnnotateNext"> 下一步 </a-button>
 
       <a-button type="primary" size="large" @click="onClickAnnotateConfirm">
-        确定
+        确定并生成试戴任务
       </a-button>
     </a-space>
     <div style="position: relative">
@@ -210,6 +215,15 @@ import { LeftOutlined } from "@ant-design/icons-vue";
 interface TryonPageProps {
   id: number; // 试戴的ID
   onClickBack: () => void; // 功能函数：返回
+  getTryOnStateLabel: (state: number) => string;
+  getIsActiveLabelFromId: (id: number) => string;
+  changeIsActive: (
+    id: number,
+    sku: string,
+    is_active: boolean,
+    try_on_state: number,
+    refresh_func: () => void,
+  ) => void; // 功能函数：点击试戴状态按钮
 }
 const props = withDefaults(defineProps<TryonPageProps>(), {
   onClickBack: () => {},
@@ -222,6 +236,9 @@ const eyeglass_info = ref({
   model: "",
   is_tryon_leg_auto: true, // 是否自动试戴镜腿
   is_tryon_beautify_origin: true, // 是否使用原始美化图像
+  try_on_state: 0,
+  is_active: true, // 是否启用
+  model_type: "",
 });
 // 原始镜架图
 const eyeglass_frame_image = reactive({
@@ -257,13 +274,6 @@ interface TryOnImage {
   tryon_state: number; // 试戴状态
 }
 const tryon_images = reactive<TryOnImage[]>([]);
-const tryon_count = reactive({
-  wait: 0, // 待处理
-  processing: 0, // 处理中
-  success: 0, // 处理完成
-  failed: 0, // 处理失败
-  undealt: 0, // 未进行试戴
-});
 const annotation_steps_options = ["左上", "右上", "左下", "右下", "完成"];
 // 镜腿标注modal
 const annotate_modal = ref({
@@ -336,6 +346,8 @@ const onClickUploadImage = () => {
     .then((response) => {
       if (response.data.code === 0) {
         message.success(response.data.msg);
+        getPageData(); // 刷新页面数据
+        beautify_modal.visible = false;
       } else {
         message.error(response.data.msg);
       }
@@ -506,7 +518,9 @@ const onClickAnnotateConfirm = () => {
       .post("/glassmanagement/api/update-annotation-leg", formData)
       .then((response) => {
         console.log(response);
+        getPageData(); // 刷新页面数据
         message.success(response.data.msg);
+        annotate_modal.value.show_annotate_modal = false; // 关闭标注modal
       });
   } else {
     message.error("请标注完整4个镜腿位置");
@@ -590,9 +604,7 @@ const onClickResetAndGenerateTryonTask = (
     // console.log(response);
     const data = response.data.data;
     if (data.data) {
-      eyeglass_info.value.is_tryon_beautify_origin =
-        data.data.is_tryon_beautify_origin;
-      eyeglass_info.value.is_tryon_leg_auto = data.data.is_tryon_leg_auto;
+      getPageData();
       message.success(data.msg);
     } else {
       message.error(data.msg);
@@ -601,23 +613,17 @@ const onClickResetAndGenerateTryonTask = (
   });
 };
 
-// ###########################################静态函数###########################################
-const getTryOnStateLabel = (state: number) => {
-  switch (state) {
-    case -1:
-      return "未进行试戴";
-    case 0:
-      return "待处理";
-    case 1:
-      return "处理中";
-    case 2:
-      return "处理完成";
-    case 3:
-      return "处理失败";
-    default:
-      return "无";
-  }
+const onClickIsActive = () => {
+  props.changeIsActive(
+    eyeglass_info.value.id,
+    eyeglass_info.value.sku,
+    eyeglass_info.value.is_active,
+    eyeglass_info.value.try_on_state,
+    getPageData,
+  );
 };
+
+// ###########################################静态函数###########################################
 
 const setAnnotationDot = (
   x_real: number,
@@ -674,8 +680,8 @@ const findNearestPoint = (x_real: number, y_real: number) => {
   return { x_real: x_counter, y_real: y_counter };
 };
 
-// ###########################################生命周期钩子###########################################
-onMounted(() => {
+// 获取页面数据
+const getPageData = async () => {
   // 获取镜架美化图片
   axios
     .get("/glassmanagement/api/get-eyeglassframe-tryon-and-beautify", {
@@ -691,11 +697,9 @@ onMounted(() => {
         eyeglass_info.value.is_tryon_beautify_origin =
           data.is_tryon_beautify_origin;
         eyeglass_info.value.is_tryon_leg_auto = data.is_tryon_leg_auto;
-        tryon_count.wait = data.tryon_wait_count;
-        tryon_count.processing = data.tryon_processing_count;
-        tryon_count.success = data.tryon_success_count;
-        tryon_count.failed = data.tryon_failed_count;
-        tryon_count.undealt = data.tryon_undealt_count;
+        eyeglass_info.value.try_on_state = data.aiface_tryon_state;
+        eyeglass_info.value.is_active = data.is_active;
+        eyeglass_info.value.model_type = data.model_type;
         eyeglass_frame_image.frontview_beautify = data.frontview_beautify;
         eyeglass_frame_image.sideview_beautify = data.sideview_beautify;
         processed_beautify_images.frontview_beautify_processed =
@@ -716,6 +720,10 @@ onMounted(() => {
         alert("未获取到镜架美化图片数据");
       }
     });
+};
+// ###########################################生命周期钩子###########################################
+onMounted(() => {
+  getPageData();
 });
 </script>
 

@@ -256,6 +256,9 @@
           tryonPageState.showTryOnPage = false;
         }
       "
+      :getTryOnStateLabel="getTryOnStateLabel"
+      :changeIsActive="changeIsActive"
+      :getIsActiveLabelFromId="getIsActiveLabelFromId"
     />
   </div>
 </template>
@@ -628,10 +631,10 @@ const getTryOnStateLabel = (state: number) => {
 // 功能函数：从id获取试戴状态标签
 const getTryOnStateLabelFromId = (id: number) => {
   // 遍历tryOnStates，找到id对应的试戴状态
-  const tryOnState = tryOnStates.value.find((item) => item.id === id);
+  const try_on_state = tryOnStates.value.find((item) => item.id === id);
   // 如果找到，返回对应的标签
-  if (tryOnState) {
-    return getTryOnStateLabel(tryOnState.aiface_tryon_state);
+  if (try_on_state) {
+    return getTryOnStateLabel(try_on_state.aiface_tryon_state);
   } else {
     return getTryOnStateLabel(-1);
   }
@@ -669,16 +672,19 @@ const getIsActiveLabelFromId = (id: number) => {
   const tryOnState = tryOnStates.value.find((item) => item.id === id);
   // 如果找到，返回对应的标签
   if (tryOnState) {
-    if (tryOnState.is_active) {
-      return "启用";
-    } else {
-      return "未启用";
-    }
+    return getIsActiveLabel(tryOnState.is_active);
   } else {
     return "无";
   }
 };
 
+const getIsActiveLabel = (is_active: boolean) => {
+  if (is_active) {
+    return "启用";
+  } else {
+    return "未启用";
+  }
+};
 // 功能函数：修改启用状态
 const updateIsActive = (id: number, is_active: boolean) => async () => {
   // 反转is_active的值
@@ -835,9 +841,24 @@ const onClickIsActive = (id: number) => {
   const sku = dataSource.value.find((item) => item.id === id)?.sku;
   const is_active =
     tryOnStates.value.find((item) => item.id === id)?.is_active || false;
-  const try_on_state = getTryOnStateLabelFromId(id);
-  let content = `当前状态：${getIsActiveLabelFromId(id)}，`;
-  if (try_on_state === "处理成功") {
+  changeIsActive(
+    id,
+    sku || "",
+    is_active,
+    tryOnStates.value.find((item) => item.id === id)?.aiface_tryon_state || 0,
+    () => {},
+  );
+};
+
+const changeIsActive = (
+  id: number,
+  sku: string,
+  is_active: boolean,
+  try_on_state: number,
+  refresh_func: () => void,
+) => {
+  let content = `当前状态：${getIsActiveLabel(is_active)}，`;
+  if (try_on_state === 2) {
     if (is_active) {
       content += "试戴已完成，是否禁用？";
     } else {
@@ -860,7 +881,7 @@ const onClickIsActive = (id: number) => {
     okText: "确认",
     cancelText: "取消",
     centered: true,
-    onOk: updateIsActive(id, is_active),
+    onOk: () => updateIsActive(id, is_active)().then(refresh_func),
   });
 };
 // #########################################监视函数#########################################
