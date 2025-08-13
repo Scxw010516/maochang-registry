@@ -177,16 +177,36 @@
     v-model:open="annotate_modal.show_annotate_modal"
     width="1050px"
     :footer="null"
+    centered
   >
-    <a-space class="page-title">
-      镜腿标注步骤：{{ annotation_steps_options[annotate_modal.annotate_step] }}
-      <a-button size="large" @click="onClickAnnotatePrev"> 上一步 </a-button>
-      <a-button size="large" @click="onClickAnnotateNext"> 下一步 </a-button>
-
-      <a-button type="primary" size="large" @click="onClickAnnotateConfirm">
-        确定并生成试戴任务
-      </a-button>
-    </a-space>
+    <a-row :gutter="[32, 0]" align="middle">
+      <a-col class="page-title" style="padding-top: 0; padding-bottom: 0">
+        镜腿标注
+      </a-col>
+      <a-col>
+        <a-button size="large" @click="onClickAnnotatePrev"> 上一步 </a-button>
+      </a-col>
+      <a-col>
+        <a-button size="large" @click="onClickAnnotateNext"> 下一步 </a-button>
+      </a-col>
+      <a-col>
+        <a-button
+          type="primary"
+          size="large"
+          @click="onClickAnnotateConfirm"
+          :disabled="annotate_modal.annotate_step < 4"
+        >
+          确定并生成试戴任务
+        </a-button>
+      </a-col>
+      <a-col :span="24">
+        <a-progress
+          :percent="annotate_modal.annotate_step * 25"
+          :format="() => annotation_steps_options[annotate_modal.annotate_step]"
+          :size="[300, 10]"
+        />
+      </a-col>
+    </a-row>
     <div style="position: relative">
       <div
         v-for="(item, index) in annotation_steps_options.length - 1"
@@ -453,6 +473,7 @@ const onClickImageToAnnotate = (event: MouseEvent) => {
     console.log("吸附转化后实际坐标", x_real, y_real);
     // 在图片上显示标注点
     setAnnotationDot(x_real, y_real, annotate_modal.value.annotate_step);
+    onClickAnnotateNext();
   }
 };
 
@@ -500,6 +521,10 @@ const onClickAnnotatePrev = () => {
 // 点击标注确认
 const onClickAnnotateConfirm = () => {
   console.log("确认标注结果：", annotate_modal.value.annotation_result);
+  if (annotate_modal.value.annotation_result.length < 4) {
+    message.error("请标注完整4个镜腿位置");
+    return;
+  }
   // 检查标注结果
   if (
     annotate_modal.value.annotation_result[0] &&
