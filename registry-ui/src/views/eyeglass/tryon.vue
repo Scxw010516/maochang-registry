@@ -66,32 +66,27 @@
     <!-- 操作按钮 -->
     <a-row justify="space-around" class="operation-row">
       <a-col>
-        <a-button
-          type="primary"
-          class="operation-button"
-          @click="onClickDownload"
-        >
-          下载原始镜架图
-        </a-button>
+        <a-row :gutter="[32, 0]">
+          <a-col>
+            <a-button
+              type="primary"
+              class="operation-button"
+              @click="onClickDownload"
+            >
+              下载原始镜架图
+            </a-button></a-col
+          >
+          <a-col>
+            <a-button
+              type="primary"
+              class="operation-button"
+              @click="onClickUpload"
+            >
+              上传美化图
+            </a-button></a-col
+          >
+        </a-row>
       </a-col>
-      <a-col>
-        <a-button
-          type="primary"
-          class="operation-button"
-          @click="onClickUpload"
-        >
-          上传美化图
-        </a-button>
-      </a-col>
-      <!-- <a-col>
-        <a-button
-          type="primary"
-          class="operation-button"
-          @click="onClickUpload('side')"
-        >
-          上传镜架侧视图
-        </a-button>
-      </a-col> -->
       <a-col>
         <a-button
           type="primary"
@@ -102,26 +97,32 @@
         </a-button>
       </a-col>
       <a-col>
-        <!-- 复原 -->
-        <a-dropdown overlayClassName="operation-dropdown">
-          <template #overlay>
-            <a-menu @click="onClickReset">
-              <a-menu-item key="1"> 复原镜腿标注 </a-menu-item>
-              <a-menu-item key="2"> 复原镜架美化图 </a-menu-item>
-              <a-menu-item key="3"> 全部复原 </a-menu-item>
-            </a-menu>
-          </template>
-          <a-button type="primary" class="operation-button"> 复原 </a-button>
-        </a-dropdown>
-      </a-col>
-      <a-col>
-        <a-button
-          type="primary"
-          class="operation-button"
-          @click="onClickIsActive"
-        >
-          {{ eyeglass_info.is_active ? "禁用" : "启用" }}
-        </a-button>
+        <a-row :gutter="[32, 0]">
+          <a-col>
+            <!-- 复原 -->
+            <a-dropdown overlayClassName="operation-dropdown">
+              <template #overlay>
+                <a-menu @click="onClickReset">
+                  <a-menu-item key="1"> 复原镜腿标注 </a-menu-item>
+                  <a-menu-item key="2"> 复原镜架美化图 </a-menu-item>
+                  <a-menu-item key="3"> 全部复原 </a-menu-item>
+                </a-menu>
+              </template>
+              <a-button type="primary" class="operation-button">
+                复原
+              </a-button>
+            </a-dropdown>
+          </a-col>
+          <a-col>
+            <a-button
+              type="primary"
+              class="operation-button"
+              @click="onClickIsActive"
+            >
+              {{ eyeglass_info.is_active ? "禁用" : "启用" }}
+            </a-button>
+          </a-col>
+        </a-row>
       </a-col>
     </a-row>
   </div>
@@ -782,7 +783,7 @@ onMounted(() => {
 }
 
 .operation-button {
-  width: 250px;
+  width: 225px;
   height: 75px;
   font-size: 24px;
 }
