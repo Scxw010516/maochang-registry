@@ -344,7 +344,6 @@ def calc(self, sku):
     """
     发送镜架参数
     """
-    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
     if not EyeglassFrameEntry_instance:
         # 镜架基本信息表不存在
         error_msg = f"计算失败：镜架基本信息表不存在，SKU: {sku}"
