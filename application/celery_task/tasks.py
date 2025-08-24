@@ -18,18 +18,7 @@ from django.core.files import File
 from application.glass_management import models
 from application.glass_management import forms
 # 引入通用函数
-from application.celery_task.services import (
-    read_image_from_field,  # 从数据库读取图片
-    read_image_from_field_to_raw,  # 从数据库读取图片（返回原始字节数据）
-    read_image_from_field_as_3channel_bytes,# 从数据库读取图片（返回3通道字节数据）
-    save_output_mask,  # 保存mask
-    save_output_images,  # 保存images
-    save_output_point,  # 保存point
-    save_output_parameter,  # 保存parameter
-    save_output_size,  # 保存size
-    save_output_shape,  # 保存shape
-    TaskManager,  # Celery任务管理器（替代了手动Redis操作）
-)
+import application.celery_task.services as services
 
 # 引入镜架计算模型
 from .glass_detect.glasses import process, get_models
@@ -55,10 +44,10 @@ def calc(self, sku):
     """
     print(f"执行计算任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
 
-    existing_task_id = TaskManager.search_calc_task(sku)
+    existing_task_id = services.TaskManager.search_calc_task(sku)
     if existing_task_id and existing_task_id != self.request.id:
         print(f"发现重复任务 {existing_task_id}，正在删除...")
-        TaskManager.delete_calc_task(sku)
+        services.TaskManager.delete_calc_task(sku)
 
     # 查询镜架基本信息表
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
@@ -162,11 +151,11 @@ def calc(self, sku):
 
     try:
         # 读取三视图
-        up_image = read_image_from_field(EyeglassFrameImage_instance.topview)
-        front_image = read_image_from_field(EyeglassFrameImage_instance.frontview)
-        left_image = read_image_from_field(EyeglassFrameImage_instance.sideview)
+        up_image = services.read_image_from_field(EyeglassFrameImage_instance.topview)
+        front_image = services.read_image_from_field(EyeglassFrameImage_instance.frontview)
+        left_image = services.read_image_from_field(EyeglassFrameImage_instance.sideview)
         images = {"up": up_image, "front": front_image, "left": left_image}
-        # images=get_capture_images(sku)
+        # images=services.get_capture_images(sku)
         # 读取模型
         calc_models = get_models()
         # 设置计算参数
@@ -248,7 +237,7 @@ def calc(self, sku):
         try:
             # 如果mask计算成功，保存mask；更新计算状态
             if output['mask']['state']:
-                save_output_mask(output['mask'], EyeglassFrameImage_instance)
+                services.save_output_mask(output['mask'], EyeglassFrameImage_instance)
                 EyeglassFrameEntry_instance.image_mask_state = 2
             else:
                 EyeglassFrameEntry_instance.image_mask_state = 3
@@ -262,7 +251,7 @@ def calc(self, sku):
         try:
             # 如果images计算成功，保存images；更新计算状态
             if output['image']['state']:
-                save_output_images(output['image'], EyeglassFrameImage_instance)
+                services.save_output_images(output['image'], EyeglassFrameImage_instance)
                 EyeglassFrameEntry_instance.image_seg_state = 2
                 EyeglassFrameEntry_instance.image_beautify_state = 2
             else:
@@ -278,7 +267,7 @@ def calc(self, sku):
         """
         try:
             if output['point']['state']:
-                save_output_point(output['point'], entry_id)
+                services.save_output_point(output['point'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.coordinate_state = 2
             else:
@@ -293,7 +282,7 @@ def calc(self, sku):
         """
         try:
             if output['parameter']['state']:
-                save_output_parameter(output['parameter'], entry_id)
+                services.save_output_parameter(output['parameter'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.pixel_measurement_state = 2
             else:
@@ -308,7 +297,7 @@ def calc(self, sku):
         """
         try:
             if output['size']['state']:
-                save_output_size(output['size'], entry_id)
+                services.save_output_size(output['size'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.millimeter_measurement_state = 2
             else:
@@ -323,7 +312,7 @@ def calc(self, sku):
         """
         try:
             if output['shape']['state']:
-                save_output_shape(output['shape'], entry_id)
+                services.save_output_shape(output['shape'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.calculation_state = 2
             else:
@@ -332,7 +321,7 @@ def calc(self, sku):
         except Exception as e:
             EyeglassFrameEntry_instance.calculation_state = 3
             print("shape处理失败:" + str(e))  # 删除重复任务（如果还有的话）
-        TaskManager.delete_calc_task(sku)
+        services.TaskManager.delete_calc_task(sku)
     # 返回
     print('计算任务执行完毕：' + sku)
     """
@@ -355,9 +344,27 @@ def calc(self, sku):
     """
     发送镜架参数
     """
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
+    if not EyeglassFrameEntry_instance:
+        # 镜架基本信息表不存在
+        error_msg = f"计算失败：镜架基本信息表不存在，SKU: {sku}"
+        print(error_msg)
+        return error_msg
     # 获取token
-    
+    try:
+        token = services.get_sanlian_token()
+        # print(f"获取到的token: {token}")
+        if not token:
+            print("获取token失败")
+            return "获取token失败"
+
+        services.update_sanlian_eyeglass(EyeglassFrameEntry_instance.id, token)
+
+    except Exception as e:
+        print(f"更新镜架信息失败: {e}")
+        raise
     return sku
+
 
 """
 镜架试戴任务
@@ -368,10 +375,10 @@ def calc(self, sku):
 def tryon(self, sku):
     print(f"执行试戴任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
 
-    existing_task_id = TaskManager.search_tryon_task(sku)
+    existing_task_id = services.TaskManager.search_tryon_task(sku)
     if existing_task_id and existing_task_id != self.request.id:
         print(f"发现重复任务 {existing_task_id}，正在删除...")
-        TaskManager.delete_calc_task(sku)
+        services.TaskManager.delete_calc_task(sku)
 
     # 查询镜架基本信息表
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
@@ -411,14 +418,13 @@ def tryon(self, sku):
     # 读取镜架图片和信息
     if EyeglassFrameEntry_instance.is_tryon_beautify_origin:
         # 使用原始美化图片
-        eyeglass_image = read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify) # 眼镜正面照片
-        eyeglass_leg = read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify) # 眼镜侧面照片
+        eyeglass_image = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify) # 眼镜正面照片
+        eyeglass_leg = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify) # 眼镜侧面照片
     else:
         # 使用处理后美化图片
-        eyeglass_image = read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify_processed) # 眼镜正面照片
-        eyeglass_leg = read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify_processed) # 眼镜侧面照片
-    eyeglass_mask = read_image_from_field_to_raw(EyeglassFrameImage_instance.front) # 眼镜正面黑白图
-    is_transparent = EyeglassFrameEntry_instance.is_transparent # 透明度：0-不透明，1-全透明，2-有色透明
+        eyeglass_image = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify_processed) # 眼镜正面照片
+        eyeglass_leg = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify_processed) # 眼镜侧面照片
+    eyeglass_mask = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.front) # 眼镜正面黑白图
 
     # 🔧 重试时的状态恢复逻辑
     initial_states = None
@@ -486,8 +492,9 @@ def tryon(self, sku):
                 error_msg = f"试戴失败：{face_name}人脸图片不存在，SKU: {sku}"
                 print(error_msg)
                 continue
-            aiface_image = read_image_from_field_as_3channel_bytes(aiface_entry.image) # 人脸正面照片
+            aiface_image = services.read_image_from_field_as_3channel_bytes(aiface_entry.image) # 人脸正面照片
             pupillary_distance = aiface_entry.pupil_distance # 瞳距(毫米)
+            is_transparent = EyeglassFrameEntry_instance.is_transparent
            
             # 构建请求参数
             files =  {
