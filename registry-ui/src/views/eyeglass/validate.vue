@@ -158,7 +158,23 @@
                 />
               </a-form-item>
             </a-col>
-            <a-col :span="8" style="display: flex; justify-content: end">
+            <a-col :span="8">
+              <a-form-item
+                name="calculation_state"
+                label="计算状态"
+                :labelCol="{ span: 6, offset: 0 }"
+                :wrapperCol="{ span: 18, offset: 0 }"
+                labelAlign="left"
+              >
+                <a-select
+                  v-model:value="searchFormState.calculation_state"
+                  placeholder="请选择计算状态"
+                  :options="options.calculation_state_options"
+                />
+              </a-form-item>
+            </a-col>
+
+            <a-col :span="24" style="display: flex; justify-content: end">
               <a-button
                 style="
                   margin: 0 22px;
@@ -201,7 +217,7 @@
         :columns="columns"
         :pagination="pagination"
         :loading="loading"
-        :scroll="{ y: 600 }"
+        :scroll="{ y: 700 }"
         @change="handleTableChange"
         :row-selection="{
           selectedRowKeys: tableSelectionState.selectedRowKeys,
@@ -1035,7 +1051,7 @@ const searchFormState = reactive<searchForm>({
   searchMinPrice: undefined,
   searchMaxPrice: undefined,
   material: [],
-  calculation_state: 0,
+  calculation_state: undefined,
 });
 
 // 镜架表格项选择

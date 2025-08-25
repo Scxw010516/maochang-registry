@@ -618,7 +618,8 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     search_key_max_price = decimal.Decimal(search_key_max_price) if search_key_max_price else None
     search_key_material = request.GET.getlist("material[]")  # 镜架材质id列表
     search_calculation_state = request.GET.get("calculation_state")  # 镜架参数计算状态
-
+    search_aiface_tryon_state = request.GET.get("aiface_tryon_state")  # 镜架试戴状态
+    search_is_active = int(request.GET.get("is_active")) if request.GET.get("is_active") else None  # 镜架是否启用
     # 查询所有镜架基本信息表
     entrys = models.EyeglassFrameEntry.objects.filter(is_delete=False)
 
@@ -643,16 +644,51 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
         entrys = entrys.filter(material__in=search_key_material)
     # 查询计算完成的结果
     print(search_calculation_state)
-    if search_calculation_state:
-        entrys = entrys.filter(
-            pixel_measurement_state=2,
-            millimeter_measurement_state=2,
-            calculation_state=2,
-            coordinate_state=2,
-            image_mask_state=2,
-            image_seg_state=2,
-            image_beautify_state=2,
-        )
+    if search_calculation_state is not None:
+        if search_calculation_state == "2":
+            entrys = entrys.filter(
+                pixel_measurement_state=2,
+                millimeter_measurement_state=2,
+                calculation_state=2,
+                coordinate_state=2,
+                image_mask_state=2,
+                image_seg_state=2,
+                image_beautify_state=2,
+            )
+        elif search_calculation_state == "1":
+            entrys = entrys.filter(
+                models.Q(pixel_measurement_state=1) |
+                models.Q(millimeter_measurement_state=1) |
+                models.Q(calculation_state=1) |
+                models.Q(coordinate_state=1) |
+                models.Q(image_mask_state=1) |
+                models.Q(image_seg_state=1) |
+                models.Q(image_beautify_state=1)
+            )
+        elif search_calculation_state == "0":
+            entrys = entrys.filter(
+                models.Q(pixel_measurement_state=0) |
+                models.Q(millimeter_measurement_state=0) |
+                models.Q(calculation_state=0) |
+                models.Q(coordinate_state=0) |
+                models.Q(image_mask_state=0) |
+                models.Q(image_seg_state=0) |
+                models.Q(image_beautify_state=0)
+            )
+        elif search_calculation_state == "3":
+            entrys = entrys.filter(
+                models.Q(pixel_measurement_state=3) |
+                models.Q(millimeter_measurement_state=3) |
+                models.Q(calculation_state=3) |
+                models.Q(coordinate_state=3) |
+                models.Q(image_mask_state=3) |
+                models.Q(image_seg_state=3) |
+                models.Q(image_beautify_state=3)
+            )
+    if search_aiface_tryon_state is not None:
+        entrys = entrys.filter(aiface_tryon_state=search_aiface_tryon_state)
+    if search_is_active is not None:
+        entrys = entrys.filter(is_active=search_is_active)
     # 排序
     if sort_order == "descend":
         entrys = entrys.order_by(f"-{sort_field}")

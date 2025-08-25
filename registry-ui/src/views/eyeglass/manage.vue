@@ -159,7 +159,37 @@
                 />
               </a-form-item>
             </a-col>
-            <a-col :span="8" style="display: flex; justify-content: end">
+            <a-col :span="8">
+              <a-form-item
+                name="tryon"
+                label="试戴状态"
+                :labelCol="{ span: 6, offset: 0 }"
+                :wrapperCol="{ span: 18, offset: 0 }"
+                labelAlign="left"
+              >
+                <a-select
+                  v-model:value="searchFormState.aiface_tryon_state"
+                  placeholder="请选择试戴状态"
+                  :options="options.aiface_tryon_state_options"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="8">
+              <a-form-item
+                name="is_active"
+                label="启用状态"
+                :labelCol="{ span: 6, offset: 0 }"
+                :wrapperCol="{ span: 18, offset: 0 }"
+                labelAlign="left"
+              >
+                <a-select
+                  v-model:value="searchFormState.is_active"
+                  placeholder="请选择启用状态"
+                  :options="options.is_active_options"
+                />
+              </a-form-item>
+            </a-col>
+            <a-col :span="16" style="display: flex; justify-content: end">
               <a-button
                 style="
                   margin: 0 22px;
@@ -202,7 +232,7 @@
         :columns="columns"
         :pagination="pagination"
         :loading="loading"
-        :scroll="{ y: 600 }"
+        :scroll="{ y: 700 }"
         @change="handleTableChange"
         :row-selection="{
           selectedRowKeys: tableSelectionState.selectedRowKeys,
@@ -407,6 +437,8 @@ interface searchForm {
   searchMaxPrice?: number | undefined;
   material?: number[];
   calculation_state: number | undefined;
+  aiface_tryon_state: number | undefined;
+  is_active: boolean | undefined;
 }
 
 // 镜架搜索数据表单数据
@@ -418,6 +450,8 @@ const searchFormState = reactive<searchForm>({
   searchMaxPrice: undefined,
   material: [],
   calculation_state: 2,
+  aiface_tryon_state: undefined,
+  is_active: undefined,
 });
 
 // select和autocompe下拉框选项接口定义
@@ -587,6 +621,14 @@ const searchFormFilter = computed(() => {
   }
   // 将calculation_state的键值对加入searchForm
   searchForm.calculation_state = searchFormState.calculation_state;
+  // 将aiface_tryon_state的键值对加入searchForm
+  if (searchFormState.aiface_tryon_state !== undefined) {
+    searchForm.aiface_tryon_state = searchFormState.aiface_tryon_state;
+  }
+  // 将is_active的键值对加入searchForm
+  if (searchFormState.is_active !== undefined) {
+    searchForm.is_active = searchFormState.is_active;
+  }
   return searchForm;
 });
 
