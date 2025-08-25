@@ -14,7 +14,7 @@ from PIL import Image
 from utils import R, regular
 from django.db import transaction
 from django.core.files import File
-
+from config.env import TRYON_URL
 from application.glass_management import models
 from application.glass_management import forms
 # 引入通用函数
@@ -50,7 +50,7 @@ def calc(self, sku):
         services.TaskManager.delete_calc_task(sku)
 
     # 查询镜架基本信息表
-    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku,is_delete=False).first()
     if not EyeglassFrameEntry_instance:
         # 镜架基本信息表不存在
         error_msg = f"计算失败：镜架基本信息表不存在，SKU: {sku}"
@@ -131,7 +131,7 @@ def calc(self, sku):
     """
     entry_id = EyeglassFrameEntry_instance.id  # 获取镜架基本信息表ID
     # 获取镜架三视图路径
-    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=entry_id).first()
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=entry_id,is_delete=False).first()
     if not EyeglassFrameImage_instance:
         # 三视图不存在，更新计算状态为计算失败
         # 数据库事务处理
@@ -324,23 +324,9 @@ def calc(self, sku):
         services.TaskManager.delete_calc_task(sku)
     # 返回
     print('计算任务执行完毕：' + sku)
-    """
-    生成试戴任务
-    """
-    # 计算任务正确完成
-    if output['shape']['state'] and output['point']['state'] and output['parameter']['state'] and output['size']['state'] and output['mask']['state'] and output['image']['state']:
-        """
-        生成试戴任务：传递镜架基本信息表的sku值
-        """
-        EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
-        tryon.delay_on_commit(sku)
-        print("生成试戴任务成功：" + str(sku))
-    else:
-        print("生成试戴任务失败：" + str(sku))
-    # 保存镜架基本信息表
+    EyeglassFrameEntry_instance.is_tryon_leg_auto = True
+    EyeglassFrameEntry_instance.is_tryon_beautify_origin = True
     EyeglassFrameEntry_instance.save()
-    print("镜架基本信息表已保存")
-
     """
     发送镜架参数
     """
@@ -361,7 +347,24 @@ def calc(self, sku):
 
     except Exception as e:
         print(f"更新镜架信息失败: {e}")
-        raise
+        return
+    """
+    生成试戴任务
+    """
+    # 计算任务正确完成
+    if output['shape']['state'] and output['point']['state'] and output['parameter']['state'] and output['size']['state'] and output['mask']['state'] and output['image']['state']:
+        """
+        生成试戴任务：传递镜架基本信息表的sku值
+        """
+        EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
+        tryon.delay_on_commit(sku)
+        print("生成试戴任务成功：" + str(sku))
+    else:
+        print("生成试戴任务失败：" + str(sku))
+    # 保存镜架基本信息表
+    EyeglassFrameEntry_instance.save()
+    print("镜架基本信息表已保存")
+
     return sku
 
 
@@ -380,7 +383,7 @@ def tryon(self, sku):
         services.TaskManager.delete_calc_task(sku)
 
     # 查询镜架基本信息表
-    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku).first()
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku,is_delete=False).first()
     if not EyeglassFrameEntry_instance:
         # 镜架基本信息表不存在
         error_msg = f"试戴失败：镜架基本信息表不存在，SKU: {sku}"
@@ -401,7 +404,7 @@ def tryon(self, sku):
         EyeglassFrameEntry_instance.save()
         return
     # 查询镜架图片数据表
-    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=EyeglassFrameEntry_instance.id).first()
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False).first()
     if not EyeglassFrameImage_instance:
         # 镜架图片数据表不存在  
         error_msg = f"试戴失败：镜架图片数据表不存在，SKU: {sku}"
@@ -422,9 +425,26 @@ def tryon(self, sku):
     else:
         # 使用处理后美化图片
         eyeglass_image = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.frontview_beautify_processed) # 眼镜正面照片
-        eyeglass_leg = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify_processed) # 眼镜侧面照片
-    eyeglass_mask = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.front) # 眼镜正面黑白图
+        eyeglass_leg = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.sideview_beautify_processed) # 眼镜侧面照片、
 
+    eyeglass_mask = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.front) # 眼镜正面黑白图
+    eyeglass_leg_mask = services.read_image_from_field_to_raw(EyeglassFrameImage_instance.templeWf) # 眼镜腿黑白图
+    is_transparent = EyeglassFrameEntry_instance.is_transparent
+    is_tryon_leg_auto = EyeglassFrameEntry_instance.is_tryon_leg_auto
+    EyeglassFrameCoordinate_instance = models.EyeglassFrameCoordinate.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False).first()
+    if EyeglassFrameCoordinate_instance:
+        left_points = EyeglassFrameCoordinate_instance.left_points 
+        top_left_point = left_points.get("top_left_point") if left_points.get("top_left_point") else [0,0]
+        top_right_point = left_points.get("top_right_point") if left_points.get("top_right_point") else [0,0]
+        bottom_left_point = left_points.get("bottom_left_point") if left_points.get("bottom_left_point") else [0,0]
+        bottom_right_point = left_points.get("bottom_right_point") if left_points.get("bottom_right_point") else [0,0]
+    else:
+        top_left_point = [0,0]
+        top_right_point = [0,0]
+        bottom_left_point = [0,0]
+        bottom_right_point = [0,0]
+    eyeglass_leg_temple_points = json.dumps([top_left_point, top_right_point, bottom_right_point, bottom_left_point])
+    print(f"镜架图片和信息读取完成，is_tryon_leg_auto: {is_tryon_leg_auto}, eyeglass_leg_temple_points: {eyeglass_leg_temple_points}")
     # 🔧 重试时的状态恢复逻辑
     initial_states = None
     if self.request.retries > 0:
@@ -460,7 +480,7 @@ def tryon(self, sku):
         # 获取所有的试戴结果表实例
         eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
         # 读取所有启用的人脸
-        aiface_entrys = models.AIFace.objects.filter(is_active=True)
+        aiface_entrys = models.AIFace.objects.filter(is_active=True,is_delete=False)
         for aiface_entry in aiface_entrys:
             # 查询人脸对应的试戴结果表实例
             eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
@@ -493,18 +513,19 @@ def tryon(self, sku):
                 continue
             aiface_image = services.read_image_from_field_as_3channel_bytes(aiface_entry.image) # 人脸正面照片
             pupillary_distance = aiface_entry.pupil_distance # 瞳距(毫米)
-            is_transparent = EyeglassFrameEntry_instance.is_transparent
-           
             # 构建请求参数
             files =  {
                 "face_image": aiface_image,
                 "eyeglass_image": eyeglass_image,
                 "eyeglass_mask": eyeglass_mask,
                 "eyeglass_leg": eyeglass_leg,
+                "eyeglass_leg_mask":eyeglass_leg_mask
             }
             data = {
-                "pupillary_distance": pupillary_distance,
-                "is_transparent": is_transparent,  # 1表示全透明
+                "eyeglass_leg_temple_points": str(eyeglass_leg_temple_points),
+                "pupillary_distance": str(pupillary_distance),
+                "is_transparent": str(is_transparent),
+                "is_manual": str(not is_tryon_leg_auto),
             }
             # 查询试戴结果示例
             eyeglassTryonResult_instance =  models.EyeglassTryonResult.objects.filter(
@@ -521,10 +542,8 @@ def tryon(self, sku):
             eyeglassTryonResult_instance.tryon_state=1 # 处理中
             eyeglassTryonResult_instance.save()
             # API服务地址
-            # API_URL = "http://localhost:9100"
-            API_URL = "http://maochang-microservices:9100"
             # 发送试戴请求
-            response = requests.post(f"{API_URL}/try-on",files=files,data=data)
+            response = requests.post(f"{TRYON_URL}/try-on",files=files,data=data)
             # 处理响应，处理成功
             if response.status_code == 200:
                 content_type = response.headers.get('Content-Type', '')

@@ -3,8 +3,6 @@ import os
 import tempfile
 import requests
 import json
-import datetime
-import random
 
 from django.core.files.base import ContentFile
 import numpy as np
@@ -18,20 +16,14 @@ from django.core.files import File
 #OBS函数
 from utils.obs.obs_client import get_image_object,get_image_object_raw,get_image_object_as_3channel_bytes
 
+# sanlian相关函数
+import utils.sanlian as sanlian
+
 from application.glass_management import models
 from application.glass_management import forms
 
 from application.celery import app
 
-
-def get_current_timestamp():
-    """
-    生成当前时间戳
-    
-    Returns:
-        str: 格式化的时间戳字符串，格式为 "YYYY-MM-DD HH:MM:SS"
-    """
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 def save_output_mask(output_mask, instance):
     """
@@ -243,23 +235,7 @@ def get_sanlian_token():
     获取三联的token
     """
     try:
-        token_data = {
-            "client_id": "SF_inspection",
-            "client_secret": "yN8-wA3=oR2^yM1&xJ5;zU4&a",
-            "username":"kdA",
-            "accountId": "1789897953700315136",
-            "nonce": str(random.randint(1000, 9999)),
-            "timestamp": get_current_timestamp()  # 自动生成当前时间戳
-        }
-        response = requests.post(
-            "https://sanlianjituan.test.kdcloud.com/kapi/oauth2/getToken", 
-            json=token_data,
-        )
-        print(f"获取三联token响应: {response.json()}")
-        # 直接返回token，如果任何环节出错则抛出异常
-        if response.json().get("errorCode") != '0':
-            raise ValueError("获取三联token失败")
-        token = response.json().get("data").get("access_token")
+        token = sanlian.get_sanlian_token()
         return token
     except Exception:
         # 重新抛出异常，让调用者处理
@@ -275,74 +251,51 @@ def update_sanlian_eyeglass(id, token):
         EyeglassFrameMillimeterMeasurement_instance = models.EyeglassFrameMillimeterMeasurement.objects.filter(
             entry_id=id
         ).first()
-
-        def safe_int(value, default=0):
-            """安全地将值转换为整数，如果值为None则返回默认值"""
-            if value is None:
-                return default
-            if type(value) == int:
-                return value
-            return int(value)
-
-        def safe_str(value, default=""):
-            """安全地将值转换为字符串，如果值为None则返回默认值"""
-            if value is None:
-                return default
-            if type(value) == str:
-                return value
-            return str(value)
         
         data ={
-            "number": safe_str(EyeglassFrameEntry_instance.sku),
-            "createorg_number": "1",
-            "shcp_textfield": safe_str(EyeglassFrameEntry_instance.brand),
-            "shcp_model": safe_str(EyeglassFrameEntry_instance.model_type),
-            "shcp_price1": EyeglassFrameEntry_instance.price,  # 价格可能需要特殊处理
-            "shcp_materialquality": safe_str(EyeglassFrameEntry_instance.material),
-            "shcp_color": safe_str(EyeglassFrameEntry_instance.color),
-            "shcp_shape": safe_str(EyeglassFrameEntry_instance.shape),
-            "shcp_nosepad": EyeglassFrameEntry_instance.isnosepad,
-            "shcp_stocks": safe_int(EyeglassFrameEntry_instance.stock),
-            "shcp_radian": safe_int(EyeglassFrameEntry_instance.lens_radian),
-            "shcp_width": safe_int(EyeglassFrameEntry_instance.lens_width_st),
-            "shcp_nosepadwidth": safe_int(EyeglassFrameEntry_instance.bridge_width_st),
-            "shcp_leglength": safe_int(EyeglassFrameEntry_instance.temple_length_st),
-            "shcp_weight": safe_int(EyeglassFrameEntry_instance.weight),
-            "shcp_style": ",1,",
-            "shcp_frameheight": safe_str(EyeglassFrameMillimeterMeasurement_instance.frame_height),
-            "shcp_glass_width": safe_int(EyeglassFrameMillimeterMeasurement_instance.frame_width),
-            "shcp_leftpile_heigth": safe_int(EyeglassFrameMillimeterMeasurement_instance.pile_height_left),
-            "shcp_rightpile_heigth": safe_int(EyeglassFrameMillimeterMeasurement_instance.pile_height_right),
-            "shcp_frame_width": safe_int(EyeglassFrameMillimeterMeasurement_instance.frame_width),
-            "shcp_leftring_width": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_width_left),
-            "shcp_rightring_width": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_width_right),
-            "shcp_leftring_heigth": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_height_left),
-            "shcp_rightring_heigth": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_height_right),
-            "shcp_leftring_length": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_diagonal_left),
-            "shcp_rightring_length": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_diagonal_right),
-            "shcp_rightring_area": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_area_right),
-            "shcp_integerfield": safe_int(EyeglassFrameMillimeterMeasurement_instance.lens_area_left),
-            "shcp_nosepadwidth1": safe_int(EyeglassFrameMillimeterMeasurement_instance.bridge_width),
-            "shcp_lowangle": safe_int(EyeglassFrameMillimeterMeasurement_instance.vertical_angle),
-            "shcp_frontangle": safe_int(EyeglassFrameMillimeterMeasurement_instance.forward_angle),
-            "shcp_legangle": safe_int(EyeglassFrameMillimeterMeasurement_instance.temple_angle),
-            "shcp_anglelength": safe_int(EyeglassFrameMillimeterMeasurement_instance.drop_length),
-            "shcp_facecurveness": safe_int(EyeglassFrameMillimeterMeasurement_instance.face_angle),
-            "shcp_integerfield3": safe_int(EyeglassFrameMillimeterMeasurement_instance.sagittal_angle_left),
-            "shcp_rightlow_angle": safe_int(EyeglassFrameMillimeterMeasurement_instance.sagittal_angle_right),
-            "shcp_integerfield1": safe_int(EyeglassFrameMillimeterMeasurement_instance.temple_length_left),
-            "shcp_rightleg_length": safe_int(EyeglassFrameMillimeterMeasurement_instance.temple_length_right),
-            "shcp_integerfield2": safe_int(EyeglassFrameMillimeterMeasurement_instance.temporal_width),
-            "shcp_integerfield4": safe_int(EyeglassFrameMillimeterMeasurement_instance.spread_angle_left),
-            "shcp_rightleg_angle": safe_int(EyeglassFrameMillimeterMeasurement_instance.spread_angle_right),
-            "shcp_pilelength": safe_int(EyeglassFrameMillimeterMeasurement_instance.pile_distance),
+            "sku": EyeglassFrameEntry_instance.sku,
+            "brand": EyeglassFrameEntry_instance.brand,
+            "model_type": EyeglassFrameEntry_instance.model_type,
+            "price": EyeglassFrameEntry_instance.price,  # 价格可能需要特殊处理
+            "material": EyeglassFrameEntry_instance.material,
+            "color": EyeglassFrameEntry_instance.color,
+            "shape": EyeglassFrameEntry_instance.shape,
+            "isnosepad": EyeglassFrameEntry_instance.isnosepad,
+            "stock": EyeglassFrameEntry_instance.stock,
+            "lens_radian": EyeglassFrameEntry_instance.lens_radian,
+            "lens_width_st": EyeglassFrameEntry_instance.lens_width_st,
+            "bridge_width_st": EyeglassFrameEntry_instance.bridge_width_st,
+            "temple_length_st": EyeglassFrameEntry_instance.temple_length_st,
+            "weight": EyeglassFrameEntry_instance.weight,
+            "frame_height": EyeglassFrameMillimeterMeasurement_instance.frame_height,
+            "frame_width": EyeglassFrameMillimeterMeasurement_instance.frame_width,
+            "pile_height_left": EyeglassFrameMillimeterMeasurement_instance.pile_height_left,
+            "pile_height_right": EyeglassFrameMillimeterMeasurement_instance.pile_height_right,
+            "frame_width": EyeglassFrameMillimeterMeasurement_instance.frame_width,
+            "lens_width_left": EyeglassFrameMillimeterMeasurement_instance.lens_width_left,
+            "lens_width_right": EyeglassFrameMillimeterMeasurement_instance.lens_width_right,
+            "lens_height_left": EyeglassFrameMillimeterMeasurement_instance.lens_height_left,
+            "lens_height_right": EyeglassFrameMillimeterMeasurement_instance.lens_height_right,
+            "lens_diagonal_left": EyeglassFrameMillimeterMeasurement_instance.lens_diagonal_left,
+            "lens_diagonal_right": EyeglassFrameMillimeterMeasurement_instance.lens_diagonal_right,
+            "lens_area_right": EyeglassFrameMillimeterMeasurement_instance.lens_area_right,
+            "lens_area_left": EyeglassFrameMillimeterMeasurement_instance.lens_area_left,
+            "bridge_width": EyeglassFrameMillimeterMeasurement_instance.bridge_width,
+            "vertical_angle": EyeglassFrameMillimeterMeasurement_instance.vertical_angle,
+            "forward_angle": EyeglassFrameMillimeterMeasurement_instance.forward_angle,
+            "temple_angle": EyeglassFrameMillimeterMeasurement_instance.temple_angle,
+            "drop_length": EyeglassFrameMillimeterMeasurement_instance.drop_length,
+            "face_angle": EyeglassFrameMillimeterMeasurement_instance.face_angle,
+            "sagittal_angle_left": EyeglassFrameMillimeterMeasurement_instance.sagittal_angle_left,
+            "sagittal_angle_right": EyeglassFrameMillimeterMeasurement_instance.sagittal_angle_right,
+            "temple_length_left": EyeglassFrameMillimeterMeasurement_instance.temple_length_left,
+            "temple_length_right": EyeglassFrameMillimeterMeasurement_instance.temple_length_right,
+            "temporal_width": EyeglassFrameMillimeterMeasurement_instance.temporal_width,
+            "spread_angle_left": EyeglassFrameMillimeterMeasurement_instance.spread_angle_left,
+            "spread_angle_right": EyeglassFrameMillimeterMeasurement_instance.spread_angle_right,
+            "pile_distance": EyeglassFrameMillimeterMeasurement_instance.pile_distance,
         }
-        response = requests.post(
-            "https://sanlianjituan.test.kdcloud.com/kapi/v2/shcp/basedata/bd_material/updateSFinfo",
-            headers={"Content-Type": "application/json", "accesstoken": token},
-            json={"data": data}
-        )
-        print(f"更新镜架信息响应: {response.json()}")
+        sanlian.update_sanlian_eyeglass(token, data)
     except Exception as e:
         print(f"更新镜架信息错误: {e}")
         raise
