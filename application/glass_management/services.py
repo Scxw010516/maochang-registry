@@ -5,6 +5,7 @@ import numpy as np
 from utils import R, regular
 from utils import utils
 from django.db import transaction
+from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpRequest
 
@@ -657,33 +658,33 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
             )
         elif search_calculation_state == "1":
             entrys = entrys.filter(
-                models.Q(pixel_measurement_state=1) |
-                models.Q(millimeter_measurement_state=1) |
-                models.Q(calculation_state=1) |
-                models.Q(coordinate_state=1) |
-                models.Q(image_mask_state=1) |
-                models.Q(image_seg_state=1) |
-                models.Q(image_beautify_state=1)
+                Q(pixel_measurement_state=1) |
+                Q(millimeter_measurement_state=1) |
+                Q(calculation_state=1) |
+                Q(coordinate_state=1) |
+                Q(image_mask_state=1) |
+                Q(image_seg_state=1) |
+                Q(image_beautify_state=1)
             )
         elif search_calculation_state == "0":
             entrys = entrys.filter(
-                models.Q(pixel_measurement_state=0) |
-                models.Q(millimeter_measurement_state=0) |
-                models.Q(calculation_state=0) |
-                models.Q(coordinate_state=0) |
-                models.Q(image_mask_state=0) |
-                models.Q(image_seg_state=0) |
-                models.Q(image_beautify_state=0)
+                Q(pixel_measurement_state=0) |
+                Q(millimeter_measurement_state=0) |
+                Q(calculation_state=0) |
+                Q(coordinate_state=0) |
+                Q(image_mask_state=0) |
+                Q(image_seg_state=0) |
+                Q(image_beautify_state=0)
             )
         elif search_calculation_state == "3":
             entrys = entrys.filter(
-                models.Q(pixel_measurement_state=3) |
-                models.Q(millimeter_measurement_state=3) |
-                models.Q(calculation_state=3) |
-                models.Q(coordinate_state=3) |
-                models.Q(image_mask_state=3) |
-                models.Q(image_seg_state=3) |
-                models.Q(image_beautify_state=3)
+                Q(pixel_measurement_state=3) |
+                Q(millimeter_measurement_state=3) |
+                Q(calculation_state=3) |
+                Q(coordinate_state=3) |
+                Q(image_mask_state=3) |
+                Q(image_seg_state=3) |
+                Q(image_beautify_state=3)
             )
     if search_aiface_tryon_state is not None:
         entrys = entrys.filter(aiface_tryon_state=search_aiface_tryon_state)

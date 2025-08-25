@@ -850,7 +850,7 @@ import {
   // EyeGlassCalculateParamsLabel, // 镜架计算参数标签
   // EyeGlassCalculateParamsExample, // 镜架计算参数示例
 } from "./params";
-import { initFormOptions } from "./utils";
+import { initFormOptions, getCalculationStateLabel } from "./utils";
 import { Item } from "ant-design-vue/es/menu";
 
 // 导入所有SVG图片
@@ -1646,7 +1646,7 @@ const searchFormFilter = computed(() => {
     // 将material的键值对加入searchForm
     searchForm.material = searchFormState.material;
   }
-  if (searchFormState.calculation_state) {
+  if (searchFormState.calculation_state !== undefined) {
     // 将calculation_state的键值对加入searchForm
     searchForm.calculation_state = searchFormState.calculation_state;
   }
@@ -2106,23 +2106,9 @@ const onClickDelete = async (id: number) => {
   });
 };
 // 计算状态相关
-// 功能函数：获取计算标签
-const getCalculateStateLabel = (state: number) => {
-  if (state == 0) {
-    return "待计算";
-  } else if (state == 1) {
-    return "计算中";
-  } else if (state == 2) {
-    return "计算成功";
-  } else if (state == 3) {
-    return "计算失败";
-  } else {
-    return "无";
-  }
-};
 // 功能函数：获取全局计算状态标签
 const getAllCalculateStateLabel = (id: number) => {
-  return getCalculateStateLabel(getAllCalculateState(id));
+  return getCalculationStateLabel(getAllCalculateState(id));
 };
 
 // 功能函数：获取全局计算状态参数
@@ -2187,32 +2173,38 @@ const onClickCalculationState = async (id: number) => {
     content: h("div", {}, [
       h(
         "p",
-        "计算状态：" + getCalculateStateLabel(getAllCalculateState(item.id)),
+        "计算状态：" + getCalculationStateLabel(getAllCalculateState(item.id)),
       ),
       h(
         "p",
         "像素测量数据状态：" +
-          getCalculateStateLabel(item.pixel_measurement_state),
+          getCalculationStateLabel(item.pixel_measurement_state),
       ),
       h(
         "p",
         "毫米测量数据状态：" +
-          getCalculateStateLabel(item.millimeter_measurement_state),
-      ),
-      h("p", "计算数据状态：" + getCalculateStateLabel(item.calculation_state)),
-      h("p", "坐标数据状态：" + getCalculateStateLabel(item.coordinate_state)),
-      h(
-        "p",
-        "mask图片数据状态：" + getCalculateStateLabel(item.image_mask_state),
+          getCalculationStateLabel(item.millimeter_measurement_state),
       ),
       h(
         "p",
-        "分割图片数据状态：" + getCalculateStateLabel(item.image_seg_state),
+        "计算数据状态：" + getCalculationStateLabel(item.calculation_state),
+      ),
+      h(
+        "p",
+        "坐标数据状态：" + getCalculationStateLabel(item.coordinate_state),
+      ),
+      h(
+        "p",
+        "mask图片数据状态：" + getCalculationStateLabel(item.image_mask_state),
+      ),
+      h(
+        "p",
+        "分割图片数据状态：" + getCalculationStateLabel(item.image_seg_state),
       ),
       h(
         "p",
         "美化图片数据状态：" +
-          getCalculateStateLabel(item.image_beautify_state),
+          getCalculationStateLabel(item.image_beautify_state),
       ),
     ]),
     onOk: () => {

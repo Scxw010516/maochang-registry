@@ -286,7 +286,6 @@
           tryonPageState.showTryOnPage = false;
         }
       "
-      :getTryOnStateLabel="getTryOnStateLabel"
       :changeIsActive="changeIsActive"
       :getIsActiveLabelFromId="getIsActiveLabelFromId"
     />
@@ -314,7 +313,7 @@ import axios from "@/config/axios-config";
 import { usePagination } from "vue-request";
 import { Key } from "ant-design-vue/lib/_util/type";
 
-import { initFormOptions } from "./utils";
+import { getTryOnStateLabel, getIsActiveLabel } from "./utils";
 import { Item } from "ant-design-vue/es/menu";
 import tryonPage from "./tryon.vue";
 import { modalProps } from "ant-design-vue/es/modal/Modal";
@@ -655,21 +654,6 @@ const onSelectChange = (selectedRowKeys: Key[]) => {
 };
 
 // 试戴状态相关
-// 功能函数：获取试戴状态标签
-const getTryOnStateLabel = (state: number) => {
-  if (state == 0) {
-    return "待处理";
-  } else if (state == 1) {
-    return "处理中";
-  } else if (state == 2) {
-    return "处理成功";
-  } else if (state == 3) {
-    return "处理失败";
-  } else {
-    return "无";
-  }
-};
-
 // 功能函数：从id获取试戴状态标签
 const getTryOnStateLabelFromId = (id: number) => {
   // 遍历tryOnStates，找到id对应的试戴状态
@@ -720,13 +704,6 @@ const getIsActiveLabelFromId = (id: number) => {
   }
 };
 
-const getIsActiveLabel = (is_active: boolean) => {
-  if (is_active) {
-    return "启用";
-  } else {
-    return "未启用";
-  }
-};
 // 功能函数：修改启用状态
 const updateIsActive = (id: number, is_active: boolean) => async () => {
   // 反转is_active的值

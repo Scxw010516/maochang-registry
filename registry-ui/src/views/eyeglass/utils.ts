@@ -20,6 +20,12 @@ export const initFormOptions = () => {
   getAllFrametypes();
   // 获取所有镜架风格
   // getAllStyles();
+  // 获取所有计算状态
+  getAllCalculationStates();
+  // 获取所有试戴状态
+  getAllAifaceTryonStates();
+  // 获取所有启用状态
+  getAllIsActiveStates();
 };
 
 // 功能函数：获取所有镜架品牌
@@ -239,4 +245,81 @@ export const getAllWarehouses = async () => {
     .catch((error) => {
       console.log(error);
     });
+};
+
+const getAllCalculationStates = async () => {
+  const options = useOptionStore(); // 在函数内部调用
+  options.calculation_state_options = [
+    { value: 0, label: "待计算" },
+    { value: 1, label: "计算中" },
+    { value: 2, label: "计算完成" },
+    { value: 3, label: "计算失败" },
+  ];
+};
+
+const getAllAifaceTryonStates = async () => {
+  const options = useOptionStore(); // 在函数内部调用
+  options.aiface_tryon_state_options = [
+    { value: 0, label: "待试戴" },
+    { value: 1, label: "试戴中" },
+    { value: 2, label: "试戴完成" },
+    { value: 3, label: "试戴失败" },
+  ];
+};
+
+const getAllIsActiveStates = async () => {
+  const options = useOptionStore(); // 在函数内部调用
+  options.is_active_options = [
+    {
+      value: 1,
+      label: "启用",
+    },
+    {
+      value: 0,
+      label: "禁用",
+    },
+  ];
+};
+
+export const getCalculationStateLabel = (value: number) => {
+  const options = useOptionStore(); // 在函数内部调用
+  if (options.calculation_state_options) {
+    const option = options.calculation_state_options.find(
+      (item) => item.value === value,
+    );
+    return option ? option.label : "无";
+  } else {
+    return "无";
+  }
+};
+
+export const getTryOnStateLabel = (value: number) => {
+  const options = useOptionStore(); // 在函数内部调用
+  if (options.aiface_tryon_state_options) {
+    const option = options.aiface_tryon_state_options.find(
+      (item) => item.value === value,
+    );
+    return option ? option.label : "无";
+  } else {
+    return "无";
+  }
+};
+
+export const getIsActiveLabel = (value: boolean | number) => {
+  if (typeof value === "boolean") {
+    if (value) {
+      value = 1;
+    } else {
+      value = 0;
+    }
+  }
+  const options = useOptionStore(); // 在函数内部调用
+  if (options.is_active_options) {
+    const option = options.is_active_options.find(
+      (item) => item.value === value,
+    );
+    return option ? option.label : "无";
+  } else {
+    return "无";
+  }
 };

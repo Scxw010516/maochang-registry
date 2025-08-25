@@ -28,7 +28,7 @@
           <a-col>
             <p class="image-title">
               原始镜架图：
-              {{ eyeglass_info.is_tryon_beautify_origin ? "启用" : "未启用" }}
+              {{ getIsActiveLabel(eyeglass_info.is_tryon_beautify_origin) }}
             </p>
             <img
               :src="eyeglass_frame_image.frontview_beautify"
@@ -47,7 +47,7 @@
           >
             <p class="image-title">
               处理后镜架图：
-              {{ eyeglass_info.is_tryon_beautify_origin ? "未启用" : "启用" }}
+              {{ getIsActiveLabel(!eyeglass_info.is_tryon_beautify_origin) }}
             </p>
             <img
               v-if="processed_beautify_images.frontview_beautify_processed"
@@ -119,7 +119,7 @@
               class="operation-button"
               @click="onClickIsActive"
             >
-              {{ eyeglass_info.is_active ? "禁用" : "启用" }}
+              {{ getIsActiveLabel(eyeglass_info.is_active) }}
             </a-button>
           </a-col>
         </a-row>
@@ -232,11 +232,10 @@ import type { MenuProps } from "ant-design-vue";
 import { set } from "nprogress";
 import { siderProps } from "ant-design-vue/es/layout/Sider";
 import { LeftOutlined } from "@ant-design/icons-vue";
-
+import { getTryOnStateLabel, getIsActiveLabel } from "./utils";
 interface TryonPageProps {
   id: number; // 试戴的ID
   onClickBack: () => void; // 功能函数：返回
-  getTryOnStateLabel: (state: number) => string;
   getIsActiveLabelFromId: (id: number) => string;
   changeIsActive: (
     id: number,
