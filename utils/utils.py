@@ -113,3 +113,55 @@ def saveEditContent(content, title, dirname):
         content = content.replace("alt=\"\"", "alt=\"" + title + "\"")
     # 返回结果
     return content
+
+# 获取全局计算状态
+def getGlobalCalculationState(item):
+    all_calculate_state = 3
+    if not item:
+        all_calculate_state = 3
+    try:
+        # 修改访问方式，支持字典和对象
+        def get_state(attr):
+            if isinstance(item, dict):
+                return item.get(attr, 0)
+            else:
+                return getattr(item, attr, 0)
+        
+        if (
+            get_state('pixel_measurement_state') == 2 and
+            get_state('millimeter_measurement_state') == 2 and
+            get_state('calculation_state') == 2 and
+            get_state('coordinate_state') == 2 and
+            get_state('image_mask_state') == 2 and
+            get_state('image_seg_state') == 2 and
+            get_state('image_beautify_state') == 2
+        ):
+            # 当所有计算都成功时，计算状态为计算成功
+            all_calculate_state = 2
+        elif (
+            get_state('pixel_measurement_state') == 1 or
+            get_state('millimeter_measurement_state') == 1 or
+            get_state('calculation_state') == 1 or
+            get_state('coordinate_state') == 1 or
+            get_state('image_mask_state') == 1 or
+            get_state('image_seg_state') == 1 or
+            get_state('image_beautify_state') == 1
+        ):
+            # 当有一个为计算中时，计算状态为计算中
+            all_calculate_state = 1
+        elif (
+            get_state('pixel_measurement_state') == 0 or
+            get_state('millimeter_measurement_state') == 0 or
+            get_state('calculation_state') == 0 or
+            get_state('coordinate_state') == 0 or
+            get_state('image_mask_state') == 0 or
+            get_state('image_seg_state') == 0 or
+            get_state('image_beautify_state') == 0
+        ):
+            # 当有一个为待计算时，计算状态为待计算
+            all_calculate_state = 0
+    except Exception as e:
+        all_calculate_state = 3   
+        print(e)
+    return all_calculate_state
+

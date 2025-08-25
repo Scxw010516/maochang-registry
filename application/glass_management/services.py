@@ -15,6 +15,7 @@ from application.glass_management import forms
 from application.celery_task import tasks
 from application.celery_task.services import search_calc_task
 from utils.obs.obs_client import get_image_object
+from utils.utils import getGlobalCalculationState
 
 
 
@@ -534,6 +535,15 @@ def GetEyeglassFrameDetail(request: HttpRequest):
         "image_mask_state": eyeglassframeentry_result.image_mask_state,
         "image_seg_state": eyeglassframeentry_result.image_seg_state,
         "image_beautify_state": eyeglassframeentry_result.image_beautify_state,
+        "global_calculation_state": getGlobalCalculationState({
+            "pixel_measurement_state": eyeglassframeentry_result.pixel_measurement_state,
+            "millimeter_measurement_state": eyeglassframeentry_result.millimeter_measurement_state,
+            "calculation_state": eyeglassframeentry_result.calculation_state,
+            "coordinate_state": eyeglassframeentry_result.coordinate_state,
+            "image_mask_state": eyeglassframeentry_result.image_mask_state,
+            "image_seg_state": eyeglassframeentry_result.image_seg_state,
+            "image_beautify_state": eyeglassframeentry_result.image_beautify_state,
+        })
     }
     # 查询镜架图片表
     EyeglassFrameImage_result = models.EyeglassFrameImage.objects.filter(entry_id=eyeglassframeentry_result.id, is_delete=False).first()
@@ -646,46 +656,17 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     # 查询计算完成的结果
     print(search_calculation_state)
     if search_calculation_state is not None:
-        if search_calculation_state == "2":
-            entrys = entrys.filter(
-                pixel_measurement_state=2,
-                millimeter_measurement_state=2,
-                calculation_state=2,
-                coordinate_state=2,
-                image_mask_state=2,
-                image_seg_state=2,
-                image_beautify_state=2,
-            )
-        elif search_calculation_state == "1":
-            entrys = entrys.filter(
-                Q(pixel_measurement_state=1) |
-                Q(millimeter_measurement_state=1) |
-                Q(calculation_state=1) |
-                Q(coordinate_state=1) |
-                Q(image_mask_state=1) |
-                Q(image_seg_state=1) |
-                Q(image_beautify_state=1)
-            )
-        elif search_calculation_state == "0":
-            entrys = entrys.filter(
-                Q(pixel_measurement_state=0) |
-                Q(millimeter_measurement_state=0) |
-                Q(calculation_state=0) |
-                Q(coordinate_state=0) |
-                Q(image_mask_state=0) |
-                Q(image_seg_state=0) |
-                Q(image_beautify_state=0)
-            )
-        elif search_calculation_state == "3":
-            entrys = entrys.filter(
-                Q(pixel_measurement_state=3) |
-                Q(millimeter_measurement_state=3) |
-                Q(calculation_state=3) |
-                Q(coordinate_state=3) |
-                Q(image_mask_state=3) |
-                Q(image_seg_state=3) |
-                Q(image_beautify_state=3)
-            )
+        entrys = entrys.filter(
+            lambda instance: getGlobalCalculationState({
+                "pixel_measurement_state": instance.pixel_measurement_state,
+                "millimeter_measurement_state": instance.millimeter_measurement_state,
+                "calculation_state": instance.calculation_state,
+                "coordinate_state": instance.coordinate_state,
+                "image_mask_state": instance.image_mask_state,
+                "image_seg_state": instance.image_seg_state,
+                "image_beautify_state": instance.image_beautify_state,
+            }) == search_calculation_state
+        )
     if search_aiface_tryon_state is not None:
         entrys = entrys.filter(aiface_tryon_state=search_aiface_tryon_state)
     if search_is_active is not None:
@@ -728,6 +709,15 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
                 "image_mask_state": entry.image_mask_state,
                 "image_seg_state": entry.image_seg_state,
                 "image_beautify_state": entry.image_beautify_state,
+                "global_calculation_state": getGlobalCalculationState({
+                    "pixel_measurement_state": entry.pixel_measurement_state,
+                    "millimeter_measurement_state": entry.millimeter_measurement_state,
+                    "calculation_state": entry.calculation_state,
+                    "coordinate_state": entry.coordinate_state,
+                    "image_mask_state": entry.image_mask_state,
+                    "image_seg_state": entry.image_seg_state,
+                    "image_beautify_state": entry.image_beautify_state,
+                }),
                 "create_time": entry.create_time.strftime("%Y-%m-%d %H:%M:%S"),
                 "update_time": entry.update_time.strftime("%Y-%m-%d %H:%M:%S"),
                 # 试戴
@@ -777,6 +767,15 @@ def GetAllCalculateStates(request: HttpRequest):
                     "image_mask_state": entry.image_mask_state,
                     "image_seg_state": entry.image_seg_state,
                     "image_beautify_state": entry.image_beautify_state,
+                    "global_calculation_state": getGlobalCalculationState({
+                        "pixel_measurement_state": entry.pixel_measurement_state,
+                        "millimeter_measurement_state": entry.millimeter_measurement_state,
+                        "calculation_state": entry.calculation_state,
+                        "coordinate_state": entry.coordinate_state,
+                        "image_mask_state": entry.image_mask_state,
+                        "image_seg_state": entry.image_seg_state,
+                        "image_beautify_state": entry.image_beautify_state,
+                    }),
                 }
                 for entry in entries
             ]
@@ -888,7 +887,6 @@ def GetEyeglassFrameTryonAndBeautify(request: HttpRequest):
         "sideview_beautify_processed": utils.getImageURL(request, str(EyeglassFrameImage_result.sideview_beautify_processed)),
         "sideview_seg":  utils.getImageURL(request,str(EyeglassFrameImage_result.sideview_seg)),
         "tryon_images": tryon_images,
-
     }
 
     # 返回成功结果

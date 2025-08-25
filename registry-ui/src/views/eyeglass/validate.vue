@@ -243,7 +243,9 @@
                 type="primary"
                 ghost
                 @click="onClickCalculationState(record.id)"
-                >{{ getAllCalculateStateLabel(record.id) }}</a-button
+                >{{
+                  getCalculationStateLabel(record.global_calculation_state)
+                }}</a-button
               >
             </span>
           </template>
@@ -788,7 +790,8 @@
             type="primary"
             :disabled="
               editModalState.modalId !== null &&
-              getAllCalculateState(editModalState.modalId) == 1
+              calculateStates.find((item) => item.id === editModalState.modalId)
+                ?.global_calculation_state === 1
             "
             @click="onClickSaveEditModal"
           >
@@ -1010,6 +1013,7 @@ type getAllEyeglassFrameEntryAPIResult = {
     image_mask_state: number;
     image_seg_state: number;
     image_beautify_state: number;
+    global_calculation_state: number;
   }[];
   count: number;
 };
@@ -1024,6 +1028,7 @@ interface calculate_state {
   image_mask_state: number;
   image_seg_state: number;
   image_beautify_state: number;
+  global_calculation_state: number;
 }
 
 // 镜架计算状态数组
@@ -1562,6 +1567,10 @@ const getTableData = (params: getAllEyeglassFrameEntryAPIParams) => {
       "/glassmanagement/api/get-all-eyeglassframes_entrys",
       { params },
     )
+    .then((response) => {
+      console.log(response.data);
+      return response;
+    })
     .catch((error) => {
       console.log(error);
     });
@@ -1601,6 +1610,7 @@ const dataSource = computed(() => {
         options.material_options?.find(
           (option) => option.value === item.material,
         )?.label || item.material,
+      global_calculation_state: item.global_calculation_state,
     }));
   }
 });
@@ -2106,56 +2116,6 @@ const onClickDelete = async (id: number) => {
   });
 };
 // 计算状态相关
-// 功能函数：获取全局计算状态标签
-const getAllCalculateStateLabel = (id: number) => {
-  return getCalculationStateLabel(getAllCalculateState(id));
-};
-
-// 功能函数：获取全局计算状态参数
-const getAllCalculateState = (id: number) => {
-  let item = calculateStates.value.find(
-    (item: calculate_state) => item.id === id,
-  );
-  if (!item) {
-    return -1;
-  }
-  let all_calculate_state = 3;
-  if (
-    item.pixel_measurement_state == 2 &&
-    item.millimeter_measurement_state == 2 &&
-    item.calculation_state == 2 &&
-    item.coordinate_state == 2 &&
-    item.image_mask_state == 2 &&
-    item.image_seg_state == 2 &&
-    item.image_beautify_state == 2
-  ) {
-    // 当所有计算都成功时，计算状态为计算成功
-    all_calculate_state = 2;
-  } else if (
-    item.pixel_measurement_state == 1 ||
-    item.millimeter_measurement_state == 1 ||
-    item.calculation_state == 1 ||
-    item.coordinate_state == 1 ||
-    item.image_mask_state == 1 ||
-    item.image_seg_state == 1 ||
-    item.image_beautify_state == 1
-  ) {
-    // 当有一个为计算中时，计算状态为计算中
-    all_calculate_state = 1;
-  } else if (
-    item.pixel_measurement_state == 0 ||
-    item.millimeter_measurement_state == 0 ||
-    item.calculation_state == 0 ||
-    item.coordinate_state == 0 ||
-    item.image_mask_state == 0 ||
-    item.image_seg_state == 0 ||
-    item.image_beautify_state == 0
-  ) {
-    // 当有一个为待计算时，计算状态为待计算
-    all_calculate_state = 0;
-  }
-  return all_calculate_state;
-};
 
 // table计算状态点击事件：展开计算状态modal
 const onClickCalculationState = async (id: number) => {
@@ -2173,7 +2133,7 @@ const onClickCalculationState = async (id: number) => {
     content: h("div", {}, [
       h(
         "p",
-        "计算状态：" + getCalculationStateLabel(getAllCalculateState(item.id)),
+        "计算状态：" + getCalculationStateLabel(item.global_calculation_state),
       ),
       h(
         "p",
@@ -2266,6 +2226,7 @@ const refreshCalculateStates = async () => {
           image_mask_state: item.image_mask_state,
           image_seg_state: item.image_seg_state,
           image_beautify_state: item.image_beautify_state,
+          global_calculation_state: item.global_calculation_state,
         }),
       );
     }
@@ -2289,6 +2250,7 @@ watch(dataSource, () => {
       image_mask_state: item.image_mask_state,
       image_seg_state: item.image_seg_state,
       image_beautify_state: item.image_beautify_state,
+      global_calculation_state: item.global_calculation_state,
     });
   });
 });
