@@ -30,7 +30,7 @@ def SearchModeltypeOrSKU(request: HttpRequest):
     返回：
         HttpResponse: JSON格式的响应对象，{code,data,msg}
     """
-
+    # print(request.POST)
     # 获取镜架型号和SKU
     searchtype = request.POST.get("skuormodeltype", "")
     searchstring = request.POST.get("searchString", "")
@@ -932,7 +932,7 @@ def UploadProcessedBeautifyImage(request: HttpRequest):
     if not frontview_beautify_processed or not sideview_beautify_processed:
         return R.failed(msg="镜架美化图片未上传")
     # 保存镜架美化图片
-    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=id).first()
+    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(entry_id=id,is_delete=False).first()
     if not EyeglassFrameImage_instance:
         return R.failed(msg="未找到该镜架")
     frontview_beautify = get_image_object(str(EyeglassFrameImage_instance.frontview_beautify))
@@ -956,7 +956,7 @@ def UploadProcessedBeautifyImage(request: HttpRequest):
         except Exception as e:
             return R.failed(msg=f"处理图像时发生错误: {str(e)}")
 
-    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=EyeglassFrameImage_instance.entry_id).first()
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=EyeglassFrameImage_instance.entry_id,is_delete=False).first()
     if not EyeglassFrameEntry_instance:
         return R.failed(msg="未找到该镜架")
     EyeglassFrameEntry_instance.is_tryon_beautify_origin = False
@@ -1002,11 +1002,16 @@ def UpdateAnnotationLeg(request: HttpRequest):
     """
     # 获取请求参数
     annotation_result = request.POST.get("annotation_result")
+    id = request.POST.get("id")
+    if not id:
+        return R.failed(msg="镜架ID为空")
     if not annotation_result:
         return R.failed(msg="镜腿标注数据为空")
-
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="未找到该镜架")
     # 更新镜腿标注
-    result = models.EyeglassFrameCoordinate.objects.filter(entry_id=request.POST.get("id")).first()
+    result = models.EyeglassFrameCoordinate.objects.filter(entry_id=id,is_delete=False).first()
     if not result:
         return R.failed(msg="镜腿标注更新失败")
     original_data = result.left_points
@@ -1024,22 +1029,21 @@ def UpdateAnnotationLeg(request: HttpRequest):
         left_points = {**original_data, **leg_data}
         result.left_points = left_points
         result.save()
+        EyeglassFrameEntry_instance.is_tryon_leg_auto = False
+        EyeglassFrameEntry_instance.save()
         # print(left_points)
     except json.JSONDecodeError:
         return R.failed(msg="镜腿标注数据格式错误")
     """
     生成试戴任务
     """
-    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
-    if not EyeglassFrameEntry_instance:
-        return R.failed(msg="未找到该镜架，生成试戴任务失败")
     EyeglassFrameEntry_instance.aiface_tryon_state = 0 # 待试戴
     EyeglassFrameEntry_instance.is_active = False # 禁用镜架
     EyeglassFrameEntry_instance.save()
     # 更新试戴结果表
     # 获取所有的试戴结果表实例
     eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
-    aiface_entrys = models.AIFace.objects.filter(is_active=True)
+    aiface_entrys = models.AIFace.objects.filter(is_active=True,is_delete=False)
     for aiface_entry in aiface_entrys:
         # 查询人脸对应的试戴结果表实例
         eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
@@ -1161,7 +1165,7 @@ def ResetTryonMode(request: HttpRequest):
     # 更新试戴结果表
     # 获取所有的试戴结果表实例
     eyeglassTryonResult_instances = models.EyeglassTryonResult.objects.filter(entry_id=EyeglassFrameEntry_instance.id,is_delete=False)
-    aiface_entrys = models.AIFace.objects.filter(is_active=True)
+    aiface_entrys = models.AIFace.objects.filter(is_active=True,is_delete=False)
     for aiface_entry in aiface_entrys:
         # 查询人脸对应的试戴结果表实例
         eyeglassTryonResult_instance = eyeglassTryonResult_instances.filter(face_id=aiface_entry.id).first()
