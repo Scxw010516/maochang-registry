@@ -232,7 +232,7 @@
         :columns="columns"
         :pagination="pagination"
         :loading="loading"
-        :scroll="{ y: 700 }"
+        :scroll="{ y: 640 }"
         @change="handleTableChange"
         :row-selection="{
           selectedRowKeys: tableSelectionState.selectedRowKeys,
