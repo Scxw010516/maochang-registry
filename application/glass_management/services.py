@@ -5,7 +5,6 @@ import numpy as np
 from utils import R, regular
 from utils import utils
 from django.db import transaction
-from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse, StreamingHttpResponse, HttpRequest
 
@@ -43,12 +42,12 @@ def SearchModeltypeOrSKU(request: HttpRequest):
 
     # 查询镜架型号或SKU是否存在，其中sku是唯一的
     if searchtype == "1":
-        entrys = models.EyeglassFramePreloadData.objects.filter(model_type__icontains=searchstring, is_delete=False)
+        entrys = models.EyeglassFrameEntry.objects.filter(model_type__icontains=searchstring, is_delete=False)
     elif searchtype == "2":
-        entrys = models.EyeglassFramePreloadData.objects.filter(sku__icontains=searchstring, is_delete=False)
 
+        entrys = models.EyeglassFrameEntry.objects.filter(sku__icontains=searchstring, is_delete=False)
     # 通过sku字段，过滤已经存在于EyeglassFrameEntry表中的数据
-    entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.filter(is_delete=False)])
+    # entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.filter(is_delete=False)])
 
     # 限制返回结果数量最多为50条
     entrys = entrys[:50]
@@ -628,7 +627,7 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     search_key_max_price = request.GET.get("searchMaxPrice")  # 镜架最高价格
     search_key_max_price = decimal.Decimal(search_key_max_price) if search_key_max_price else None
     search_key_material = request.GET.getlist("material[]")  # 镜架材质id列表
-    search_calculation_state = request.GET.get("calculation_state")  # 镜架参数计算状态
+    search_calculation_state = request.GET.get("calculation_state")# 镜架参数计算状态
     search_aiface_tryon_state = request.GET.get("aiface_tryon_state")  # 镜架试戴状态
     search_is_active = int(request.GET.get("is_active")) if request.GET.get("is_active") else None  # 镜架是否启用
     # 查询所有镜架基本信息表
@@ -656,17 +655,22 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     # 查询计算完成的结果
     print(search_calculation_state)
     if search_calculation_state is not None:
-        entrys = entrys.filter(
-            lambda instance: getGlobalCalculationState({
-                "pixel_measurement_state": instance.pixel_measurement_state,
-                "millimeter_measurement_state": instance.millimeter_measurement_state,
-                "calculation_state": instance.calculation_state,
-                "coordinate_state": instance.coordinate_state,
-                "image_mask_state": instance.image_mask_state,
-                "image_seg_state": instance.image_seg_state,
-                "image_beautify_state": instance.image_beautify_state,
+        if type(search_calculation_state) != int:
+            search_calculation_state = int(search_calculation_state)
+        ids = [
+            entry.id for entry in entrys
+            if getGlobalCalculationState({
+                "pixel_measurement_state": entry.pixel_measurement_state,
+                "millimeter_measurement_state": entry.millimeter_measurement_state,
+                "calculation_state": entry.calculation_state,
+                "coordinate_state": entry.coordinate_state,
+                "image_mask_state": entry.image_mask_state,
+                "image_seg_state": entry.image_seg_state,
+                "image_beautify_state": entry.image_beautify_state,
             }) == search_calculation_state
-        )
+        ]
+        # 再用ID列表过滤，返回QuerySet
+        entrys = entrys.filter(id__in=ids)
     if search_aiface_tryon_state is not None:
         entrys = entrys.filter(aiface_tryon_state=search_aiface_tryon_state)
     if search_is_active is not None:
