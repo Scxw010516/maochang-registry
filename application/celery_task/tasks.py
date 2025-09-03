@@ -65,6 +65,7 @@ def calc(self, sku):
         EyeglassFrameEntry_instance.image_mask_state = 3
         EyeglassFrameEntry_instance.image_seg_state = 3
         EyeglassFrameEntry_instance.image_beautify_state = 3
+        EyeglassFrameEntry_instance.is_update = 3
         # 保存
         EyeglassFrameEntry_instance.save()
         print("以达到最大重试次数，计算失败")
@@ -95,6 +96,7 @@ def calc(self, sku):
             EyeglassFrameEntry_instance.image_mask_state = 0
             EyeglassFrameEntry_instance.image_seg_state = 0
             EyeglassFrameEntry_instance.image_beautify_state = 0
+            EyeglassFrameEntry_instance.is_update = 0
             EyeglassFrameEntry_instance.save()
         print("状态已恢复到初始状态(0)")
     else:
@@ -123,6 +125,7 @@ def calc(self, sku):
         EyeglassFrameEntry_instance.image_mask_state = 1
         EyeglassFrameEntry_instance.image_seg_state = 1
         EyeglassFrameEntry_instance.image_beautify_state = 1
+        EyeglassFrameEntry_instance.is_update = 0
         # 保存
         EyeglassFrameEntry_instance.save()
 
@@ -144,6 +147,7 @@ def calc(self, sku):
             EyeglassFrameEntry_instance.image_mask_state = 3
             EyeglassFrameEntry_instance.image_seg_state = 3
             EyeglassFrameEntry_instance.image_beautify_state = 3
+            EyeglassFrameEntry_instance.is_update = 3
             # 保存
             EyeglassFrameEntry_instance.save()
         print(f"计算失败：镜架三视图不存在，SKU: {sku}")
@@ -208,6 +212,7 @@ def calc(self, sku):
                 EyeglassFrameEntry_instance.image_mask_state = 3
                 EyeglassFrameEntry_instance.image_seg_state = 3
                 EyeglassFrameEntry_instance.image_beautify_state = 3
+                EyeglassFrameEntry_instance.is_update = 3
                 EyeglassFrameEntry_instance.save()
                 return f"计算失败：计算参数失败 - {str(e)}"
             else:
@@ -220,6 +225,7 @@ def calc(self, sku):
                 EyeglassFrameEntry_instance.image_mask_state = 0
                 EyeglassFrameEntry_instance.image_seg_state = 0
                 EyeglassFrameEntry_instance.image_beautify_state = 0
+                EyeglassFrameEntry_instance.is_update = 0
                 EyeglassFrameEntry_instance.save()
                 # 抛出异常以触发重试
                 raise self.retry(exc=e, countdown=60)
@@ -337,6 +343,8 @@ def calc(self, sku):
         return error_msg
     # 获取token
     try:
+        EyeglassFrameEntry_instance.is_update = 1
+        EyeglassFrameEntry_instance.save()
         token = services.get_sanlian_token()
         # print(f"获取到的token: {token}")
         if not token:

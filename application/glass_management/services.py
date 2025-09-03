@@ -542,7 +542,7 @@ def GetEyeglassFrameDetail(request: HttpRequest):
             "image_mask_state": eyeglassframeentry_result.image_mask_state,
             "image_seg_state": eyeglassframeentry_result.image_seg_state,
             "image_beautify_state": eyeglassframeentry_result.image_beautify_state,
-        })
+        }),
     }
     # 查询镜架图片表
     EyeglassFrameImage_result = models.EyeglassFrameImage.objects.filter(entry_id=eyeglassframeentry_result.id, is_delete=False).first()
@@ -653,7 +653,7 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
     if search_key_material:
         entrys = entrys.filter(material__in=search_key_material)
     # 查询计算完成的结果
-    print(search_calculation_state)
+    # print(type(search_calculation_state))
     if search_calculation_state is not None:
         if type(search_calculation_state) != int:
             search_calculation_state = int(search_calculation_state)
@@ -727,6 +727,9 @@ def GetAllEyeglassFrameEntrys(request: HttpRequest):
                 # 试戴
                 "aiface_tryon_state": entry.aiface_tryon_state,
                 "is_active": entry.is_active,
+                # 更新状态
+                "is_update": entry.is_update,
+                "update_info": entry.update_info,
             }
             for entry in entry_list
         ]
@@ -780,6 +783,8 @@ def GetAllCalculateStates(request: HttpRequest):
                         "image_seg_state": entry.image_seg_state,
                         "image_beautify_state": entry.image_beautify_state,
                     }),
+                    "is_update": entry.is_update,
+                    "update_info": entry.update_info,
                 }
                 for entry in entries
             ]

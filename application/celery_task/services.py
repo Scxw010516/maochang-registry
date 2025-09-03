@@ -295,7 +295,19 @@ def update_sanlian_eyeglass(id, token):
             "spread_angle_right": EyeglassFrameMillimeterMeasurement_instance.spread_angle_right,
             "pile_distance": EyeglassFrameMillimeterMeasurement_instance.pile_distance,
         }
-        sanlian.update_sanlian_eyeglass(token, data)
+        is_update, msg = sanlian.update_sanlian_eyeglass(token, data)
+        print(f"更新镜架信息响应状态: {is_update}, 信息: {msg}")
+        if is_update == "0":
+            print(f"更新三联镜架信息成功")
+            EyeglassFrameEntry_instance.is_update = 2 # 更新成功
+            EyeglassFrameEntry_instance.update_info = None
+            EyeglassFrameEntry_instance.save()
+        else:
+            print(f"更新三联镜架信息失败: {msg}")
+            EyeglassFrameEntry_instance.is_update = 3 # 更新失败
+            EyeglassFrameEntry_instance.update_info = msg
+            EyeglassFrameEntry_instance.save()
+        return is_update, msg
     except Exception as e:
         print(f"更新镜架信息错误: {e}")
         raise

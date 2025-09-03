@@ -86,6 +86,10 @@ class EyeglassFrameEntry(BaseModel):
     is_tryon_beautify_origin = models.BooleanField(unique=False, blank=False, null=False, default=True, verbose_name="是否使用原始beautify进行试戴")
     # 是否启用
     is_active = models.BooleanField(default=True, verbose_name="是否启用")
+    # 是否更新
+    is_update = models.SmallIntegerField(choices=PROCESS_STATE_CHOICES, unique=False, blank=False, null=False, default=0, verbose_name="是否更新")
+    # 更新信息
+    update_info = models.TextField(blank=True, null=True, verbose_name="更新信息")
 
     @property
     def is_fully_processed(self):
