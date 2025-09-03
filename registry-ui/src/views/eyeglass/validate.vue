@@ -243,9 +243,17 @@
                 type="primary"
                 ghost
                 @click="onClickCalculationState(record.id)"
-                >{{
-                  getCalculationState(record.id)
-                }}</a-button
+                >{{ getCalculationState(record.id) }}</a-button
+              >
+            </span>
+          </template>
+          <template v-if="column.key === 'update_info'">
+            <span>
+              <a-button
+                type="primary"
+                ghost
+                @click="onClickIsUpdateState(record.id)"
+                >{{ getIsUpdateState(record.id) }}</a-button
               >
             </span>
           </template>
@@ -803,6 +811,17 @@
           >
             重新录入镜架
           </a-button>
+          <a-button
+            style="height: 72px; border-radius: 12px; font-size: 20px"
+            @click="
+              sendCalculationTask(
+                editModalState.modalId ? editModalState.modalId : 0,
+              )
+            "
+            :loading="calculateModelLoading"
+          >
+            发送计算任务
+          </a-button>
         </div>
       </a-col>
     </a-modal>
@@ -853,7 +872,11 @@ import {
   // EyeGlassCalculateParamsLabel, // 镜架计算参数标签
   // EyeGlassCalculateParamsExample, // 镜架计算参数示例
 } from "./params";
-import { initFormOptions, getCalculationStateLabel } from "./utils";
+import {
+  initFormOptions,
+  getCalculationStateLabel,
+  getIsUpdateStateLabel,
+} from "./utils";
 import { Item } from "ant-design-vue/es/menu";
 
 // 导入所有SVG图片
@@ -981,6 +1004,10 @@ const columns = [
     title: "计算状态",
     key: "all_calculate_state",
   },
+  {
+    title: "数据更新",
+    key: "update_info",
+  },
 ];
 // 镜架table请求API携带参数格式
 type getAllEyeglassFrameEntryAPIParams = {
@@ -1014,6 +1041,8 @@ type getAllEyeglassFrameEntryAPIResult = {
     image_seg_state: number;
     image_beautify_state: number;
     global_calculation_state: number;
+    is_update: number;
+    update_info: string;
   }[];
   count: number;
 };
@@ -1029,6 +1058,8 @@ interface calculate_state {
   image_seg_state: number;
   image_beautify_state: number;
   global_calculation_state: number;
+  is_update: number;
+  update_info: string;
 }
 
 // 镜架计算状态数组
@@ -1537,7 +1568,7 @@ onMounted(async () => {
   timer = setInterval(() => {
     // 刷新页面
     setTimeout(() => {
-      refreshCalculateStates();
+      refreshCalculateStatesAndUpdateStates();
     }, 0);
   }, 5000);
 });
@@ -1953,11 +1984,23 @@ const saveEditEyeglassFrame = async () => {
 };
 
 const getCalculationState = (id: number) => {
-  let global_calculation_state =  calculateStates.value.find((item) => item.id === id)?.global_calculation_state;
+  let global_calculation_state = calculateStates.value.find(
+    (item) => item.id === id,
+  )?.global_calculation_state;
   if (!global_calculation_state) {
     global_calculation_state = 0;
   }
   return getCalculationStateLabel(global_calculation_state);
+};
+
+const getIsUpdateState = (id: number) => {
+  let is_update = calculateStates.value.find(
+    (item) => item.id === id,
+  )?.is_update;
+  if (!is_update) {
+    is_update = 0;
+  }
+  return getIsUpdateStateLabel(is_update);
 };
 
 // #########################################onClick函数定义#########################################
@@ -2186,6 +2229,37 @@ const onClickCalculationState = async (id: number) => {
   });
 };
 
+const onClickIsUpdateState = async (id: number) => {
+  let item = calculateStates.value.find((item) => item.id === id);
+  if (!item) {
+    return;
+  }
+  let sku = dataSource.value.find((item) => item.id === id)?.sku || item.id;
+  Modal.confirm({
+    title: sku + " 更新状态",
+    okText: "发送计算任务",
+    cancelText: "取消",
+    centered: true,
+    icon: createVNode(ExclamationCircleOutlined),
+    content: h("div", {}, [
+      h(
+        "p",
+        "更新状态：" +
+          getIsUpdateStateLabel(item.is_update) +
+          (item.update_info ? item.update_info : ""),
+      ),
+    ]),
+    onOk: () => {
+      sendCalculationTask(id);
+    },
+    okButtonProps: {
+      // disabled: getAllCalculateLabel(id) == "待计算",
+      // // getAllCalculateLabel(id) == "计算中",
+      // loading: calculateModelLoading.value,
+    },
+  });
+};
+
 // table计算状态发送计算任务事件
 const sendCalculationTask = async (id: number) => {
   calculateModelLoading.value = true;
@@ -2200,8 +2274,9 @@ const sendCalculationTask = async (id: number) => {
       // 生成成功
       if (response.data.code === 0) {
         calculateModelLoading.value = false;
+        message.success("生成计算任务成功");
         // 刷新计算状态
-        refreshCalculateStates();
+        refreshCalculateStatesAndUpdateStates();
       } else {
         // 提示生成计算任务失败
         message.error(response.data.msg);
@@ -2210,8 +2285,8 @@ const sendCalculationTask = async (id: number) => {
     });
 };
 
-// 功能函数: 只获取计算状态数据
-const refreshCalculateStates = async () => {
+// 功能函数: 只获取计算状态数据和更新状态
+const refreshCalculateStatesAndUpdateStates = async () => {
   try {
     const ids = calculateStates.value.map((item) => item.id);
     const response = await axios.get(
@@ -2235,6 +2310,8 @@ const refreshCalculateStates = async () => {
           image_seg_state: item.image_seg_state,
           image_beautify_state: item.image_beautify_state,
           global_calculation_state: item.global_calculation_state,
+          is_update: item.is_update,
+          update_info: item.update_info,
         }),
       );
     }
@@ -2259,6 +2336,8 @@ watch(dataSource, () => {
       image_seg_state: item.image_seg_state,
       image_beautify_state: item.image_beautify_state,
       global_calculation_state: item.global_calculation_state,
+      is_update: item.is_update,
+      update_info: item.update_info,
     });
   });
 });
