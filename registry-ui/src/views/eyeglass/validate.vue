@@ -244,7 +244,7 @@
                 ghost
                 @click="onClickCalculationState(record.id)"
                 >{{
-                  getCalculationStateLabel(record.global_calculation_state)
+                  getCalculationState(record.id)
                 }}</a-button
               >
             </span>
@@ -1950,6 +1950,14 @@ const saveEditEyeglassFrame = async () => {
       isSaveSuccess = false;
     });
   return isSaveSuccess;
+};
+
+const getCalculationState = (id: number) => {
+  let global_calculation_state =  calculateStates.value.find((item) => item.id === id)?.global_calculation_state;
+  if (!global_calculation_state) {
+    global_calculation_state = 0;
+  }
+  return getCalculationStateLabel(global_calculation_state);
 };
 
 // #########################################onClick函数定义#########################################
