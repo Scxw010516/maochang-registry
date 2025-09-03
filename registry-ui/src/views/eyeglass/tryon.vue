@@ -8,12 +8,29 @@
         style="height: 100%; margin-right: 30px"
         :icon="h(LeftOutlined)"
       />
+      <a-button
+        type="default"
+        size="large"
+        @click="getPageData"
+        style="height: 100%; margin-right: 30px"
+        >刷新
+      </a-button>
       {{ eyeglass_info.sku }} - {{ eyeglass_info.model_type }}
     </p>
     <a-row class="full-height align-center">
       <!-- 试戴图片 -->
       <a-col span="12" class="tryon-image-col">
-        <a-carousel>
+        <a-carousel arrows>
+          <template #prevArrow>
+            <div class="custom-slick-arrow" style="left: 60px; z-index: 1">
+              <left-circle-outlined />
+            </div>
+          </template>
+          <template #nextArrow>
+            <div class="custom-slick-arrow" style="right: 60px">
+              <right-circle-outlined />
+            </div>
+          </template>
           <div v-for="(item, index) in tryon_images" :key="index + 1">
             <p class="image-title">
               {{ item.face_name }} - {{ getTryOnStateLabel(item.tryon_state) }}
@@ -231,7 +248,11 @@ import { message, Modal, Button, Space, Row, Col } from "ant-design-vue";
 import type { MenuProps } from "ant-design-vue";
 import { set } from "nprogress";
 import { siderProps } from "ant-design-vue/es/layout/Sider";
-import { LeftOutlined } from "@ant-design/icons-vue";
+import {
+  LeftOutlined,
+  LeftCircleOutlined,
+  RightCircleOutlined,
+} from "@ant-design/icons-vue";
 import { getTryOnStateLabel, getIsActiveLabel } from "./utils";
 interface TryonPageProps {
   id: number; // 试戴的ID
@@ -293,7 +314,13 @@ interface TryOnImage {
   tryon_image: string;
   tryon_state: number; // 试戴状态
 }
-const tryon_images = reactive<TryOnImage[]>([]);
+const tryon_images = reactive<TryOnImage[]>([
+  {
+    face_name: "",
+    tryon_image: "",
+    tryon_state: 0,
+  },
+]);
 const annotation_steps_options = ["左上", "右上", "左下", "右下", "完成"];
 // 镜腿标注modal
 const annotate_modal = ref({
@@ -804,6 +831,17 @@ onMounted(() => {
 }
 :deep(.slick-dots) {
   bottom: -25px;
+}
+:deep(.slick-arrow.custom-slick-arrow) {
+  width: 30px;
+  height: 30px;
+  font-size: 30px;
+  color: #8675ff;
+  z-index: 1;
+}
+
+:deep(.slick-arrow.custom-slick-arrow:before) {
+  display: none;
 }
 
 .tryon-image-col {
