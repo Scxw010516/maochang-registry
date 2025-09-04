@@ -4,7 +4,6 @@ import json
 import cv2
 import requests
 import os
-from time import sleep
 
 from django.core.files.base import ContentFile
 import numpy as np
@@ -22,6 +21,7 @@ import application.celery_task.services as services
 
 # 引入镜架计算模型
 from .glass_detect.glasses import process, get_models
+from .glass_detect.config import default_options
 # from .glass_detect.glasses import get_capture_images
 
 
@@ -45,9 +45,11 @@ def calc(self, sku):
     print(f"执行计算任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
 
     existing_task_id = services.TaskManager.search_calc_task(sku)
-    if existing_task_id and existing_task_id != self.request.id:
-        print(f"发现重复任务 {existing_task_id}，正在删除...")
-        services.TaskManager.delete_calc_task(sku)
+    if existing_task_id:
+        for task_id in existing_task_id:
+            if task_id != self.request.id:
+                print(f"发现重复任务 {task_id}，正在删除...")
+                services.TaskManager.delete_calc_task(task_id)      
 
     # 查询镜架基本信息表
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku,is_delete=False).first()
@@ -65,7 +67,6 @@ def calc(self, sku):
         EyeglassFrameEntry_instance.image_mask_state = 3
         EyeglassFrameEntry_instance.image_seg_state = 3
         EyeglassFrameEntry_instance.image_beautify_state = 3
-        EyeglassFrameEntry_instance.is_update = 3
         # 保存
         EyeglassFrameEntry_instance.save()
         print("以达到最大重试次数，计算失败")
@@ -96,7 +97,6 @@ def calc(self, sku):
             EyeglassFrameEntry_instance.image_mask_state = 0
             EyeglassFrameEntry_instance.image_seg_state = 0
             EyeglassFrameEntry_instance.image_beautify_state = 0
-            EyeglassFrameEntry_instance.is_update = 0
             EyeglassFrameEntry_instance.save()
         print("状态已恢复到初始状态(0)")
     else:
@@ -125,7 +125,6 @@ def calc(self, sku):
         EyeglassFrameEntry_instance.image_mask_state = 1
         EyeglassFrameEntry_instance.image_seg_state = 1
         EyeglassFrameEntry_instance.image_beautify_state = 1
-        EyeglassFrameEntry_instance.is_update = 0
         # 保存
         EyeglassFrameEntry_instance.save()
 
@@ -147,7 +146,6 @@ def calc(self, sku):
             EyeglassFrameEntry_instance.image_mask_state = 3
             EyeglassFrameEntry_instance.image_seg_state = 3
             EyeglassFrameEntry_instance.image_beautify_state = 3
-            EyeglassFrameEntry_instance.is_update = 3
             # 保存
             EyeglassFrameEntry_instance.save()
         print(f"计算失败：镜架三视图不存在，SKU: {sku}")
@@ -166,33 +164,24 @@ def calc(self, sku):
         frame = EyeglassFrameEntry_instance.frame_type  # 获取镜架框架类型
         material = EyeglassFrameEntry_instance.material  # 获取镜架材质
         transparent = EyeglassFrameEntry_instance.is_transparent  # 获取镜架透明度
-        options = {
-            "types": {
-                "frame": frame,  # 对应EyeglassFrameEntry表的frame_type
-                "material": material,  # 对应EyeglassFrameEntry表的material
-                "transparent": transparent,  # 对应EyeglassFrameEntry表的is_transparent
-                "special": False,  # 默认为False
-            },
+        options = default_options
+        options["types"] = {
+            "frame": frame,  # 对应EyeglassFrameEntry表的frame_type
+            "material": material,  # 对应EyeglassFrameEntry表的material
+            "transparent": transparent,  # 对应EyeglassFrameEntry表的is_transparent
+            "special": False,  # 默认为False
         }
         lens_width_st = EyeglassFrameEntry_instance.lens_width_st
         bridge_width_st = EyeglassFrameEntry_instance.bridge_width_st
         temple_length_st = EyeglassFrameEntry_instance.temple_length_st
         if lens_width_st and bridge_width_st and temple_length_st:
-            options = {
-               **options,
-                # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
-                **{"standard_size": [ 
-                    float(lens_width_st) if lens_width_st is not None else 0.0,
+            options["standard_size"] = [ float(lens_width_st) if lens_width_st is not None else 0.0,
                     float(bridge_width_st) if bridge_width_st is not None else 0.0,
-                    float(temple_length_st) if temple_length_st is not None else 0.0],
-                    }
-            }
+                    float(temple_length_st) if temple_length_st is not None else 0.0]
+            # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
+                
         else:
-            options = {
-                **options,
-                # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
-                **{"standard_size":None,}
-            }
+            options["standard_size"] = None
         print(f"计算参数: {options}")
         # 计算参数
         output = process(images, calc_models, options)
@@ -212,7 +201,6 @@ def calc(self, sku):
                 EyeglassFrameEntry_instance.image_mask_state = 3
                 EyeglassFrameEntry_instance.image_seg_state = 3
                 EyeglassFrameEntry_instance.image_beautify_state = 3
-                EyeglassFrameEntry_instance.is_update = 3
                 EyeglassFrameEntry_instance.save()
                 return f"计算失败：计算参数失败 - {str(e)}"
             else:
@@ -225,7 +213,6 @@ def calc(self, sku):
                 EyeglassFrameEntry_instance.image_mask_state = 0
                 EyeglassFrameEntry_instance.image_seg_state = 0
                 EyeglassFrameEntry_instance.image_beautify_state = 0
-                EyeglassFrameEntry_instance.is_update = 0
                 EyeglassFrameEntry_instance.save()
                 # 抛出异常以触发重试
                 raise self.retry(exc=e, countdown=60)
@@ -287,6 +274,7 @@ def calc(self, sku):
         parameter处理: 镜架像素测量数据 EyeglassFramePixelMeasurement
         """
         try:
+            print("paarameter处理")
             if output['parameter']['state']:
                 services.save_output_parameter(output['parameter'], entry_id)
                 # 更新计算状态
@@ -302,6 +290,7 @@ def calc(self, sku):
         size处理: 镜架毫米测量数据 EyeglassFrameMillimeterMeasurement
         """
         try:
+            print("size处理")
             if output['size']['state']:
                 services.save_output_size(output['size'], entry_id)
                 # 更新计算状态
@@ -327,7 +316,7 @@ def calc(self, sku):
         except Exception as e:
             EyeglassFrameEntry_instance.calculation_state = 3
             print("shape处理失败:" + str(e))  # 删除重复任务（如果还有的话）
-        services.TaskManager.delete_calc_task(sku)
+        # services.TaskManager.delete_calc_task(sku)
     # 返回
     print('计算任务执行完毕：' + sku)
     EyeglassFrameEntry_instance.is_tryon_leg_auto = True
@@ -343,8 +332,6 @@ def calc(self, sku):
         return error_msg
     # 获取token
     try:
-        EyeglassFrameEntry_instance.is_update = 1
-        EyeglassFrameEntry_instance.save()
         token = services.get_sanlian_token()
         # print(f"获取到的token: {token}")
         if not token:
@@ -386,10 +373,13 @@ def tryon(self, sku):
     print(f"执行试戴任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
 
     existing_task_id = services.TaskManager.search_tryon_task(sku)
-    if existing_task_id and existing_task_id != self.request.id:
-        print(f"发现重复任务 {existing_task_id}，正在删除...")
-        services.TaskManager.delete_calc_task(sku)
+    if existing_task_id:
+        for task_id in existing_task_id:
+            if task_id != self.request.id:
+                print(f"发现重复任务 {task_id}，正在删除...")
+                services.TaskManager.delete_tryon_task(task_id)      
 
+    # calc(sku)
     # 查询镜架基本信息表
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku,is_delete=False).first()
     if not EyeglassFrameEntry_instance:
@@ -593,8 +583,6 @@ def tryon(self, sku):
     """
     # 数据库事务处理
     with transaction.atomic():
-       
-        # TaskManager.delete_calc_task(sku)
         if(tryon_success_flag):
             EyeglassFrameEntry_instance.aiface_tryon_state = 2 # 处理成功
         else:

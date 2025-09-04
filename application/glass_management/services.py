@@ -44,7 +44,6 @@ def SearchModeltypeOrSKU(request: HttpRequest):
     if searchtype == "1":
         entrys = models.EyeglassFrameEntry.objects.filter(model_type__icontains=searchstring, is_delete=False)
     elif searchtype == "2":
-
         entrys = models.EyeglassFrameEntry.objects.filter(sku__icontains=searchstring, is_delete=False)
     # 通过sku字段，过滤已经存在于EyeglassFrameEntry表中的数据
     # entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.filter(is_delete=False)])
@@ -542,7 +541,7 @@ def GetEyeglassFrameDetail(request: HttpRequest):
             "image_mask_state": eyeglassframeentry_result.image_mask_state,
             "image_seg_state": eyeglassframeentry_result.image_seg_state,
             "image_beautify_state": eyeglassframeentry_result.image_beautify_state,
-        }),
+        })
     }
     # 查询镜架图片表
     EyeglassFrameImage_result = models.EyeglassFrameImage.objects.filter(entry_id=eyeglassframeentry_result.id, is_delete=False).first()
@@ -1029,7 +1028,8 @@ def UploadProcessedBeautifyImage(request: HttpRequest):
         else: # 存在试戴结果表实例，则更新
             eyeglassTryonResult_instance.tryon_state = 0 # 待处理
             eyeglassTryonResult_instance.save()
-    tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
+    sku = EyeglassFrameEntry_instance.sku
+    tasks.tryon.delay_on_commit(sku)
     return R.ok({"msg": "美化图保存成功，生成试戴任务成功"})
 
 def UpdateAnnotationLeg(request: HttpRequest):
@@ -1103,7 +1103,8 @@ def UpdateAnnotationLeg(request: HttpRequest):
         else: # 存在试戴结果表实例，则更新
             eyeglassTryonResult_instance.tryon_state = 0 # 待处理
             eyeglassTryonResult_instance.save()
-    tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
+    sku = EyeglassFrameEntry_instance.sku
+    tasks.tryon.delay_on_commit(sku)
     return R.ok(msg="镜腿标注更新成功")
 
 def ResetTryonMode(request: HttpRequest):
@@ -1225,7 +1226,8 @@ def ResetTryonMode(request: HttpRequest):
         else: # 存在试戴结果表实例，则更新
             eyeglassTryonResult_instance.tryon_state = 0 # 待处理
             eyeglassTryonResult_instance.save()
-    tasks.tryon.delay_on_commit(sku=EyeglassFrameEntry_instance.sku)
+    sku = EyeglassFrameEntry_instance.sku
+    tasks.tryon.delay_on_commit(sku)
     # 返回成功结果
     result = {"is_tryon_leg_auto": EyeglassFrameEntry_instance.is_tryon_leg_auto, "is_tryon_beautify_origin": EyeglassFrameEntry_instance.is_tryon_beautify_origin}
     return R.ok({"msg": "生成试戴任务任务", "data": result})

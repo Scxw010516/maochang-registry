@@ -164,9 +164,11 @@ def save_output_parameter(output_parameter, entry_id):
     ).first()
     if not EyeglassFramePixelMeasurement_instance:
         # 不存在镜架像素测量数据表实例，则创建
+        print("Creating new EyeglassFramePixelMeasurement instance")
         form_EyeglassFramePixelMeasurement = forms.EyeglassFramePixelMeasurementForm(output_parameter['data'])
     else:
         # 存在镜架像素测量数据表实例，则更新
+        print("Updating existing EyeglassFramePixelMeasurement instance")
         form_EyeglassFramePixelMeasurement = forms.EyeglassFramePixelMeasurementForm(
             output_parameter['data'], instance=EyeglassFramePixelMeasurement_instance
         )
@@ -190,9 +192,11 @@ def save_output_size(output_size, entry_id):
     ).first()
     if not EyeglassFrameMillimeterMeasurement_instance:
         # 不存在镜架毫米测量数据表实例，则创建
+        print("Creating new EyeglassFrameMillimeterMeasurement instance")
         form_EyeglassFrameMillimeterMeasurement = forms.EyeglassFrameMillimeterMeasurementForm(output_size['data'])
     else:
         # 存在镜架毫米测量数据表实例，则更新
+        print("Updating existing EyeglassFrameMillimeterMeasurement instance")
         form_EyeglassFrameMillimeterMeasurement = forms.EyeglassFrameMillimeterMeasurementForm(
             output_size['data'], instance=EyeglassFrameMillimeterMeasurement_instance
         )
@@ -215,9 +219,11 @@ def save_output_shape(output_shape, entry_id):
     EyeglassFrameCalculation_instance = models.EyeglassFrameCalculation.objects.filter(entry_id=entry_id).first()
     if not EyeglassFrameCalculation_instance:
         # 不存在镜架计算数据表实例，则创建
+        print("Creating new EyeglassFrameCalculation instance")
         form_EyeglassFrameCalculation = forms.EyeglassFrameCalculationForm(output_shape['data'])
     else:
         # 存在镜架计算数据表实例，则更新
+        print("Updating existing EyeglassFrameCalculation instance")
         form_EyeglassFrameCalculation = forms.EyeglassFrameCalculationForm(
             output_shape['data'], instance=EyeglassFrameCalculation_instance
         )
@@ -307,7 +313,6 @@ def update_sanlian_eyeglass(id, token):
             EyeglassFrameEntry_instance.is_update = 3 # 更新失败
             EyeglassFrameEntry_instance.update_info = msg
             EyeglassFrameEntry_instance.save()
-        return is_update, msg
     except Exception as e:
         print(f"更新镜架信息错误: {e}")
         raise
@@ -405,13 +410,16 @@ class TaskManager:
         """搜索指定SKU的计算任务"""
         try:
             calc_tasks = TaskManager.get_calc_queue()
-
+            repeat_tasks = []
             for task in calc_tasks:
                 # 检查任务参数中是否包含指定的SKU
                 args = task.get('args', [])
                 if args and len(args) > 0 and sku in str(args[0]):
                     print(f"找到任务: {task['id']}, SKU: {sku}, 状态: {task['state']}")
-                    return task['id']
+                    repeat_tasks.append(task['id'])
+            if len(repeat_tasks) > 0:
+                # print(f"找到任务: {repeat_tasks}")
+                return repeat_tasks
 
             print(f"未找到匹配的任务: {sku}")
             return None
@@ -421,19 +429,17 @@ class TaskManager:
             return None
 
     @staticmethod
-    def delete_calc_task(sku):
+    def delete_calc_task(task_id):
         """删除指定SKU的计算任务"""
         try:
-            # 先搜索任务
-            task_id = TaskManager.search_calc_task(sku)
 
             if task_id:
-                # 使用Celery的revoke方法撤销任务
+                # 使用Celery的revoke方法撤销任务    
                 app.control.revoke(task_id, terminate=True)
                 print(f"任务已删除: {task_id}")
                 return True
             else:
-                print(f"未找到要删除的任务: {sku}")
+                print(f"未找到要删除的任务: {task_id}")
                 return False
 
         except Exception as e:
@@ -442,13 +448,12 @@ class TaskManager:
 
     @staticmethod
     def check_calc_task_exists(sku):
-        """检查指定SKU的任务是否存在"""
+        """检查指定SKU的计算任务是否存在"""
         return TaskManager.search_calc_task(sku) is not None
-    
     
     @staticmethod
     def get_tryon_queue():
-        """获取所有计算任务"""
+        """获取所有试戴任务"""
         try:
             # 使用Celery的inspect API获取队列信息
             inspector = app.control.inspect()
@@ -457,7 +462,9 @@ class TaskManager:
             scheduled_tasks = inspector.scheduled()
             reserved_tasks = inspector.reserved()
             active_tasks = inspector.active()
-
+            print(scheduled_tasks)
+            print(reserved_tasks)
+            print(active_tasks)
             tryon_tasks = []
 
             # 检查所有类型的任务
@@ -505,16 +512,20 @@ class TaskManager:
 
     @staticmethod
     def search_tryon_task(sku):
-        """搜索指定SKU的计算任务"""
+        """搜索指定SKU的试戴任务"""
         try:
             tryon_tasks = TaskManager.get_tryon_queue()
-
+            print(tryon_tasks)
+            repeat_tasks = []
             for task in tryon_tasks:
                 # 检查任务参数中是否包含指定的SKU
                 args = task.get('args', [])
                 if args and len(args) > 0 and sku in str(args[0]):
                     print(f"找到任务: {task['id']}, SKU: {sku}, 状态: {task['state']}")
-                    return task['id']
+                    repeat_tasks.append(task['id'])
+            if len(repeat_tasks) > 0:
+                # print(f"找到任务: {repeat_tasks}")
+                return repeat_tasks
 
             print(f"未找到匹配的任务: {sku}")
             return None
@@ -524,11 +535,9 @@ class TaskManager:
             return None
 
     @staticmethod
-    def delete_tryon_task(sku):
-        """删除指定SKU的计算任务"""
+    def delete_tryon_task(task_id):
+        """删除指定SKU的试戴任务"""
         try:
-            # 先搜索任务
-            task_id = TaskManager.search_tryon_task(sku)
 
             if task_id:
                 # 使用Celery的revoke方法撤销任务
@@ -536,7 +545,7 @@ class TaskManager:
                 print(f"任务已删除: {task_id}")
                 return True
             else:
-                print(f"未找到要删除的任务: {sku}")
+                print(f"未找到要删除的任务: {task_id}")
                 return False
 
         except Exception as e:
@@ -545,8 +554,11 @@ class TaskManager:
 
     @staticmethod
     def check_tryon_task_exists(sku):
-        """检查指定SKU的任务是否存在"""
+        """检查指定SKU的试戴任务是否存在"""
         return TaskManager.search_tryon_task(sku) is not None
+    
+    
+
 
 
 # 保持向后兼容的函数接口
