@@ -5,6 +5,7 @@ import requests
 import json
 import datetime
 import random
+
 def get_current_timestamp():
     """
     生成当前时间戳
@@ -13,6 +14,31 @@ def get_current_timestamp():
         str: 格式化的时间戳字符串，格式为 "YYYY-MM-DD HH:MM:SS"
     """
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+def safe_int(value, default=0):
+    """安全地将值转换为整数，如果值为None则返回默认值"""
+    if value is None:
+        return default
+    if type(value) == int:
+        return value
+    return int(value)
+
+def safe_str(value, default=""):
+    """安全地将值转换为字符串，如果值为None则返回默认值"""
+    if value is None:
+        return default
+    if type(value) == str:
+        return value
+    return str(value)
+
+def safe_float(value, default=0.0):
+    """安全地将值转换为浮点数，如果值为None则返回默认值"""
+    if value is None:
+        return default
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
 
 def get_sanlian_token():
     """
@@ -46,28 +72,13 @@ def update_sanlian_eyeglass(token, data):
     更新三联眼镜信息
     """
     try:
-        def safe_int(value, default=0):
-            """安全地将值转换为整数，如果值为None则返回默认值"""
-            if value is None:
-                return default
-            if type(value) == int:
-                return value
-            return int(value)
-
-        def safe_str(value, default=""):
-            """安全地将值转换为字符串，如果值为None则返回默认值"""
-            if value is None:
-                return default
-            if type(value) == str:
-                return value
-            return str(value)
-        print(data)
+        # print(data)
         data ={
             "number": safe_str(data["sku"]),
             "createorg_number": "1",
             "shcp_textfield": safe_str(data["brand"]),
             "shcp_model": safe_str(data["model_type"]),
-            "shcp_price1": data["price"],
+            "shcp_price1": safe_float(data["price"]),
             "shcp_materialquality": safe_str(data["material"]),
             "shcp_color": safe_str(data["color"]),
             "shcp_shape": safe_str(data["shape"]),
@@ -78,7 +89,6 @@ def update_sanlian_eyeglass(token, data):
             "shcp_nosepadwidth": safe_int(data["bridge_width_st"]),
             "shcp_leglength": safe_int(data["temple_length_st"]),
             "shcp_weight": safe_int(data["weight"]),
-            "shcp_style": ",1,",
             "shcp_frameheight": safe_str(data["frame_height"]),
             "shcp_glass_width": safe_int(data["frame_width"]),
             "shcp_leftpile_heigth": safe_int(data["pile_height_left"]),
@@ -107,12 +117,17 @@ def update_sanlian_eyeglass(token, data):
             "shcp_rightleg_angle": safe_int(data["spread_angle_right"]),
             "shcp_pilelength": safe_int(data["pile_distance"]),
         }
+        print(data)
         response = requests.post(
             "https://sanlianjituan.test.kdcloud.com/kapi/v2/shcp/basedata/bd_material/updateSFinfo",
             headers={"Content-Type": "application/json", "accesstoken": token},
             json={"data": data}
         )
+        print(response.json())
         print(f"更新镜架信息响应: {response.json()}")
+        state = response.json().get("errorCode")
+        msg = response.json().get("message")
+        return state, msg
     except Exception as e:
         print(f"更新镜架信息错误: {e}")
-        raise
+        return 0, str(e)
