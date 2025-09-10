@@ -229,7 +229,7 @@
             <span>
               <a-space>
                 <a-button type="primary" @click="onClickEditModal(record.id)"
-                  >修改</a-button
+                  >查看</a-button
                 >
                 <a-button danger @click="onClickDelete(record.id)"
                   >删除</a-button
@@ -877,7 +877,6 @@ import {
   getCalculationStateLabel,
   getIsUpdateStateLabel,
 } from "./utils";
-import { Item } from "ant-design-vue/es/menu";
 
 // 导入所有SVG图片
 // 正视图参数

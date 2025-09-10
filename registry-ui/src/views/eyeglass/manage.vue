@@ -240,30 +240,23 @@
         }"
       >
         <template #bodyCell="{ column, record }">
+          <template v-if="column.key === 'tryon'">
+            <span>
+              <a-button type="primary" ghost @click="onClickTryOn(record.id)"
+                >{{ getTryOnStateLabelFromId(record.id) }}
+              </a-button>
+            </span>
+          </template>
           <template v-if="column.key === 'operation'">
             <span>
               <a-space>
+                <a-button type="primary" @click="onClickIsActive(record.id)"
+                  >{{ getIsActiveLabelFromId(record.id) }}
+                </a-button>
                 <a-button danger @click="onClickDelete(record.id)"
-                  >删除</a-button
-                >
+                  >删除
+                </a-button>
               </a-space>
-            </span>
-          </template>
-          <template v-if="column.key === 'tryon'">
-            <span>
-              <a-button type="primary" ghost @click="onClickTryOn(record.id)">{{
-                getTryOnStateLabelFromId(record.id)
-              }}</a-button>
-            </span>
-          </template>
-          <template v-if="column.key === 'is_active'">
-            <span>
-              <a-button
-                type="primary"
-                ghost
-                @click="onClickIsActive(record.id)"
-                >{{ getIsActiveLabelFromId(record.id) }}</a-button
-              >
             </span>
           </template>
         </template>
@@ -314,7 +307,6 @@ import { usePagination } from "vue-request";
 import { Key } from "ant-design-vue/lib/_util/type";
 
 import { getTryOnStateLabel, getIsActiveLabel } from "./utils";
-import { Item } from "ant-design-vue/es/menu";
 import tryonPage from "./tryon.vue";
 import { modalProps } from "ant-design-vue/es/modal/Modal";
 //#########################################参数初始化###########################################
@@ -372,16 +364,12 @@ const columns = [
     key: "update_time",
   },
   {
-    title: "操作",
-    key: "operation",
-  },
-  {
     title: "试戴",
     key: "tryon",
   },
   {
-    title: "启用状态",
-    key: "is_active",
+    title: "操作",
+    key: "operation",
   },
 ];
 // 镜架table请求API携带参数格式

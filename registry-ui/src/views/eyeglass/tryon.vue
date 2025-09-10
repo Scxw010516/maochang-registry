@@ -15,69 +15,63 @@
         style="height: 100%; margin-right: 30px"
         >刷新
       </a-button>
-      {{ eyeglass_info.sku }} - {{ eyeglass_info.model_type }}
+      SKU：{{ eyeglass_info.sku }} 型号：{{ eyeglass_info.model_type }}
+      {{ getTryOnStateLabel(eyeglass_info.try_on_state) }}
     </p>
-    <a-row class="full-height align-center">
+    <a-row class="full-height" align="middle">
       <!-- 试戴图片 -->
       <a-col span="12" class="tryon-image-col">
-        <a-carousel arrows>
-          <template #prevArrow>
-            <div class="custom-slick-arrow" style="left: 60px; z-index: 1">
-              <left-circle-outlined />
-            </div>
-          </template>
-          <template #nextArrow>
-            <div class="custom-slick-arrow" style="right: 60px">
-              <right-circle-outlined />
-            </div>
-          </template>
-          <div v-for="(item, index) in tryon_images" :key="index + 1">
-            <p class="image-title">
+        <a-row class="full-height" align="middle">
+          <a-col span="24">
+            <a-carousel arrows>
+              <template #prevArrow>
+                <div class="custom-slick-arrow" style="left: 60px; z-index: 1">
+                  <left-circle-outlined />
+                </div>
+              </template>
+              <template #nextArrow>
+                <div class="custom-slick-arrow" style="right: 60px">
+                  <right-circle-outlined />
+                </div>
+              </template>
+              <div v-for="(item, index) in tryon_images" :key="index + 1">
+                <!-- <p class="image-title">
               {{ item.face_name }} - {{ getTryOnStateLabel(item.tryon_state) }}
-            </p>
-            <img :src="item.tryon_image" class="eyeglass-frame-img" />
-          </div>
-        </a-carousel>
+            </p> -->
+                <a-image :src="item.tryon_image" class="eyeglass-frame-img" />
+              </div>
+            </a-carousel>
+          </a-col>
+        </a-row>
       </a-col>
-      <!-- 镜架图片 操作按钮   -->
-      <a-col span="12">
-        <a-carousel>
-          <a-col>
-            <p class="image-title">
-              原始镜架图：
-              {{ getIsActiveLabel(eyeglass_info.is_tryon_beautify_origin) }}
-            </p>
-            <img
+      <!-- 镜架图片 -->
+      <a-col span="12" class="tryon-image-col">
+        <a-row class="full-height" align="middle" justify="center">
+          <a-col span="22" v-if="eyeglass_info.is_tryon_beautify_origin">
+            <!-- <p class="image-title">原始镜架图</p> -->
+            <a-image
               :src="eyeglass_frame_image.frontview_beautify"
               class="eyeglass-frame-img"
             />
-            <img
+            <a-image
               :src="eyeglass_frame_image.sideview_beautify"
               class="eyeglass-frame-img"
             />
           </a-col>
-          <a-col
-            v-if="
-              processed_beautify_images.frontview_beautify_processed ||
-              processed_beautify_images.sideview_beautify_processed
-            "
-          >
-            <p class="image-title">
-              处理后镜架图：
-              {{ getIsActiveLabel(!eyeglass_info.is_tryon_beautify_origin) }}
-            </p>
-            <img
+          <a-col v-else span="22">
+            <!-- <p class="image-title">处理后镜架图</p> -->
+            <a-image
               v-if="processed_beautify_images.frontview_beautify_processed"
               :src="processed_beautify_images.frontview_beautify_processed"
               class="eyeglass-frame-img"
             />
-            <img
+            <a-image
               v-if="processed_beautify_images.sideview_beautify_processed"
               :src="processed_beautify_images.sideview_beautify_processed"
               class="eyeglass-frame-img"
             />
           </a-col>
-        </a-carousel>
+        </a-row>
       </a-col>
     </a-row>
     <!-- 操作按钮 -->
@@ -367,7 +361,6 @@ const onClickChoseBeautifyImage = (type: "front" | "side") => {
 
 // 点击模态框上传美化图:上传处理后图片到服务器并生成试戴任务
 const onClickUploadImage = () => {
-  beautify_modal.loading = true;
   // 检查两张图片是否都上传了
   if (!beautify_modal.tempUploadFiles.front.file) {
     message.error("请上传正视图");
@@ -388,6 +381,7 @@ const onClickUploadImage = () => {
     beautify_modal.tempUploadFiles.side.file as File,
   );
   formData.append("id", eyeglass_info.value.id.toString());
+  beautify_modal.loading = true;
   axios
     .post("glassmanagement/api/upload-processed-beautify-image", formData)
     .then((response) => {
@@ -785,16 +779,19 @@ onMounted(() => {
   display: flex;
   flex-direction: column; /* 子元素垂直排列 */
 }
+
 .full-height {
   flex: 1;
-  height: max-content;
+  height: 100%;
+  min-height: 400px;
+  /* height: max-content; */
 }
 .align-center {
   align-items: center;
 }
 .page-title {
   margin: 0;
-  padding: 40px 39.5px;
+  padding: 30px 39.5px;
   font-size: 30px;
   font-weight: bold;
   display: flex;
@@ -804,8 +801,9 @@ onMounted(() => {
 .operation-row {
   width: 100%;
   height: min-content;
-  margin: 60px 0;
-  padding: 0 39.5px;
+  /* margin: 30px 0; */
+  padding: 30px 39.5px;
+  /* margin-top: auto; */
 }
 
 .operation-button {
@@ -843,13 +841,25 @@ onMounted(() => {
 :deep(.slick-arrow.custom-slick-arrow:before) {
   display: none;
 }
+/* 去除a-image预览字样 */
+:deep(.ant-image-mask-info) {
+  visibility: hidden;
+  font-size: 0;
+}
+
+:deep(.ant-image-mask-info span) {
+  visibility: visible;
+  font-size: 20;
+}
 
 .tryon-image-col {
-  /* top: -100px; */
+  height: 100%;
+  /* display: flex; */
+  text-align: center;
 }
 
 .eyeglass-frame-img {
-  width: 75%;
+  max-width: 60%;
   max-height: 40%;
 }
 
@@ -858,6 +868,7 @@ onMounted(() => {
   font-weight: bold;
   margin: 0 15%;
 }
+
 :global(.annotation) {
   position: absolute;
   width: 10px;
