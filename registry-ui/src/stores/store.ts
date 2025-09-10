@@ -70,6 +70,30 @@ export const useOptionStore = defineStore("option", {
           label: "",
         },
       ] as SelectProps["options"],
+      calculation_state_options: [
+        {
+          value: null,
+          label: "",
+        },
+      ] as SelectProps["options"],
+      aiface_tryon_state_options: [
+        {
+          value: null,
+          label: "",
+        },
+      ] as SelectProps["options"],
+      is_active_options: [
+        {
+          value: null,
+          label: "",
+        },
+      ] as SelectProps["options"],
+      is_update_options: [
+        {
+          value: null,
+          label: "",
+        },
+      ] as SelectProps["options"],
     };
   },
 });

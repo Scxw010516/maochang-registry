@@ -345,7 +345,7 @@
         ref="TopVideo"
         class="capture-frame"
         name="TopVideo"
-        style="transform: scale(-1, 1)"
+        style="transform: scale(1, 1)"
       ></video>
     </a-col>
     <a-col :span="8" class="capture-box">
@@ -353,7 +353,7 @@
         ref="FrontVideo"
         class="capture-frame"
         name="FrontVideo"
-        style="transform: scale(-1, 1)"
+        style="transform: scale(1, 1)"
       ></video>
     </a-col>
     <a-col :span="8" class="capture-box">
@@ -361,7 +361,7 @@
         ref="SideVideo"
         class="capture-frame"
         name="SideVideo"
-        style="transform: scale(-1, 1)"
+        style="transform: scale(1, 1)"
       ></video>
     </a-col>
   </a-row>
@@ -698,7 +698,11 @@
       >重拍
     </a-button>
     <a-button class="operation-button" @click="onClickReturn">返回 </a-button>
-    <a-button class="operation-button-primary" @click="onClickCaptureOrConfirm">
+    <a-button
+      class="operation-button-primary"
+      :loading="captureOrConfirmLoading"
+      @click="onClickCaptureOrConfirm"
+    >
       {{ currentStage === "preview" ? "拍摄" : "确认" }}
     </a-button>
   </a-row>
@@ -746,12 +750,8 @@ import {
   nextTick,
 } from "vue";
 // import { useRouter } from "vue-router";
-import {
-  useOptionStore,
-  useStateStore,
-  useUserStore,
-} from "@/stores/store";
-import {useCameraStore} from "@/stores/camera";
+import { useOptionStore, useStateStore, useUserStore } from "@/stores/store";
+import { useCameraStore } from "@/stores/camera";
 import { MenuUnfoldOutlined, FormOutlined } from "@ant-design/icons-vue";
 import { StepProps, message, Modal } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form"; // 引入表单验证规则Rule组件
@@ -852,6 +852,9 @@ const cameraStateErrorModalLoading = ref<boolean>(false);
 // 秤状态错误modal
 const showWeightStateErrorModal = ref<boolean>(false);
 const weightStateErrorModalLoading = ref<boolean>(false);
+
+// 确认按钮loading状态
+const captureOrConfirmLoading = ref<boolean>(false);
 
 //#########################################参数初始化--表单数据###########################################
 // 镜架基础参数表单实例
@@ -1041,7 +1044,8 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
 // modal展示的镜架详细参数表单实例
 const EyeGlassDetailModelFormRef = ref();
 // modal展示的镜架详细参数表单初始化数据
-const EyeGlassDetailModelFormInitState: UnwrapRef<EyeGlassDetailForm> = reactive({
+const EyeGlassDetailModelFormInitState: UnwrapRef<EyeGlassDetailForm> =
+  reactive({
     frame_height: "",
     frame_width: "",
     pile_height_left: "",
@@ -1141,7 +1145,8 @@ const EyeGlassImageFormState: UnwrapRef<EyeGlassImageForm> = reactive({
   sideview: null,
 });
 // 镜架图像背景表单数据
-const EyeGlassImageBackgroundFormState: UnwrapRef<EyeGlassImageBackgroundForm> = reactive({
+const EyeGlassImageBackgroundFormState: UnwrapRef<EyeGlassImageBackgroundForm> =
+  reactive({
     frontview_bg: null,
     topview_bg: null,
     sideview_bg: null,
@@ -1205,7 +1210,11 @@ const filterOptionbyValue = (input: string, option: Option) => {
 // 功能函数：发送websocket请求，设置摄像头参数；前端读取摄像头配置，并初始化摄像头
 async function initCamera(): Promise<boolean> {
   // 初始化前，先关闭所有已有的视频流，避免占用与冲突
-  try { stopCameraStream(); } catch (e) { console.log('stopCameraStream 执行出错', e); }
+  try {
+    stopCameraStream();
+  } catch (e) {
+    console.log("stopCameraStream 执行出错", e);
+  }
   const wsResult = await new Promise<boolean>((resolve, reject) => {
     // 发送初始化摄像头请求
     const ws = new WebSocket(`ws://localhost:8765/configure-cameras`);
@@ -1246,7 +1255,7 @@ async function initCamera(): Promise<boolean> {
   if (!wsResult) {
     return false;
   }
-    
+
   // 清空设备列表
   camera.initCameraDeviceState();
   // 检查可用的媒体输入和输出设备的列表
@@ -1257,9 +1266,12 @@ async function initCamera(): Promise<boolean> {
   }
   // 为了拿到稳定的 label 与 deviceId，先申请一次权限（只要 video 即可）
   try {
-    const permStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const permStream = await navigator.mediaDevices.getUserMedia({
+      video: true,
+      audio: false,
+    });
     // 立刻关闭该临时流
-    permStream.getTracks().forEach(t => t.stop());
+    permStream.getTracks().forEach((t) => t.stop());
   } catch (e) {
     console.log("预授权 getUserMedia 失败", e);
   }
@@ -1273,7 +1285,7 @@ async function initCamera(): Promise<boolean> {
         // 判断设备类型是否为videoinput，并且设备label拥有相同的设备名和VID
         if (
           device.kind === "videoinput" &&
-          device.label.includes("48MP USB Camera (32e4:0020)")
+          device.label.includes("48MP USB Camera (32e4:0021)")
         ) {
           // 添加设备到设备列表
           camera.cameraState.cameraList.push({
@@ -1285,7 +1297,7 @@ async function initCamera(): Promise<boolean> {
           });
         } else if (
           device.kind === "videoinput" &&
-          device.label.includes("48MP USB Camera (32e4:0021)")
+          device.label.includes("48MP USB Camera (32e4:0020)")
         ) {
           // 添加设备到设备列表
           camera.cameraState.cameraList.push({
@@ -1361,7 +1373,8 @@ async function refreshDeviceIdByIndex(index: number): Promise<string | null> {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const targetLabel = CAMERA_LABEL_BY_INDEX[index];
     const dev = devices.find(
-      (d) => d.kind === "videoinput" && d.label && d.label.includes(targetLabel),
+      (d) =>
+        d.kind === "videoinput" && d.label && d.label.includes(targetLabel),
     );
     return dev ? dev.deviceId : null;
   } catch (e) {
@@ -1395,8 +1408,10 @@ async function openStreamForCam(cam: any): Promise<void> {
     navigator.mediaDevices.getUserMedia({
       video: {
         deviceId: { exact: deviceId },
-        width:{exact:4656/2},
-        height:{exact:3496/2},
+        // width: { exact: 4656 / 2 },
+        // height: { exact: 3496 / 2 },
+        width: { exact: 4000 },
+        height: { exact: 3000  },
       },
     });
 
@@ -1420,10 +1435,12 @@ async function openStreamForCam(cam: any): Promise<void> {
         cam.deviceId = newId;
         try {
           const stream = await navigator.mediaDevices.getUserMedia({
-            video: { 
+            video: {
               deviceId: { exact: cam.deviceId },
-              width:{exact:4656/2},
-              height:{exact:3496/2},
+              // width: { exact: 4656 / 2 },
+              // height: { exact: 3496 / 2 },
+              width: { exact: 4000 },
+              height: { exact: 3000 },
             },
           });
           cam.mediaStream = stream;
@@ -1431,21 +1448,33 @@ async function openStreamForCam(cam: any): Promise<void> {
           return;
         } catch (err2: any) {
           console.log("重试仍失败: " + err2?.name + ": " + err2?.message);
-          message.error(`摄像头${cam.index}打开失败：不满足约束或设备被占用，请检查连接与权限`, 5);
+          message.error(
+            `摄像头${cam.index}打开失败：不满足约束或设备被占用，请检查连接与权限`,
+            5,
+          );
           showCameraStateErrorModal.value = true;
           cameraStateErrorModalLoading.value = false;
         }
       } else {
-        message.error(`未找到匹配的摄像头(${cam.index}) 或设备ID未更新，无法打开视频流`, 5);
+        message.error(
+          `未找到匹配的摄像头(${cam.index}) 或设备ID未更新，无法打开视频流`,
+          5,
+        );
         showCameraStateErrorModal.value = true;
         cameraStateErrorModalLoading.value = false;
       }
-    } else if (err && (err.name === "NotReadableError" || err.name === "NotAllowedError")) {
+    } else if (
+      err &&
+      (err.name === "NotReadableError" || err.name === "NotAllowedError")
+    ) {
       message.error(`摄像头${cam.index}打开失败：设备被占用或未授权`, 5);
       showCameraStateErrorModal.value = true;
       cameraStateErrorModalLoading.value = false;
     } else {
-      message.error(`摄像头${cam.index}打开失败：${err?.message || "未知错误"}` , 5);
+      message.error(
+        `摄像头${cam.index}打开失败：${err?.message || "未知错误"}`,
+        5,
+      );
       showCameraStateErrorModal.value = true;
       cameraStateErrorModalLoading.value = false;
     }
@@ -1459,7 +1488,9 @@ async function startCameraStream(): Promise<void> {
   // 适当等待设备释放
   await new Promise((r) => setTimeout(r, 100));
   // 并发为每个摄像头开启流，并在单个摄像头失败时进行一次基于label的重试
-  const tasks = camera.cameraState.cameraList.map((cam) => openStreamForCam(cam));
+  const tasks = camera.cameraState.cameraList.map((cam) =>
+    openStreamForCam(cam),
+  );
   await Promise.all(tasks);
 }
 
@@ -1472,16 +1503,16 @@ async function CameraCapture(): Promise<void> {
       // 开启拍摄
       const canvas = document.createElement("canvas");
       // todo:调整图像大小（和摄像头参数一致）
-      canvas.width = 4656;
-      canvas.height = 3496;
+      canvas.width = 4000;
+      canvas.height = 3000;
       const ctx = canvas.getContext("2d");
       if (ctx) {
         ctx.imageSmoothingEnabled = true;
         // @ts-ignore: imageSmoothingQuality may not exist in old lib dom typings
         ctx.imageSmoothingQuality = "high";
       }
-      ctx?.scale(-1, 1);
-      ctx?.translate(-canvas.width, 0);
+      ctx?.scale(1, 1);
+      ctx?.translate(0, 0);
       try {
         let blob: Blob | null = null;
         if (camera.index === 0) {
@@ -1945,10 +1976,10 @@ const handleTestSkuAutoFill = (testSku: string): boolean => {
   if (!testSku || !testSku.startsWith("TEST-SKU")) {
     return false;
   }
-  
+
   // 设置测试SKU（保持用户输入的完整SKU）
   EyeGlassBasicFormState.sku = testSku;
-  
+
   // 自动填充测试数据
   EyeGlassBasicFormState.brand = "测试品牌";
   EyeGlassBasicFormState.model_type = "TEST-MODEL-001";
@@ -1965,15 +1996,15 @@ const handleTestSkuAutoFill = (testSku: string): boolean => {
   EyeGlassBasicFormState.bridge_width_st = 18;
   EyeGlassBasicFormState.temple_length_st = 140;
   EyeGlassBasicFormState.weight = "25.5";
-  
+
   // 提示测试数据已加载
   message.success("测试数据已自动填充完成！");
-  
+
   // 直接进入基础信息输入阶段
   currentStage.value = "input-basic-params";
   // 初始化表单Options
   initFormOptions();
-  
+
   return true;
 };
 
@@ -1983,13 +2014,13 @@ const onClickEnterSKU = async () => {
   if (skuormodeltype.value == 2) {
     EyeGlassBasicFormState.sku = searchString.value;
   }
-  
+
   // 检查是否为测试SKU，如果是则自动填充并返回
   const testSku = EyeGlassBasicFormState.sku || searchString.value;
   if (handleTestSkuAutoFill(testSku)) {
     return;
   }
-  
+
   // 判断输入参数是否为空
   if (EyeGlassBasicFormState.sku == "") {
     message.warning("请输入镜架SKU或选择镜架条目");
@@ -2117,9 +2148,13 @@ const onClickEnterBasicParams = () => {
     } else {
       currentStage.value = "preview";
       nextTick(() => {
-        if (TopVideo.value) TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
-        if (FrontVideo.value) FrontCapture.value.videoElement = FrontVideo.value as HTMLVideoElement;
-        if (SideVideo.value) SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
+        if (TopVideo.value)
+          TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
+        if (FrontVideo.value)
+          FrontCapture.value.videoElement =
+            FrontVideo.value as HTMLVideoElement;
+        if (SideVideo.value)
+          SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
         startCameraStream();
       });
     }
@@ -2127,52 +2162,61 @@ const onClickEnterBasicParams = () => {
 };
 
 // 拍摄或确认按钮点击事件
-const onClickCaptureOrConfirm = () => {
-  console.log("enableSubmitButton:", enabledSubmitButton.value);
-  switch (currentStage.value) {
-    case "preview": //预览
-      if (camera.cameraState.cameraInitState) {
-        // 开启取流，进行预览
-        CameraCapture()
-          .then(() => {
-            currentStage.value = "confirm";
-            // 进入确认页关闭视频流
-            stopCameraStream();
-          })
-          .catch((error) => {
-            // 打开模态窗，展示错误
-            showCameraStateErrorModal.value = true;
-            cameraStateErrorModalLoading.value = false;
-            console.log(error);
-          });
-      } else {
-        // 摄像头未初始化，弹出提示框
-        showCameraStateErrorModal.value = true;
-      }
-      // currentStage.value = "input-params";
-      break;
-    case "confirm":
-      currentStage.value = "input-params";
-      if (!hasWeightLoged.value) {
-        readWeight();
-      }
-      break;
-    case "input-params": // 计算参数
-      // 保存镜框信息成功后进入SKU输入阶段
-      uploadNewEyeglassFrame().then((result) => {
-        if (result) {
-          // 重置提交按钮
-          enabledSubmitButton.value = false;
-          // 页面跳转至SKU输入阶段
-          currentStage.value = "input-sku";
-          // 初始化表单Options
-          initFormOptions();
-          // 初始化镜架检索类型和搜索字符串
-          skuormodeltype.value = 1;
-          searchString.value = "";
+const onClickCaptureOrConfirm = async () => {
+  try {
+    // 确认按钮loading状态
+    captureOrConfirmLoading.value = true;
+    // 按照当前进度区分按钮状态
+    switch (currentStage.value) {
+      case "preview": //预览
+        if (camera.cameraState.cameraInitState) {
+          // 开启取流，进行预览
+          await CameraCapture()
+            .then(() => {
+              currentStage.value = "confirm";
+              // 进入确认页关闭视频流
+              stopCameraStream();
+            })
+            .catch((error) => {
+              // 打开模态窗，展示错误
+              showCameraStateErrorModal.value = true;
+              cameraStateErrorModalLoading.value = false;
+              // 重抛错误
+              throw error;
+            });
+        } else {
+          // 摄像头未初始化，弹出提示框
+          showCameraStateErrorModal.value = true;
         }
-      });
-      break;
+        break;
+      case "confirm":
+        currentStage.value = "input-params";
+        if (!hasWeightLoged.value) {
+          readWeight();
+        }
+        break;
+      case "input-params": // 计算参数
+        // 保存镜框信息成功后进入SKU输入阶段
+        await uploadNewEyeglassFrame().then((result) => {
+          if (result) {
+            // 重置提交按钮
+            enabledSubmitButton.value = false;
+            // 页面跳转至SKU输入阶段
+            currentStage.value = "input-sku";
+            // 初始化表单Options
+            initFormOptions();
+            // 初始化镜架检索类型和搜索字符串
+            skuormodeltype.value = 1;
+            searchString.value = "";
+          }
+        });
+        break;
+    }
+  } catch (error) {
+    console.error("onClickCaptureOrConfirm 执行出错:", error);
+  } finally {
+    // 确保在所有情况下都关闭loading状态
+    captureOrConfirmLoading.value = false;
   }
 };
 
@@ -2205,9 +2249,12 @@ const onClickReturn = () => {
 const onClickRedo = () => {
   currentStage.value = "preview";
   nextTick(() => {
-    if (TopVideo.value) TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
-    if (FrontVideo.value) FrontCapture.value.videoElement = FrontVideo.value as HTMLVideoElement;
-    if (SideVideo.value) SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
+    if (TopVideo.value)
+      TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
+    if (FrontVideo.value)
+      FrontCapture.value.videoElement = FrontVideo.value as HTMLVideoElement;
+    if (SideVideo.value)
+      SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
     startCameraStream();
   });
 };

@@ -2234,23 +2234,19 @@ const onClickIsUpdateState = async (id: number) => {
   if (!item) {
     return;
   }
-  let sku = dataSource.value.find((item) => item.id === id)?.sku || item.id;
+  let sku = dataSource.value.find((item) => item.id === id)?.sku || "";
   Modal.confirm({
     title: sku + " 更新状态",
-    okText: "发送计算任务",
+    okText: "发送更新任务",
     cancelText: "取消",
     centered: true,
     icon: createVNode(ExclamationCircleOutlined),
     content: h("div", {}, [
-      h(
-        "p",
-        "更新状态：" +
-          getIsUpdateStateLabel(item.is_update) +
-          (item.update_info ? item.update_info : ""),
-      ),
+      h("p", "更新状态：" + getIsUpdateStateLabel(item.is_update)),
+      h("p", item.update_info ? item.update_info : ""),
     ]),
     onOk: () => {
-      sendCalculationTask(id);
+      sendUpdateTask(id);
     },
     okButtonProps: {
       // disabled: getAllCalculateLabel(id) == "待计算",
@@ -2279,6 +2275,31 @@ const sendCalculationTask = async (id: number) => {
         refreshCalculateStatesAndUpdateStates();
       } else {
         // 提示生成计算任务失败
+        message.error(response.data.msg);
+        calculateModelLoading.value = false;
+      }
+    });
+};
+
+// table更新状态发送更新任务事件
+const sendUpdateTask = async (id: number) => {
+  calculateModelLoading.value = true;
+  // 构造post请求表单formdata
+  const formData = new FormData();
+  // 将待更新的表格项的key存入formdata
+  formData.append("id", JSON.stringify(id));
+  await axios
+    .post("/glassmanagement/api/generate-update-task", formData)
+    .then((response) => {
+      console.log(response);
+      // 生成成功
+      if (response.data.code === 0) {
+        calculateModelLoading.value = false;
+        message.success("生成更新任务成功");
+        // 刷新计算状态
+        refreshCalculateStatesAndUpdateStates();
+      } else {
+        // 提示生成更新任务失败
         message.error(response.data.msg);
         calculateModelLoading.value = false;
       }

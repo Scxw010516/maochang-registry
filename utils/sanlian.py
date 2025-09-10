@@ -63,10 +63,9 @@ def get_sanlian_token():
             raise ValueError("获取三联token失败")
         token = response.json().get("data").get("access_token")
         return token
-    except Exception:
+    except Exception as e:
         # 重新抛出异常，让调用者处理
-        raise
-
+        raise str(e)
 def update_sanlian_eyeglass(token, data):
     """
     更新三联眼镜信息

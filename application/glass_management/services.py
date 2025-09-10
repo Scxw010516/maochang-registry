@@ -35,7 +35,7 @@ def SearchModeltypeOrSKU(request: HttpRequest):
     # 获取镜架型号和SKU
     searchtype = request.POST.get("skuormodeltype", "")
     searchstring = request.POST.get("searchString", "")
-
+    print(searchtype, searchstring)
     # 参数为空判断
     if not searchtype or not searchstring:
         return R.failed(msg="请求表单错误")
@@ -45,6 +45,7 @@ def SearchModeltypeOrSKU(request: HttpRequest):
         entrys = models.EyeglassFrameEntry.objects.filter(model_type__icontains=searchstring, is_delete=False)
     elif searchtype == "2":
         entrys = models.EyeglassFrameEntry.objects.filter(sku__icontains=searchstring, is_delete=False)
+    print(entrys)
     # 通过sku字段，过滤已经存在于EyeglassFrameEntry表中的数据
     # entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.filter(is_delete=False)])
 
@@ -365,6 +366,7 @@ def GenerateCalculateTask(request: HttpRequest):
             EyeglassFrameEntry_instance.image_mask_state = 0
             EyeglassFrameEntry_instance.image_seg_state = 0
             EyeglassFrameEntry_instance.image_beautify_state = 0
+            EyeglassFrameEntry_instance.is_update = 0
             """
             生成celery计算任务：传递镜架基础信息表的sku值
             """
@@ -375,6 +377,24 @@ def GenerateCalculateTask(request: HttpRequest):
     except Exception as e:
         return R.failed(msg=str(e))
     return R.ok(msg="生成计算任务成功：" + str(task_id))
+
+
+def GenerateUpdateTask(request:HttpRequest):
+    """
+    生成更新任务
+    参数：
+        id：镜架基础表ID
+    """
+    print("GenerateUpdateTask:", id)
+    id = request.POST.get("id")
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
+    if not EyeglassFrameEntry_instance:
+        return R.failed(msg="镜架不存在")
+    EyeglassFrameEntry_instance.is_update = 0 # 待更新
+    sku = EyeglassFrameEntry_instance.sku
+    EyeglassFrameEntry_instance.save()
+    tasks.update.delay_on_commit(sku)
+    return R.ok(msg="生成更新任务成功")
 
 
 def SaveEditEyeglassFrame(request: HttpRequest):

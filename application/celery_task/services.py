@@ -243,9 +243,9 @@ def get_sanlian_token():
     try:
         token = sanlian.get_sanlian_token()
         return token
-    except Exception:
+    except Exception as e:
         # 重新抛出异常，让调用者处理
-        raise
+        raise str(e)
 
 
 def update_sanlian_eyeglass(id, token):
@@ -254,11 +254,15 @@ def update_sanlian_eyeglass(id, token):
     """
     try:
         EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id).first()
+        if not EyeglassFrameEntry_instance:
+            raise ValueError("没有找到该镜架")
         EyeglassFrameMillimeterMeasurement_instance = models.EyeglassFrameMillimeterMeasurement.objects.filter(
             entry_id=id
         ).first()
+        if not EyeglassFrameMillimeterMeasurement_instance:
+            raise ValueError("没有找到该镜架的毫米测量数据")
         
-        data ={
+        data = {
             "sku": EyeglassFrameEntry_instance.sku,
             "brand": EyeglassFrameEntry_instance.brand,
             "model_type": EyeglassFrameEntry_instance.model_type,
@@ -314,8 +318,11 @@ def update_sanlian_eyeglass(id, token):
             EyeglassFrameEntry_instance.update_info = msg
             EyeglassFrameEntry_instance.save()
     except Exception as e:
+        EyeglassFrameEntry_instance.is_update = 3 # 更新失败
+        EyeglassFrameEntry_instance.update_info = str(e)
+        EyeglassFrameEntry_instance.save()
         print(f"更新镜架信息错误: {e}")
-        raise
+        return
 
 def read_image_from_field(image_field):
     """从Django的ImageField中获得url读取图像并转换为OpenCV格式"""

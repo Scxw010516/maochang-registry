@@ -59,6 +59,15 @@ def calc(self, sku):
         print(error_msg)
         return error_msg
     
+    # """
+    # 发送镜架参数
+    # """
+    # # 获取token
+        
+    # update.delay_on_commit(sku)
+
+    # return
+
     if self.request.retries >= 3: # 第四次重试，则取消任务
         EyeglassFrameEntry_instance.pixel_measurement_state = 3
         EyeglassFrameEntry_instance.millimeter_measurement_state = 3
@@ -97,6 +106,7 @@ def calc(self, sku):
             EyeglassFrameEntry_instance.image_mask_state = 0
             EyeglassFrameEntry_instance.image_seg_state = 0
             EyeglassFrameEntry_instance.image_beautify_state = 0
+            EyeglassFrameEntry_instance.is_update = 0
             EyeglassFrameEntry_instance.save()
         print("状态已恢复到初始状态(0)")
     else:
@@ -331,18 +341,12 @@ def calc(self, sku):
         print(error_msg)
         return error_msg
     # 获取token
-    try:
-        token = services.get_sanlian_token()
-        # print(f"获取到的token: {token}")
-        if not token:
-            print("获取token失败")
-            return "获取token失败"
+    # try:
+    update.delay_on_commit(sku)
 
-        services.update_sanlian_eyeglass(EyeglassFrameEntry_instance.id, token)
-
-    except Exception as e:
-        print(f"更新镜架信息失败: {e}")
-        return
+    # except Exception as e:
+    #     print(f"更新镜架信息失败: {e}")
+    #     return
     """
     生成试戴任务
     """
@@ -593,3 +597,83 @@ def tryon(self, sku):
     # 返回
     return sku
 
+"""
+发送镜架参数到三联系统
+"""
+@shared_task(bind=True, autoretry_for=(Exception,), retry_kwargs={'max_retries': 4, 'countdown': 60})
+def update(self, sku):
+
+    print(f"执行更新任务：{sku}, 任务ID: {self.request.id}, 重试次数: {self.request.retries}")
+
+    # 查询镜架基本信息表
+    EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku, is_delete=False).first()
+    if not EyeglassFrameEntry_instance:
+        error_msg = f"更新失败：镜架基本信息表不存在，SKU: {sku}"
+        print(error_msg)
+        return error_msg
+    
+    # 第四次重试，直接失败
+    if self.request.retries >= 3:
+        EyeglassFrameEntry_instance.is_update = 3  # 更新失败
+        EyeglassFrameEntry_instance.update_info = "达到最大重试次数"
+        EyeglassFrameEntry_instance.save()
+        print("已达到最大重试次数，更新失败")
+        return
+    
+    # 重试时的状态恢复逻辑
+    if self.request.retries > 0:
+        print(f"任务重试中，正在恢复初始状态...")
+        current_states = {
+            'is_update': EyeglassFrameEntry_instance.is_update,
+            'update_info': EyeglassFrameEntry_instance.update_info
+        }
+        print(f"重试前状态: {current_states}")
+        
+        with transaction.atomic():
+            EyeglassFrameEntry_instance.is_update = 0  # 待更新
+            EyeglassFrameEntry_instance.update_info = None
+            EyeglassFrameEntry_instance.save()
+        print("状态已恢复到初始状态(0)")
+    
+    try:
+        # 更新状态为更新中
+        with transaction.atomic():
+            EyeglassFrameEntry_instance.is_update = 1  # 更新中
+            EyeglassFrameEntry_instance.save()
+        
+        # 获取token
+        token = services.get_sanlian_token()
+        if not token:
+            raise ValueError("获取token失败")
+        
+        # 更新三联系统数据
+        services.update_sanlian_eyeglass(EyeglassFrameEntry_instance.id, token)
+        
+        # 更新成功
+        with transaction.atomic():
+            EyeglassFrameEntry_instance.is_update = 2  # 更新成功
+            EyeglassFrameEntry_instance.update_info = None
+            EyeglassFrameEntry_instance.save()
+        
+        print(f"更新镜架信息成功: {sku}")
+        return sku
+
+    except Exception as e:
+        print(f"更新镜架信息失败: {str(e)}")
+        
+        # 失败时的状态处理
+        with transaction.atomic():
+            if self.request.retries >= 2:  # 最后一次重试失败
+                print("已达到最大重试次数，设置为失败状态")
+                EyeglassFrameEntry_instance.is_update = 3  # 更新失败
+                EyeglassFrameEntry_instance.update_info = f"{str(e)}"
+                EyeglassFrameEntry_instance.save()
+                return f"更新失败: {str(e)}"
+            else:
+                # 还会重试，恢复到初始状态
+                print(f"更新失败，准备重试 (当前重试次数: {self.request.retries})")
+                EyeglassFrameEntry_instance.is_update = 0  # 待更新
+                EyeglassFrameEntry_instance.update_info = None
+                EyeglassFrameEntry_instance.save()
+                # 触发重试
+                raise self.retry(exc=e, countdown=60)

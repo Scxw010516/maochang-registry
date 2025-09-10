@@ -26,6 +26,8 @@ export const initFormOptions = () => {
   getAllAifaceTryonStates();
   // 获取所有启用状态
   getAllIsActiveStates();
+  // 获取所有更新状态
+  getAllIsUpdateStates();
 };
 
 // 功能函数：获取所有镜架品牌
@@ -281,6 +283,28 @@ const getAllIsActiveStates = async () => {
   ];
 };
 
+const getAllIsUpdateStates = async () => {
+  const options = useOptionStore(); // 在函数内部调用
+  options.is_update_options = [
+    {
+      value: 0,
+      label: "待更新",
+    },
+    {
+      value: 1,
+      label: "更新中",
+    },
+    {
+      value: 2,
+      label: "更新完成",
+    },
+    {
+      value: 3,
+      label: "更新失败",
+    },
+  ];
+};
+
 export const getCalculationStateLabel = (value: number) => {
   const options = useOptionStore(); // 在函数内部调用
   if (options.calculation_state_options) {
@@ -316,6 +340,18 @@ export const getIsActiveLabel = (value: boolean | number) => {
   const options = useOptionStore(); // 在函数内部调用
   if (options.is_active_options) {
     const option = options.is_active_options.find(
+      (item) => item.value === value,
+    );
+    return option ? option.label : "无";
+  } else {
+    return "无";
+  }
+};
+
+export const getIsUpdateStateLabel = (value: number) => {
+  const options = useOptionStore(); // 在函数内部调用
+  if (options.is_update_options) {
+    const option = options.is_update_options.find(
       (item) => item.value === value,
     );
     return option ? option.label : "无";

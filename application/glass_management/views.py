@@ -330,6 +330,16 @@ class GenerateCalculateTaskView(View):
 	
 	
 """
+生成更新任务
+"""
+class GenerateUpdateTaskView(View):
+	def post(self, request: HttpRequest):
+		# 调用生成更新任务的服务方法
+		result = services.GenerateUpdateTask(request)
+		# 返回结果
+		return result
+
+"""
 编辑镜架信息
 """
 class SaveEditEyeglassFrameView(View):

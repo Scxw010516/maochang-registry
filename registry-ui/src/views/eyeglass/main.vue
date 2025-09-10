@@ -184,9 +184,9 @@ const state = useStateStore();
 // 侧边导航栏菜单
 const menuItems = ref([
   { key: "1", label: "镜架采集", title: "镜架采集" },
-  { key: "2", label: "镜架验证", title: "镜架验证" },
-  { key: "3", label: "镜框落库", title: "镜框落库" },
-  { key: "4", label: "账号中心", title: "账号中心" },
+  { key: "2", label: "参数计算", title: "参数计算" },
+  { key: "3", label: "试戴验证", title: "试戴验证" },
+  // { key: "4", label: "账号中心", title: "账号中心" },
 ]);
 
 const selectedMenuItem = ref<string[]>(["1"]); // 选中的菜单项
