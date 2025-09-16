@@ -1158,8 +1158,8 @@ def ResetTryonMode(request: HttpRequest):
         失败时：data: null
                 msg: "镜架试戴模式更新失败"
     """
-    is_tryon_leg_auto = request.POST.get("is_tryon_leg_auto", "true")
-    is_tryon_beautify_origin = request.POST.get("is_tryon_beautify_origin", "true")
+    is_tryon_leg_auto = request.POST.get("is_tryon_leg_auto")
+    is_tryon_beautify_origin = request.POST.get("is_tryon_beautify_origin")
     id = request.POST.get("id")
     if not id:
         return R.failed(msg="镜架ID为空")

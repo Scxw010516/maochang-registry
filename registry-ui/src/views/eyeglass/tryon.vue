@@ -575,6 +575,7 @@ const onClickAnnotateConfirm = () => {
 
 // 点击复原：展开复原确认modal
 const onClickReset: MenuProps["onClick"] = (e) => {
+  // reset_confirm_loading.value = false;
   console.log("click", e.key); // 获取点击的菜单项的 key
   // 在这里添加你想要执行的逻辑，例如根据 key 值进行不同的操作
   switch (e.key) {
@@ -647,15 +648,15 @@ const onClickResetAndGenerateTryonTask = (
       break;
   }
   axios.post("/glassmanagement/api/reset-tryon-mode", form).then((response) => {
-    // console.log(response);
-    const data = response.data.data;
+    reset_confirm_loading.value = false;
+    console.log(response);
+    const data = response.data;
     if (data.data) {
       getPageData();
-      message.success(data.msg);
+      message.success(data.data.msg);
     } else {
       message.error(data.msg);
     }
-    reset_confirm_loading.value = false;
   });
 };
 
