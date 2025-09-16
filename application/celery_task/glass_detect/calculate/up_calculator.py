@@ -134,7 +134,7 @@ class UpCalculator(ImageCalculator):
         rotated_image = rotate_image(
             image,
             angle=-(np.pi / 2 - self.rotate_angle),
-            point=add(self.pile_points[0], [crop_region[0], crop_region[2]]),
+            point=add(self.pile_points[0], [crop_region[2], crop_region[0]]),
         )
         return rotated_image[
             crop_region[0] : crop_region[1], crop_region[2] : crop_region[3]

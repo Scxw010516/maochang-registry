@@ -9,6 +9,13 @@ default_options = {
     },
     # List[float]类型，对应EyeglassFrameEntry表的lens_width_st、bridge_width_st、temple_length_st。严格按顺序
     "standard_size": [53, 16, 145],
+    "regions": {
+        "up": (0, 3000, 0, 3995),
+        "front": (900, 2600, 350, 3750),
+        "left": (300, 2080, 400, 3960),
+        "nose": (188, 1212, 1088,2112), # 相对于裁切后的front，而非原图
+    },
+    "crop_version":1, # 裁剪版本，0为初始版本，1为更新版本
 }
 
 default_front_points = {

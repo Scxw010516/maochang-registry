@@ -17,7 +17,6 @@ from utils.obs.obs_client import get_image_object
 from utils.utils import getGlobalCalculationState
 
 
-
 # 镜架采集端
 def SearchModeltypeOrSKU(request: HttpRequest):
     """
@@ -42,9 +41,9 @@ def SearchModeltypeOrSKU(request: HttpRequest):
 
     # 查询镜架型号或SKU是否存在，其中sku是唯一的
     if searchtype == "1":
-        entrys = models.EyeglassFrameEntry.objects.filter(model_type__icontains=searchstring, is_delete=False)
+        entrys = models.EyeglassFramePreloadData.objects.filter(model_type__icontains=searchstring, is_delete=False)
     elif searchtype == "2":
-        entrys = models.EyeglassFrameEntry.objects.filter(sku__icontains=searchstring, is_delete=False)
+        entrys = models.EyeglassFramePreloadData.objects.filter(sku__icontains=searchstring, is_delete=False)
     print(entrys)
     # 通过sku字段，过滤已经存在于EyeglassFrameEntry表中的数据
     # entrys = entrys.exclude(sku__in=[entry.sku for entry in models.EyeglassFrameEntry.objects.filter(is_delete=False)])
@@ -237,10 +236,10 @@ def UploadNewEyeglassFrame(request: HttpRequest):
             """
             # print(request.POST)
             # 创建镜架扫描结果表实例
+            sku = request.POST.get("sku")
             # 判断是否为重新扫描
             if request.POST.get("isRescan") == "true":
                 # 获取原有记录
-                sku = request.POST.get("sku")
                 EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku, is_delete=False).first()
                 if not EyeglassFrameEntry_instance:
                     # 抛出异常
@@ -249,11 +248,20 @@ def UploadNewEyeglassFrame(request: HttpRequest):
                     request.POST, instance=EyeglassFrameEntry_instance
                 )
             else:
-                form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(request.POST)
+                # 判断原记录是否已删除
+                EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(sku=sku, is_delete=True).first()
+                if EyeglassFrameEntry_instance:
+                    form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(
+                        request.POST, instance=EyeglassFrameEntry_instance
+                    )
+                else:
+                    form_EyeglassFrameEntry = forms.EyeglassFrameEntryForm(request.POST)
             # 验证镜架基本信息表表单
             if form_EyeglassFrameEntry.is_valid():
                 # 保存镜架基本信息表实例
                 EyeglassFrameEntry_instance = form_EyeglassFrameEntry.save(commit=False)
+                # 保存是否删除为False
+                EyeglassFrameEntry_instance.is_delete = False
                 # 保存镜架计算状态为0待计算
                 EyeglassFrameEntry_instance.pixel_measurement_state = 0
                 EyeglassFrameEntry_instance.millimeter_measurement_state = 0
@@ -277,9 +285,16 @@ def UploadNewEyeglassFrame(request: HttpRequest):
                             entry_id=EyeglassFrameEntry_instance.id
                         )
                 else:
-                    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(
-                        entry_id=EyeglassFrameEntry_instance.id
-                    )
+                    # 判断原记录是否已删除
+                    EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.filter(
+                        entry_id=EyeglassFrameEntry_instance.id, is_delete=True
+                    ).first()
+                    if EyeglassFrameImage_instance:
+                        EyeglassFrameImage_instance.is_delete = False
+                    else:
+                        EyeglassFrameImage_instance = models.EyeglassFrameImage.objects.create(
+                            entry_id=EyeglassFrameEntry_instance.id
+                        )
                 # 获取三视图图片文件
                 frontview = request.FILES.get("frontview")
                 sideview = request.FILES.get("sideview")
@@ -385,7 +400,7 @@ def GenerateUpdateTask(request:HttpRequest):
     参数：
         id：镜架基础表ID
     """
-    print("GenerateUpdateTask:", id)
+    # print("GenerateUpdateTask:", id)
     id = request.POST.get("id")
     EyeglassFrameEntry_instance = models.EyeglassFrameEntry.objects.filter(id=id, is_delete=False).first()
     if not EyeglassFrameEntry_instance:
@@ -1161,7 +1176,7 @@ def ResetTryonMode(request: HttpRequest):
         EyeglassFrameEntry_instance.is_tryon_leg_auto = is_tryon_leg_auto
     else:
         return R.failed(msg="参数错误")
-    
+
     if not is_tryon_beautify_origin:
         is_tryon_beautify_origin = EyeglassFrameEntry_instance.is_tryon_beautify_origin
     elif is_tryon_beautify_origin == "true":
@@ -1169,7 +1184,7 @@ def ResetTryonMode(request: HttpRequest):
         EyeglassFrameEntry_instance.is_tryon_beautify_origin = is_tryon_beautify_origin 
     else:
         return R.failed(msg="参数错误")
-    
+
     # 判断是否自动处理镜腿
     if  is_tryon_leg_auto:
         # 自动处理镜腿，删除镜腿标注信息
@@ -1183,6 +1198,12 @@ def ResetTryonMode(request: HttpRequest):
                 keys_to_remove = ["top_left_point", "top_right_point", "bottom_left_point", "bottom_right_point"]
                 for key in keys_to_remove:
                     EyeglassFrameCoordinate_instance.left_points.pop(key, None)  # 使用pop删除，避免KeyError
+                # left_points = EyeglassFrameCoordinate_instance.left_points
+                # if isinstance(left_points, dict):
+                #     for key in keys_to_remove:
+                #         if key in left_points:
+                #             del left_points[key]
+                #     EyeglassFrameCoordinate_instance.left_points = left_points
                 EyeglassFrameCoordinate_instance.save()
     else:
         # 手动处理镜腿，则检查是否标注了镜腿
@@ -1199,7 +1220,7 @@ def ResetTryonMode(request: HttpRequest):
                 bottom_right_point = EyeglassFrameCoordinate_instance.left_points.get("bottom_right_point")
                 if not (top_left_point or top_right_point or bottom_left_point or bottom_right_point):
                     return R.failed(msg="未标注镜腿")
-                
+
     # 判断是否使用原始beautify进行试戴
     if is_tryon_beautify_origin:
         # 使用原始beautify进行试戴，删除处理后的美化图片

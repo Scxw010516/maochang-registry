@@ -24,6 +24,20 @@ from application.glass_management import forms
 
 from application.celery import app
 
+# 清洗数据：将 numpy 类型转为 Python 原生类型
+def convert(data):
+    if isinstance(data, np.integer):
+        return int(data)
+    elif isinstance(data, np.floating):
+        return float(data)
+    elif isinstance(data, np.ndarray):
+        return data.tolist()
+    elif isinstance(data, dict):
+        return {k: convert(v) for k, v in data.items()}
+    elif isinstance(data, list):
+        return [convert(v) for v in data]
+    else:
+        return data
 
 def save_output_mask(output_mask, instance):
     """
@@ -44,42 +58,32 @@ def save_output_mask(output_mask, instance):
 
     for field_name, mask_array in mask_fields.items():
         if mask_array is not None:
-            # 创建临时文件
-            temp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
             try:
-                # 保存numpy array为图片文件
-                cv2.imwrite(temp.name, mask_array)
-                # 打开临时文件并保存到ImageField
-                with open(temp.name, 'rb') as f:
-                    # 模型的字段名与mask fields的key相同
-                    getattr(instance, field_name).save(f'{field_name}.png', File(f), save=False)
-            finally:
-                # 清理临时文件
-                temp.close()
-                os.unlink(temp.name)
+                # 将numpy array转换为bytes
+                success, img_buffer = cv2.imencode('.png', mask_array)
+                if success:
+                    # 直接使用ContentFile保存到ImageField，避免临时文件
+                    getattr(instance, field_name).save(
+                        f'{field_name}.png',
+                        ContentFile(img_buffer.tobytes()),
+                        save=False
+                    )
+                else:
+                    print(f"编码mask失败: {field_name}")
+            except Exception as e:
+                print(f"保存mask图片时发生错误 {field_name}: {str(e)}")
+    
     # 保存模型实例
     instance.save()
 
-# todo：修改保存方法：
-#   if mask_array is not None:
-#             # 将numpy array转换为bytes
-#             success, img_buffer = cv2.imencode('.png', mask_array)
-#             if success:
-#                 # 直接使用ContentFile保存到ImageField，避免临时文件
-#                 getattr(instance, field_name).save(
-#                     f'{field_name}.png',
-#                     ContentFile(img_buffer.tobytes()),
-#                     save=False
-#                 )
-#             else:
-#                 print(f"编码mask失败: {field_name}")
+
 def save_output_images(output_images, instance):
     """
     将process输出的图片保存到Django模型的ImageField中
 
     Args:
-    output:process函数的输出字曲
-    instance:Django模型实例
+    output_images: process函数的输出图片
+    instance: Django模型实例
     """
     # 需要保存的图片字段
     image_fields = {
@@ -91,38 +95,26 @@ def save_output_images(output_images, instance):
 
     for field_name, image_array in image_fields.items():
         if image_array is not None:
-            # 创建临时文件
-            temp = tempfile.NamedTemporaryFile(delete=False, suffix='.png')
             try:
-                # 保存numpy array为图片文件
-                cv2.imwrite(temp.name, image_array)
-                # 打开临时文件并保存到ImageField
-                with open(temp.name, 'rb') as f:
-                    # 模型的字段名与image fields的key相同
-                    getattr(instance, field_name).save(f'{field_name}.png', File(f), save=False)
-            finally:
-                # 清理临时文件
-                temp.close()
-                os.unlink(temp.name)
+                # 将numpy array转换为bytes
+                success, img_buffer = cv2.imencode('.png', image_array)
+                if success:
+                    # 直接使用ContentFile保存到ImageField，避免临时文件
+                    getattr(instance, field_name).save(
+                        f'{field_name}.png',
+                        ContentFile(img_buffer.tobytes()),
+                        save=False
+                    )
+                else:
+                    print(f"编码图片失败: {field_name}")
+            except Exception as e:
+                print(f"保存图片时发生错误 {field_name}: {str(e)}")
+    
     # 保存模型实例
     instance.save()
 
 
 def save_output_point(output_point, entry_id):
-    # 清洗数据：将 numpy 类型转为 Python 原生类型
-    def convert(data):
-        if isinstance(data, np.integer):
-            return int(data)
-        elif isinstance(data, np.floating):
-            return float(data)
-        elif isinstance(data, np.ndarray):
-            return data.tolist()
-        elif isinstance(data, dict):
-            return {k: convert(v) for k, v in data.items()}
-        elif isinstance(data, list):
-            return [convert(v) for v in data]
-        else:
-            return data
     try:
         # 重构output_point['data']，确保数据格式正确
         cleaned_data = convert(output_point['data'])
@@ -148,6 +140,7 @@ def save_output_point(output_point, entry_id):
             EyeglassFrameCoordinate_instance.front_points = front_points
             EyeglassFrameCoordinate_instance.left_points = left_points
             EyeglassFrameCoordinate_instance.up_points = up_points
+            EyeglassFrameCoordinate_instance.is_delete = False
             EyeglassFrameCoordinate_instance.save()
     except Exception as e:
         raise ValueError("保存镜架坐标数据失败", e)
@@ -177,6 +170,7 @@ def save_output_parameter(output_parameter, entry_id):
         EyeglassFramePixelMeasurement_instance = form_EyeglassFramePixelMeasurement.save(commit=False)
         # 关联镜架基本信息表外键
         EyeglassFramePixelMeasurement_instance.entry_id = entry_id
+        EyeglassFramePixelMeasurement_instance.is_delete = False
         EyeglassFramePixelMeasurement_instance.save()
     else:
         raise ValueError("镜架像素测量数据表表单验证失败")
@@ -205,6 +199,7 @@ def save_output_size(output_size, entry_id):
         EyeglassFrameMillimeterMeasurement_instance = form_EyeglassFrameMillimeterMeasurement.save(commit=False)
         # 关联镜架基本信息表外键
         EyeglassFrameMillimeterMeasurement_instance.entry_id = entry_id
+        EyeglassFrameMillimeterMeasurement_instance.is_delete = False
         EyeglassFrameMillimeterMeasurement_instance.save()
     else:
         raise ValueError("镜架毫米测量数据表表单验证失败")
@@ -232,6 +227,7 @@ def save_output_shape(output_shape, entry_id):
         EyeglassFrameCalculation_instance = form_EyeglassFrameCalculation.save(commit=False)
         # 关联镜架基本信息表外键
         EyeglassFrameCalculation_instance.entry_id = entry_id
+        EyeglassFrameCalculation_instance.is_delete = False
         EyeglassFrameCalculation_instance.save()
     else:
         raise ValueError("镜架计算数据表表单验证失败")

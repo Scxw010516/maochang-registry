@@ -15,9 +15,10 @@ def process_normal(image, mask):
     image_edge = reduce_white_edge(
         image, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_brightness = brightness_adjust(image_edge, 0.9)
-    image_curve = adjust_curve(image_brightness, mode="none")
-    image_shadow = add_shadow(image_curve, alpha=1.5)
+    image_brightness = brightness_adjust(image_edge, 1.1)
+    # image_curve = adjust_curve(image_brightness, mode="none")
+    # image_shadow = add_shadow(image_curve, alpha=1.5)
+    image_shadow = add_shadow(image_brightness, alpha=0.5)
     image_ps = image_shadow
     return image_ps
 
@@ -27,22 +28,25 @@ def process_metal(image, mask):
     image_edge = reduce_white_edge(
         image, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_brightness = brightness_adjust(image_edge, 0.9)
-    image_curve = adjust_curve(image_brightness, mode="none")
-    image_shadow = add_shadow(image_curve, mask, alpha=1.5)
-    image_ps = image_curve
+    image_brightness = brightness_adjust(image_edge, 1.1)
+    # image_curve = adjust_curve(image_brightness, mode="none")
+    # image_shadow = add_shadow(image_curve, mask, alpha=1.5)
+    image_shadow = add_shadow(image_brightness, alpha=0.5)
+    image_ps = image_shadow
     return image_ps
 
 
 def process_transparent_color(image, mask):
     # 自适应调整亮度 -> 自适应调整曲线 -> 去除镜片白边 -> 增加投影 -> 增加底色
 
-    image_brightness = brightness_adjust(image, 0.9)
+    image_brightness = brightness_adjust(image, 1.1)
     image_curve = adjust_curve(image_brightness, mode="transparent")
     image_edge = reduce_white_edge(
         image_curve, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_shadow = add_shadow(image_edge, mask, alpha=1)
+    # image_curve = adjust_curve(image_brightness, mode="none")
+    # image_shadow = add_shadow(image_curve, alpha=1.5)
+    image_shadow = add_shadow(image_edge, alpha=0.5)
     image_color = add_base_color(image, mask, image_base=image_shadow, alpha=0.5)
     return image_color
 
@@ -50,7 +54,7 @@ def process_transparent_color(image, mask):
 def process_transparent(image, mask):
     # 自适应调整亮度 -> 自适应调整曲线 -> 自适应调整亮度 -> 去除镜片白边 -> 增加投影
 
-    image_brightness = brightness_adjust(image, 0.9)
+    image_brightness = brightness_adjust(image, 1.1)
     image_curve = adjust_curve(image_brightness, mode="transparent")
     image_brightness2 = brightness_adjust(image_curve, 0.6)
     image_edge = reduce_white_edge(
@@ -66,8 +70,10 @@ def process_half_none(image, mask):
 
     image_edge = reduce_white_edge(image, mask)
     image_brightness = brightness_adjust(image_edge, 0.9)
-    image_curve = adjust_curve(image_brightness, mode="none")
-    image_shadow = add_shadow(image_curve, mask, alpha=0.5)
+    # image_curve = adjust_curve(image_brightness, mode="none")
+    # image_shadow = add_shadow(image_curve, mask, alpha=0.5)
+
+    image_shadow = add_shadow(image_brightness, alpha=0.5)
     image_ps = image_shadow
     return image_ps
 
@@ -76,8 +82,9 @@ def process_half_none_metal(image, mask):
     # 去除镜片白边 -> 自适应调整亮度 -> 调整曲线 -> 增加投影
     image_edge = reduce_white_edge(image, mask)
     image_brightness = brightness_adjust(image_edge, 0.9)
-    image_curve = adjust_curve(image_brightness, mode="none")
-    image_shadow = add_shadow(image_curve, mask, alpha=0.5)
+    # image_curve = adjust_curve(image_brightness, mode="none")
+    # image_shadow = add_shadow(image_curve, alpha=1.5)
+    image_shadow = add_shadow(image_brightness, alpha=0.5)
     image_ps = image_shadow
     return image_ps
 
@@ -87,7 +94,7 @@ def process_normal_special(image, mask):
     image_edge = reduce_white_edge(
         image, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_shadow = add_shadow(image_edge, alpha=1.5)
+    image_shadow = add_shadow(image_edge, alpha=0.5)
 
     image_ps = image_shadow
     return image_ps
@@ -98,7 +105,7 @@ def process_metal_special(image, mask):
     image_edge = reduce_white_edge(
         image, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_shadow = add_shadow(image_edge, mask, alpha=1.5)
+    image_shadow = add_shadow(image_edge, mask, alpha=0.5)
     image_ps = image_shadow
     return image_ps
 
@@ -109,7 +116,7 @@ def process_transparent_color_special(image, mask):
     image_edge = reduce_white_edge(
         image, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_shadow = add_shadow(image_edge, mask, alpha=1)
+    image_shadow = add_shadow(image_edge, mask, alpha=0.5)
     image_color = add_base_color(image, mask, image_base=image_shadow, alpha=0.5)
     image_ps = image_color
     return image_ps
@@ -121,7 +128,7 @@ def process_transparent_special(image, mask):
     image_edge = reduce_white_edge(
         image, mask, color=(100, 100, 100), width=2, alpha=0.5
     )
-    image_shadow = add_shadow(image_edge, mask, alpha=1)
+    image_shadow = add_shadow(image_edge, mask, alpha=0.5)
 
     image_ps = image_shadow
     return image_ps

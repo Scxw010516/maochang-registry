@@ -195,7 +195,7 @@ def calc(self, sku):
         print(f"计算参数: {options}")
         # 计算参数
         output = process(images, calc_models, options)
-        # print(output)
+        print(output)
 
     except Exception as e:
         print(f"计算参数失败: {str(e)}")
@@ -242,8 +242,10 @@ def calc(self, sku):
             if output['mask']['state']:
                 services.save_output_mask(output['mask'], EyeglassFrameImage_instance)
                 EyeglassFrameEntry_instance.image_mask_state = 2
+                print("mask保存成功")
             else:
                 EyeglassFrameEntry_instance.image_mask_state = 3
+
         except Exception as e:
             EyeglassFrameEntry_instance.image_mask_state = 3
             print("mask处理失败:" + e)
@@ -257,9 +259,10 @@ def calc(self, sku):
                 services.save_output_images(output['image'], EyeglassFrameImage_instance)
                 EyeglassFrameEntry_instance.image_seg_state = 2
                 EyeglassFrameEntry_instance.image_beautify_state = 2
+                print("images保存成功")
             else:
                 EyeglassFrameEntry_instance.image_seg_state = 3
-                EyeglassFrameEntry_instance.image_beautify_state = 3
+                EyeglassFrameEntry_instance.image_beautify_state = 3 
         except Exception as e:
             EyeglassFrameEntry_instance.image_seg_state = 3
             EyeglassFrameEntry_instance.image_beautify_state = 3
@@ -273,6 +276,7 @@ def calc(self, sku):
                 services.save_output_point(output['point'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.coordinate_state = 2
+                print("point保存成功")
             else:
                 # 处理镜架坐标数据缺失
                 raise ValueError("镜架坐标数据缺失")
@@ -289,6 +293,7 @@ def calc(self, sku):
                 services.save_output_parameter(output['parameter'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.pixel_measurement_state = 2
+                print("parameter保存成功")
             else:
                 # 处理镜架像素测量数据缺失
                 raise ValueError("镜架像素测量数据缺失")
@@ -305,6 +310,7 @@ def calc(self, sku):
                 services.save_output_size(output['size'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.millimeter_measurement_state = 2
+                print("size保存成功")
             else:
                 # 处理镜架毫米测量数据缺失
                 raise ValueError("镜架毫米测量数据缺失")
@@ -320,6 +326,7 @@ def calc(self, sku):
                 services.save_output_shape(output['shape'], entry_id)
                 # 更新计算状态
                 EyeglassFrameEntry_instance.calculation_state = 2
+                print("shape保存成功")
             else:
                 # 处理镜架计算数据缺失
                 raise ValueError("镜架计算数据缺失")
@@ -332,6 +339,7 @@ def calc(self, sku):
     EyeglassFrameEntry_instance.is_tryon_leg_auto = True
     EyeglassFrameEntry_instance.is_tryon_beautify_origin = True
     EyeglassFrameEntry_instance.save()
+
     """
     发送镜架参数
     """
@@ -340,7 +348,6 @@ def calc(self, sku):
         error_msg = f"计算失败：镜架基本信息表不存在，SKU: {sku}"
         print(error_msg)
         return error_msg
-    # 获取token
     # try:
     update.delay_on_commit(sku)
 
@@ -650,12 +657,12 @@ def update(self, sku):
         services.update_sanlian_eyeglass(EyeglassFrameEntry_instance.id, token)
         
         # 更新成功
-        with transaction.atomic():
-            EyeglassFrameEntry_instance.is_update = 2  # 更新成功
-            EyeglassFrameEntry_instance.update_info = None
-            EyeglassFrameEntry_instance.save()
+        # with transaction.atomic():
+        #     EyeglassFrameEntry_instance.is_update = 2  # 更新成功
+        #     EyeglassFrameEntry_instance.update_info = None
+        #     EyeglassFrameEntry_instance.save()
         
-        print(f"更新镜架信息成功: {sku}")
+        # print(f"更新镜架信息成功: {sku}")
         return sku
 
     except Exception as e:

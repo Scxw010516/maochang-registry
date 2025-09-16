@@ -1,5 +1,5 @@
 from typing import Union
-
+import cv2
 import numpy as np
 
 
@@ -13,3 +13,8 @@ class ImagePreprocessor:
             crop_region[0] : crop_region[1], crop_region[2] : crop_region[3]
         ]
         return crop_image
+
+    def resize(self, image, dst_size: Union[tuple, list]) -> np.ndarray:
+        # dst_size:(w,h)
+        dst_image = cv2.resize(image, dst_size)
+        return dst_image

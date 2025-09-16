@@ -15,7 +15,7 @@ class LensSegmentor(ImageSegmentor):
             from .unet.utils.create_unet import create_unet
 
             net = create_unet(num_classes=2)
-                # 使用 os.path
+            # 使用 os.path
             current_dir = os.path.dirname(os.path.abspath(__file__))
             checkpoint_path = os.path.join(current_dir, "checkpoints", "lens.pth")
             checkpoint = torch.load(

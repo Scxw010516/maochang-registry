@@ -5,7 +5,7 @@ import requests
 import json
 import datetime
 import random
-
+from config.env import SANLIAN_UPDATE_URL, SANLIAN_GET_TOKEN_URL
 def get_current_timestamp():
     """
     生成当前时间戳
@@ -54,7 +54,7 @@ def get_sanlian_token():
             "timestamp": get_current_timestamp()  # 自动生成当前时间戳
         }
         response = requests.post(
-            "https://sanlianjituan.test.kdcloud.com/kapi/oauth2/getToken", 
+            SANLIAN_GET_TOKEN_URL, 
             json=token_data,
         )
         print(f"获取三联token响应: {response.json()}")
@@ -118,7 +118,7 @@ def update_sanlian_eyeglass(token, data):
         }
         print(data)
         response = requests.post(
-            "https://sanlianjituan.test.kdcloud.com/kapi/v2/shcp/basedata/bd_material/updateSFinfo",
+            SANLIAN_UPDATE_URL,
             headers={"Content-Type": "application/json", "accesstoken": token},
             json={"data": data}
         )

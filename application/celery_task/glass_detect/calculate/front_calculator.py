@@ -184,7 +184,7 @@ class FrontCalculator(ImageCalculator):
         rotated_image = rotate_image(
             image,
             angle=self.rotate_angle,
-            point=add(self.lens_center_points[0], [crop_region[0], crop_region[2]]),
+            point=add(self.lens_center_points[0], [crop_region[2], crop_region[0]]),
         )
         return rotated_image[
             crop_region[0] : crop_region[1], crop_region[2] : crop_region[3]
