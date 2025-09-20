@@ -300,6 +300,8 @@ def update_sanlian_eyeglass(id, token):
             "spread_angle_left": EyeglassFrameMillimeterMeasurement_instance.spread_angle_left,
             "spread_angle_right": EyeglassFrameMillimeterMeasurement_instance.spread_angle_right,
             "pile_distance": EyeglassFrameMillimeterMeasurement_instance.pile_distance,
+            "is_transparent": EyeglassFrameEntry_instance.is_transparent,
+            "frame_type": EyeglassFrameEntry_instance.frame_type,
         }
         is_update, msg = sanlian.update_sanlian_eyeglass(token, data)
         print(f"更新镜架信息响应状态: {is_update}, 信息: {msg}")

@@ -5,7 +5,7 @@ import requests
 import json
 import datetime
 import random
-from config.env import SANLIAN_UPDATE_URL, SANLIAN_GET_TOKEN_URL
+from config.env import SANLIAN_UPDATE_URL, SANLIAN_GET_TOKEN_URL, SANLIAN_CLIENT 
 def get_current_timestamp():
     """
     生成当前时间戳
@@ -46,10 +46,10 @@ def get_sanlian_token():
     """
     try:
         token_data = {
-            "client_id": "SF_inspection",
-            "client_secret": "yN8-wA3=oR2^yM1&xJ5;zU4&a",
-            "username":"kdA",
-            "accountId": "1789897953700315136",
+            "client_id": SANLIAN_CLIENT.get("client_id"),
+            "client_secret": SANLIAN_CLIENT.get("client_secret"),
+            "username": SANLIAN_CLIENT.get("username"),
+            "accountId": SANLIAN_CLIENT.get("accountId"),
             "nonce": str(random.randint(1000, 9999)),
             "timestamp": get_current_timestamp()  # 自动生成当前时间戳
         }
@@ -88,7 +88,6 @@ def update_sanlian_eyeglass(token, data):
             "shcp_nosepadwidth": safe_int(data["bridge_width_st"]),
             "shcp_leglength": safe_int(data["temple_length_st"]),
             "shcp_weight": safe_int(data["weight"]),
-            "shcp_frameheight": safe_str(data["frame_height"]),
             "shcp_glass_width": safe_int(data["frame_width"]),
             "shcp_leftpile_heigth": safe_int(data["pile_height_left"]),
             "shcp_rightpile_heigth": safe_int(data["pile_height_right"]),
@@ -115,6 +114,7 @@ def update_sanlian_eyeglass(token, data):
             "shcp_integerfield4": safe_int(data["spread_angle_left"]),
             "shcp_rightleg_angle": safe_int(data["spread_angle_right"]),
             "shcp_pilelength": safe_int(data["pile_distance"]),
+            "shcp_glass_height": safe_int(data["frame_height"]),
         }
         print(data)
         response = requests.post(

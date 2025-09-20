@@ -358,7 +358,7 @@ def calc(self, sku):
     生成试戴任务
     """
     # 计算任务正确完成
-    if output['shape']['state'] and output['point']['state'] and output['parameter']['state'] and output['size']['state'] and output['mask']['state'] and output['image']['state']:
+    if  EyeglassFrameEntry_instance.pixel_measurement_state == 2 and EyeglassFrameEntry_instance.millimeter_measurement_state == 2 and EyeglassFrameEntry_instance.calculation_state == 2 and EyeglassFrameEntry_instance.coordinate_state == 2 and EyeglassFrameEntry_instance.image_mask_state == 2 and EyeglassFrameEntry_instance.image_seg_state == 2 and EyeglassFrameEntry_instance.image_beautify_state == 2:
         """
         生成试戴任务：传递镜架基本信息表的sku值
         """
