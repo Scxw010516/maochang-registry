@@ -1411,7 +1411,7 @@ async function openStreamForCam(cam: any): Promise<void> {
         // width: { exact: 4656 / 2 },
         // height: { exact: 3496 / 2 },
         width: { exact: 4000 },
-        height: { exact: 3000  },
+        height: { exact: 3000 },
       },
     });
 
