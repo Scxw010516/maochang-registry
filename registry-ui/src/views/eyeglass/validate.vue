@@ -225,18 +225,6 @@
         }"
       >
         <template #bodyCell="{ column, record }">
-          <template v-if="column.key === 'operation'">
-            <span>
-              <a-space>
-                <a-button type="primary" @click="onClickEditModal(record.id)"
-                  >查看</a-button
-                >
-                <a-button danger @click="onClickDelete(record.id)"
-                  >删除</a-button
-                >
-              </a-space>
-            </span>
-          </template>
           <template v-if="column.key === 'all_calculate_state'">
             <span>
               <a-button
@@ -255,6 +243,18 @@
                 @click="onClickIsUpdateState(record.id)"
                 >{{ getIsUpdateState(record.id) }}</a-button
               >
+            </span>
+          </template>
+          <template v-if="column.key === 'operation'">
+            <span>
+              <a-space>
+                <a-button type="primary" @click="onClickEditModal(record.id)"
+                  >查看</a-button
+                >
+                <a-button danger @click="onClickDelete(record.id)"
+                  >删除</a-button
+                >
+              </a-space>
             </span>
           </template>
         </template>
@@ -996,16 +996,16 @@ const columns = [
     key: "update_time",
   },
   {
-    title: "操作",
-    key: "operation",
-  },
-  {
     title: "计算状态",
     key: "all_calculate_state",
   },
   {
     title: "数据更新",
     key: "update_info",
+  },
+  {
+    title: "操作",
+    key: "operation",
   },
 ];
 // 镜架table请求API携带参数格式
