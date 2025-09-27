@@ -38,7 +38,11 @@
                 <!-- <p class="image-title">
               {{ item.face_name }} - {{ getTryOnStateLabel(item.tryon_state) }}
             </p> -->
-                <a-image :src="item.tryon_image" class="eyeglass-frame-img" />
+                <a-image
+                  :src="item.tryon_image"
+                  class="eyeglass-frame-img"
+                  :previewMask="false"
+                />
               </div>
             </a-carousel>
           </a-col>
@@ -52,10 +56,12 @@
             <a-image
               :src="eyeglass_frame_image.frontview_beautify"
               class="eyeglass-frame-img"
+              :previewMask="false"
             />
             <a-image
               :src="eyeglass_frame_image.sideview_beautify"
               class="eyeglass-frame-img"
+              :previewMask="false"
             />
           </a-col>
           <a-col v-else span="22">
@@ -64,11 +70,13 @@
               v-if="processed_beautify_images.frontview_beautify_processed"
               :src="processed_beautify_images.frontview_beautify_processed"
               class="eyeglass-frame-img"
+              :previewMask="false"
             />
             <a-image
               v-if="processed_beautify_images.sideview_beautify_processed"
               :src="processed_beautify_images.sideview_beautify_processed"
               class="eyeglass-frame-img"
+              :previewMask="false"
             />
           </a-col>
         </a-row>
