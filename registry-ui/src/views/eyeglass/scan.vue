@@ -698,11 +698,7 @@
       >重拍
     </a-button>
     <a-button class="operation-button" @click="onClickReturn">返回 </a-button>
-    <a-button
-      class="operation-button-primary"
-      :loading="captureOrConfirmLoading"
-      @click="onClickCaptureOrConfirm"
-    >
+    <a-button class="operation-button-primary" @click="onClickCaptureOrConfirm">
       {{ currentStage === "preview" ? "拍摄" : "确认" }}
     </a-button>
   </a-row>
@@ -750,8 +746,12 @@ import {
   nextTick,
 } from "vue";
 // import { useRouter } from "vue-router";
-import { useOptionStore, useStateStore, useUserStore } from "@/stores/store";
-import { useCameraStore } from "@/stores/camera";
+import {
+  useOptionStore,
+  useStateStore,
+  useUserStore,
+} from "@/stores/store";
+import {useCameraStore} from "@/stores/camera";
 import { MenuUnfoldOutlined, FormOutlined } from "@ant-design/icons-vue";
 import { StepProps, message, Modal } from "ant-design-vue";
 import type { Rule } from "ant-design-vue/es/form"; // 引入表单验证规则Rule组件
@@ -1044,8 +1044,7 @@ const EyeGlassBasicFormRules: Record<string, Rule[]> = {
 // modal展示的镜架详细参数表单实例
 const EyeGlassDetailModelFormRef = ref();
 // modal展示的镜架详细参数表单初始化数据
-const EyeGlassDetailModelFormInitState: UnwrapRef<EyeGlassDetailForm> =
-  reactive({
+const EyeGlassDetailModelFormInitState: UnwrapRef<EyeGlassDetailForm> = reactive({
     frame_height: "",
     frame_width: "",
     pile_height_left: "",
@@ -1145,8 +1144,7 @@ const EyeGlassImageFormState: UnwrapRef<EyeGlassImageForm> = reactive({
   sideview: null,
 });
 // 镜架图像背景表单数据
-const EyeGlassImageBackgroundFormState: UnwrapRef<EyeGlassImageBackgroundForm> =
-  reactive({
+const EyeGlassImageBackgroundFormState: UnwrapRef<EyeGlassImageBackgroundForm> = reactive({
     frontview_bg: null,
     topview_bg: null,
     sideview_bg: null,
@@ -1210,11 +1208,7 @@ const filterOptionbyValue = (input: string, option: Option) => {
 // 功能函数：发送websocket请求，设置摄像头参数；前端读取摄像头配置，并初始化摄像头
 async function initCamera(): Promise<boolean> {
   // 初始化前，先关闭所有已有的视频流，避免占用与冲突
-  try {
-    stopCameraStream();
-  } catch (e) {
-    console.log("stopCameraStream 执行出错", e);
-  }
+  try { stopCameraStream(); } catch (e) { console.log('stopCameraStream 执行出错', e); }
   const wsResult = await new Promise<boolean>((resolve, reject) => {
     // 发送初始化摄像头请求
     const ws = new WebSocket(`ws://localhost:8765/configure-cameras`);
@@ -1266,12 +1260,9 @@ async function initCamera(): Promise<boolean> {
   }
   // 为了拿到稳定的 label 与 deviceId，先申请一次权限（只要 video 即可）
   try {
-    const permStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: false,
-    });
+    const permStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     // 立刻关闭该临时流
-    permStream.getTracks().forEach((t) => t.stop());
+    permStream.getTracks().forEach(t => t.stop());
   } catch (e) {
     console.log("预授权 getUserMedia 失败", e);
   }
@@ -1373,8 +1364,7 @@ async function refreshDeviceIdByIndex(index: number): Promise<string | null> {
     const devices = await navigator.mediaDevices.enumerateDevices();
     const targetLabel = CAMERA_LABEL_BY_INDEX[index];
     const dev = devices.find(
-      (d) =>
-        d.kind === "videoinput" && d.label && d.label.includes(targetLabel),
+      (d) => d.kind === "videoinput" && d.label && d.label.includes(targetLabel),
     );
     return dev ? dev.deviceId : null;
   } catch (e) {
@@ -1448,33 +1438,21 @@ async function openStreamForCam(cam: any): Promise<void> {
           return;
         } catch (err2: any) {
           console.log("重试仍失败: " + err2?.name + ": " + err2?.message);
-          message.error(
-            `摄像头${cam.index}打开失败：不满足约束或设备被占用，请检查连接与权限`,
-            5,
-          );
+          message.error(`摄像头${cam.index}打开失败：不满足约束或设备被占用，请检查连接与权限`, 5);
           showCameraStateErrorModal.value = true;
           cameraStateErrorModalLoading.value = false;
         }
       } else {
-        message.error(
-          `未找到匹配的摄像头(${cam.index}) 或设备ID未更新，无法打开视频流`,
-          5,
-        );
+        message.error(`未找到匹配的摄像头(${cam.index}) 或设备ID未更新，无法打开视频流`, 5);
         showCameraStateErrorModal.value = true;
         cameraStateErrorModalLoading.value = false;
       }
-    } else if (
-      err &&
-      (err.name === "NotReadableError" || err.name === "NotAllowedError")
-    ) {
+    } else if (err && (err.name === "NotReadableError" || err.name === "NotAllowedError")) {
       message.error(`摄像头${cam.index}打开失败：设备被占用或未授权`, 5);
       showCameraStateErrorModal.value = true;
       cameraStateErrorModalLoading.value = false;
     } else {
-      message.error(
-        `摄像头${cam.index}打开失败：${err?.message || "未知错误"}`,
-        5,
-      );
+      message.error(`摄像头${cam.index}打开失败：${err?.message || "未知错误"}` , 5);
       showCameraStateErrorModal.value = true;
       cameraStateErrorModalLoading.value = false;
     }
@@ -1488,9 +1466,7 @@ async function startCameraStream(): Promise<void> {
   // 适当等待设备释放
   await new Promise((r) => setTimeout(r, 100));
   // 并发为每个摄像头开启流，并在单个摄像头失败时进行一次基于label的重试
-  const tasks = camera.cameraState.cameraList.map((cam) =>
-    openStreamForCam(cam),
-  );
+  const tasks = camera.cameraState.cameraList.map((cam) => openStreamForCam(cam));
   await Promise.all(tasks);
 }
 
@@ -2148,13 +2124,9 @@ const onClickEnterBasicParams = () => {
     } else {
       currentStage.value = "preview";
       nextTick(() => {
-        if (TopVideo.value)
-          TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
-        if (FrontVideo.value)
-          FrontCapture.value.videoElement =
-            FrontVideo.value as HTMLVideoElement;
-        if (SideVideo.value)
-          SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
+        if (TopVideo.value) TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
+        if (FrontVideo.value) FrontCapture.value.videoElement = FrontVideo.value as HTMLVideoElement;
+        if (SideVideo.value) SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
         startCameraStream();
       });
     }
@@ -2249,12 +2221,9 @@ const onClickReturn = () => {
 const onClickRedo = () => {
   currentStage.value = "preview";
   nextTick(() => {
-    if (TopVideo.value)
-      TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
-    if (FrontVideo.value)
-      FrontCapture.value.videoElement = FrontVideo.value as HTMLVideoElement;
-    if (SideVideo.value)
-      SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
+    if (TopVideo.value) TopCapture.value.videoElement = TopVideo.value as HTMLVideoElement;
+    if (FrontVideo.value) FrontCapture.value.videoElement = FrontVideo.value as HTMLVideoElement;
+    if (SideVideo.value) SideCapture.value.videoElement = SideVideo.value as HTMLVideoElement;
     startCameraStream();
   });
 };
