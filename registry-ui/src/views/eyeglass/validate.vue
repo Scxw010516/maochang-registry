@@ -2308,7 +2308,7 @@ const sendUpdateTask = async (id: number) => {
 // 功能函数: 只获取计算状态数据和更新状态
 const refreshCalculateStatesAndUpdateStates = async () => {
   try {
-    const ids = calculateStates.value.map((item) => item.id);
+    const ids = dataSource.value.map((item) => item.id);
     const response = await axios.get(
       "/glassmanagement/api/get-all-calculate-states",
       {
