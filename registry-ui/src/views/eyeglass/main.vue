@@ -170,9 +170,11 @@
 
 <script lang="ts" setup>
 //#####################################第三方库及定义类初始化#####################################
-import { ref } from "vue";
+import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useStateStore } from "@/stores/store";
+import { useCameraStore } from "@/stores/camera";
+import { message } from "ant-design-vue";
 import validatePage from "./validate.vue";
 import ManagePage from "./manage.vue";
 import ScanPage from "./scan.vue";
@@ -181,6 +183,8 @@ import acount from "./acount.vue";
 //#########################################参数初始化###########################################
 const router = useRouter();
 const state = useStateStore();
+const camera = useCameraStore();
+
 // 侧边导航栏菜单
 const menuItems = ref([
   { key: "1", label: "镜架采集", title: "镜架采集" },
@@ -190,6 +194,118 @@ const menuItems = ref([
 ]);
 
 const selectedMenuItem = ref<string[]>(["1"]); // 选中的菜单项
+
+// #########################################相机初始化函数###########################################
+// 功能函数：全局相机初始化
+async function initGlobalCamera(): Promise<boolean> {
+  try {
+    // 发送websocket请求，设置摄像头参数
+    const wsResult = await new Promise<boolean>((resolve, reject) => {
+      const ws = new WebSocket(`ws://localhost:8765/configure-cameras`);
+      ws.addEventListener("message", (event) => {
+        const result = JSON.parse(event.data as string);
+        if (result.code == "-1") {
+          message.error("摄像头初始化失败，请检查设备连接", 10);
+          ws.close();
+          resolve(false);
+        } else {
+          message.success("摄像头初始化成功", 5);
+          ws.close();
+          resolve(true);
+        }
+      });
+      ws.addEventListener("error", () => {
+        message.error("摄像头初始化失败，请检查设备连接", 10);
+        ws.close();
+        resolve(false);
+      });
+    });
+
+    if (!wsResult) {
+      return false;
+    }
+
+    // 清空设备列表
+    camera.initCameraDeviceState();
+    
+    // 检查浏览器支持
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      console.log("浏览器不支持mediaDevices");
+      return false;
+    }
+
+    // 申请权限
+    try {
+      const permStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      permStream.getTracks().forEach(t => t.stop());
+    } catch (e) {
+      console.log("预授权 getUserMedia 失败", e);
+    }
+
+    // 获取设备列表
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    console.log("设备列表", devices);
+    
+    // 解析设备列表
+    devices.forEach(function (device) {
+      if (device.kind === "videoinput" && device.label.includes("48MP USB Camera (32e4:0021)")) {
+        camera.cameraState.cameraList.push({
+          index: 0,
+          kind: device.kind,
+          label: device.label,
+          deviceId: device.deviceId,
+          mediaStream: null,
+        });
+      } else if (device.kind === "videoinput" && device.label.includes("48MP USB Camera (32e4:0020)")) {
+        camera.cameraState.cameraList.push({
+          index: 1,
+          kind: device.kind,
+          label: device.label,
+          deviceId: device.deviceId,
+          mediaStream: null,
+        });
+      } else if (device.kind === "videoinput" && device.label.includes("48MP USB Camera (32e4:0022)")) {
+        camera.cameraState.cameraList.push({
+          index: 2,
+          kind: device.kind,
+          label: device.label,
+          deviceId: device.deviceId,
+          mediaStream: null,
+        });
+      }
+    });
+
+    // 检查设备数量
+    if (camera.cameraState.cameraList.length === 0) {
+      console.log("未找到可用摄像头设备");
+      camera.initCameraDeviceState();
+      return false;
+    }
+    
+    if (camera.cameraState.cameraList.length < 3) {
+      console.log("摄像头设备不足");
+      camera.initCameraDeviceState();
+      return false;
+    }
+
+    // 设置摄像头设备初始化状态
+    camera.cameraState.cameraInitState = true;
+    return true;
+  } catch (error) {
+    console.log("相机初始化失败", error);
+    camera.initCameraDeviceState();
+    return false;
+  }
+}
+
+// #########################################生命周期函数###########################################
+// 生命周期钩子：组件挂载完成后执行全局相机初始化
+onMounted(() => {
+  // 只在相机未初始化时进行初始化
+  if (!camera.cameraState.cameraInitState) {
+    initGlobalCamera();
+  }
+});
 
 // ###########################################点击事件定义##############################################
 // 退出登录按钮点击事件

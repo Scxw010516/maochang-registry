@@ -653,16 +653,21 @@
                 </a-form-item>
               </a-form>
             </a-col>
-            <a-col :span="6">
-              <a-button :disabled="hasWeightLoged" @click="onClickResetWeight">
-                去皮
-              </a-button>
-              <a-button v-if="!hasWeightLoged" @click="onClickLogWeight">
-                称重
-              </a-button>
-              <a-button v-else @click="onClickCancelLogWeight">
-                重新称重
-              </a-button>
+            <a-col :span="18">
+              <a-space :size="16">
+                <a-button v-if="!hasWeightLoged" @click="onClickLogWeight">
+                  锁定重量
+                </a-button>
+                <a-button v-else @click="onClickCancelLogWeight">
+                  重新称重
+                </a-button>
+                <a-button @click="onClickResetWeight">
+                  去皮
+                </a-button>
+                <a-button @click="onClickZeroWeight">
+                  置零
+                </a-button>
+              </a-space>
             </a-col>
           </a-row>
         </a-col>
@@ -686,6 +691,13 @@
       v-if="currentStage === 'preview'"
       style="margin-left: 80px; margin-right: auto"
     >
+      <a-button 
+        style="margin-right: 20px" 
+        @click="onClickReinitCamera"
+        :loading="cameraReinitLoading"
+      >
+        重新初始化相机
+      </a-button>
       <!-- <a-button style="margin-right: 40px" @click="onClickLightup">
         增加亮度
       </a-button>
@@ -795,7 +807,7 @@ const hasCaptured = ref(false); // 是否已经拍摄
 // 镜架检索信息
 const searchString = ref(""); // 镜架检索信
 const searchOptions = ref<searchOption[]>([]); // 镜架检索信息
-const skuormodeltype = ref<number>(1);
+const skuormodeltype = ref<number>(2);
 const showRescanModal = ref(false);
 
 const TopVideo = ref<HTMLVideoElement | null>(null);
@@ -855,6 +867,9 @@ const weightStateErrorModalLoading = ref<boolean>(false);
 
 // 确认按钮loading状态
 const captureOrConfirmLoading = ref<boolean>(false);
+
+// 相机重新初始化按钮loading状态
+const cameraReinitLoading = ref<boolean>(false);
 
 //#########################################参数初始化--表单数据###########################################
 // 镜架基础参数表单实例
@@ -1155,8 +1170,7 @@ const EyeGlassImageBackgroundFormState: UnwrapRef<EyeGlassImageBackgroundForm> =
 onMounted(() => {
   // 初始化表单Options
   initFormOptions();
-  // 初始化摄像头模组
-  initCamera();
+  // 注意：相机初始化已移至main.vue中进行全局初始化
   // 初始化识别秤串口
   // initWeight();
   // 判断状态管理store中是否有需要重新录入的sku
@@ -1191,6 +1205,11 @@ watch(currentStage, (currentStage) => {
     state.allowMenuSwitch = "scaning"; //正在录入，则不允许切换菜单
   } else {
     state.allowMenuSwitch = "allow";
+  }
+  
+  // 连接时机控制：在进入input-params阶段时建立WebSocket连接
+  if (currentStage === "input-params") {
+    readWeight();
   }
 });
 
@@ -1786,41 +1805,65 @@ const uploadNewEyeglassFrame = async () => {
 
 // 功能函数：访问WebSocket，读取称重结果
 const readWeight = () => {
-  const ws = new WebSocket(`ws://localhost:8765/read-weight`);
+  // 检查是否已有活跃连接
+  const existingWs = wsMap.value.get("weight");
+  if (existingWs && existingWs.readyState === WebSocket.OPEN) {
+    console.log("电子秤连接已存在，无需重复建立");
+    return;
+  }
+  
+  // 关闭已有连接（如果存在但不是OPEN状态）
+  if (existingWs) {
+    existingWs.close();
+    wsMap.value.delete("weight");
+  }
+  
+  const ws = new WebSocket(`ws://localhost:8765/scale-realtime`);
+  
+  ws.addEventListener("open", () => {
+    console.log("电子秤实时连接已建立");
+  });
+  
   ws.addEventListener("message", (event) => {
-    const result = JSON.parse(event.data as string);
-    if (result.code == "-1") {
-      // 显示秤状态错误Modal提示
-      showWeightStateErrorModal.value = true;
-      // 将称重状态置为true
-      hasWeightLoged.value = true;
-      ws.close();
-    } else {
-      // 显示秤状态错误Modal提示
-      showWeightStateErrorModal.value = false;
-      EyeGlassWeightFormState.weight = result.data as string;
+    try {
+      const message = JSON.parse(event.data as string);
+      
+      if (message.type === 'weight_data') {
+        // 处理实时重量数据
+        const weightData = message.data;
+        showWeightStateErrorModal.value = false;
+        EyeGlassWeightFormState.weight = weightData.weight.toString();
+      } else if (message.type === 'operation_result') {
+        // 处理操作结果
+        const { operation, success, message: msg } = message.data;
+        if (success) {
+          const operationName = operation === 'zero' ? '置零' : '去皮';
+          message.success(`${operationName}操作成功`);
+        } else {
+          message.error(`操作失败: ${msg}`);
+        }
+      } else if (message.type === 'error') {
+        // 处理错误消息
+        showWeightStateErrorModal.value = true;
+        hasWeightLoged.value = true;
+        message.error("电子秤连接异常");
+      }
+    } catch (error) {
+      console.error("解析WebSocket消息失败:", error);
     }
   });
+  
   // 监听错误事件
   ws.addEventListener("error", () => {
     message.error("读取称重结果失败，请检查设备连接", 10);
-    ws.close();
+    showWeightStateErrorModal.value = true;
   });
+  
+  ws.addEventListener("close", () => {
+    console.log("电子秤连接已断开");
+  });
+  
   wsMap.value.set("weight", ws);
-};
-
-// 功能函数：清楚摄像头缓存
-const clearCameraCache = async () => {
-  // 发送清除缓存的请求
-  const ws = new WebSocket(`ws://localhost:8765/clear-camera-cache`);
-  // 监听返回消息
-  ws.addEventListener("message", () => {
-    ws.close();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    ws.close();
-  });
 };
 
 // 功能函数：初始化基础参数表单
@@ -1868,20 +1911,6 @@ const initAll = () => {
     ws?.close();
   });
 };
-
-// 功能函数：计算参数，校验界面是否处于拍摄预览
-// const isCaptureStart = computed(() => {
-//   if (
-//     currentStage.value == "preview-0" ||
-//     currentStage.value == "preview-1" ||
-//     currentStage.value == "preview-2"
-//   ) {
-//     return true;
-//   } else {
-//     return false;
-//   }
-// });
-
 // #########################################OnClick点击事件函数定义#########################################
 
 // 镜架信息检索类型选择点击事件
@@ -1991,12 +2020,6 @@ const onClickEnterSKU = async () => {
     EyeGlassBasicFormState.sku = searchString.value;
   }
 
-  // 检查是否为测试SKU，如果是则自动填充并返回
-  const testSku = EyeGlassBasicFormState.sku || searchString.value;
-  if (handleTestSkuAutoFill(testSku)) {
-    return;
-  }
-
   // 判断输入参数是否为空
   if (EyeGlassBasicFormState.sku == "") {
     message.warning("请输入镜架SKU或选择镜架条目");
@@ -2084,6 +2107,11 @@ const onClickEnterSKU = async () => {
             // 初始化表单Options
             initFormOptions();
           } else {
+            // 镜架不存在，检查是否为测试SKU并自动填充
+            const testSku = EyeGlassBasicFormState.sku;
+            if (handleTestSkuAutoFill(testSku)) {
+              return;
+            }
             // 提示表单载入失败
             message.warning(response.data["msg"]);
             // 进入新镜架入库环节
@@ -2163,9 +2191,6 @@ const onClickCaptureOrConfirm = async () => {
         break;
       case "confirm":
         currentStage.value = "input-params";
-        if (!hasWeightLoged.value) {
-          readWeight();
-        }
         break;
       case "input-params": // 计算参数
         // 保存镜框信息成功后进入SKU输入阶段
@@ -2228,86 +2253,47 @@ const onClickRedo = () => {
   });
 };
 
-// 功能函数：记录称重结果
+// 功能函数：锁定重量
 const onClickLogWeight = () => {
-  const ws = new WebSocket(`ws://localhost:8765/log-weight`);
-  ws.addEventListener("message", (event) => {
-    const result = JSON.parse(event.data as string);
-    if (result.code == "-1") {
-      message.error("电子秤未启动", 5);
-    }
-    ws.close();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("锁定重量失败，请检查设备连接", 10);
-    ws.close();
-  });
-  // 关闭read-weight的WebSocket
-  wsMap.value.get("weight")?.close(1000, "客户端关闭read-weight");
+  // 锁定当前重量值，关闭实时WebSocket连接
+  const weightWs = wsMap.value.get("weight");
+  if (weightWs) {
+    weightWs.close(1000, "用户锁定重量，关闭实时连接");
+    wsMap.value.delete("weight");
+  }
   hasWeightLoged.value = true;
+  message.success("重量已锁定");
 };
 
-// 功能函数：取消记录称重结果
+// 功能函数：重新称重
 const onClickCancelLogWeight = () => {
-  // 关闭read-weight的WebSocket
-  wsMap.value.get("weight")?.close(1000, "客户端关闭read-weight");
-  console.log("取消记录称重结果");
-  // 重新读取加载称重结果
+  console.log("重新称重");
+  // 重新建立实时WebSocket连接
   readWeight();
   // 重置hasWeightLoged
   hasWeightLoged.value = false;
 };
 
-// 功能函数：清零称重结果
+// 功能函数：去皮操作
 const onClickResetWeight = () => {
-  // 使用WebSocket请求清零称重，即去皮
-  const ws = new WebSocket(`ws://localhost:8765/reset-weight`);
-  ws.addEventListener("message", (event) => {
-    const result = JSON.parse(event.data as string);
-    if (result.code == "-1") {
-      message.error("电子秤未启动", 5);
-    }
-    ws.close();
-  });
-  // 监听错误事件
-  ws.addEventListener("error", () => {
-    message.error("去皮失败，请检查设备连接", 10);
-    ws.close();
-  });
-  // 重置hasWeightLoged
-  hasWeightLoged.value = false;
+  const weightWs = wsMap.value.get("weight");
+  if (weightWs && weightWs.readyState === WebSocket.OPEN) {
+    // 通过实时连接发送去皮控制消息
+    weightWs.send(JSON.stringify({ type: "tare" }));
+  } else {
+    message.error("电子秤连接未建立，请检查设备连接", 5);
+  }
 };
 
-// 详细信息模态窗按钮点击事件
-// const onClickShowDetailModal = () => {
-//   isInputEditable.value = "";
-//   showDetailModal.value = true;
-//   Object.entries(EyeGlassDetailFormState).forEach(([key, value]) => {
-//     EyeGlassDetailModelFormState[key] = value;
-//   });
-// };
-
-// 详细信息模态窗保存按钮点击事件
-// const onClickSaveDetailModal = () => {
-//   EyeGlassDetailModelFormRef.value
-//     .validate()
-//     .then(() => {
-//       Object.entries(EyeGlassDetailModelFormState).forEach(([key, value]) => {
-//         EyeGlassDetailFormState[key] = value;
-//       });
-//       initEyeGlassDetailModelFormState();
-//       showDetailModal.value = false;
-//     })
-//     .catch(() => {
-//       message.error("请完善镜架详细信息");
-//     });
-// };
-
-// 详细信息模态窗取消按钮或关闭按钮点击事件
-const onClickCancelDetailModal = () => {
-  initEyeGlassDetailModelFormState();
-  showDetailModal.value = false;
+// 功能函数：置零操作
+const onClickZeroWeight = () => {
+  const weightWs = wsMap.value.get("weight");
+  if (weightWs && weightWs.readyState === WebSocket.OPEN) {
+    // 通过实时连接发送置零控制消息
+    weightWs.send(JSON.stringify({ type: "zero" }));
+  } else {
+    message.error("电子秤连接未建立，请检查设备连接", 5);
+  }
 };
 
 // 摄像头状态错误模态窗确定按钮点击事件
@@ -2338,43 +2324,28 @@ const onClickWeightStateErrorOk = () => {
   initWeight();
 };
 
-// 增加亮度
-const onClickLightup = () => {
-  for (var cam_id = 0; cam_id < 3; cam_id++) {
-    // 使用WebSocket请求增加亮度
-    const ws = new WebSocket(`ws://localhost:8765/light-up/${cam_id}`);
-    ws.addEventListener("message", (event) => {
-      const result = JSON.parse(event.data as string);
-      if (result.code == "0") {
-        message.success("亮度调节完成", 3);
-      }
-      ws.close();
-    });
-    // 监听错误事件
-    ws.addEventListener("error", () => {
-      message.error("亮度未能正常调节，请检查设备连接", 10);
-      ws.close();
-    });
-  }
-};
-// 降低亮度
-const onClickLightdown = () => {
-  for (var cam_id = 0; cam_id < 3; cam_id++) {
-    // 使用WebSocket请求清零称重，即去皮
-    const ws = new WebSocket(`ws://localhost:8765/light-down/${cam_id}`);
-    ws.addEventListener("message", (event) => {
-      const result = JSON.parse(event.data as string);
-      if (result.code == "0") {
-        console.log("亮度调节提示");
-        message.success("亮度调节完成", 3);
-      }
-      ws.close();
-    });
-    // 监听错误事件
-    ws.addEventListener("error", () => {
-      message.error("亮度未能正常调节，请检查设备连接", 10);
-      ws.close();
-    });
+// 手动重新初始化相机按钮点击事件
+const onClickReinitCamera = async () => {
+  cameraReinitLoading.value = true;
+  try {
+    // 先停止当前的视频流
+    stopCameraStream();
+    // 等待设备释放
+    await new Promise((r) => setTimeout(r, 200));
+    // 重新初始化相机
+    const success = await initCamera();
+    if (success) {
+      // 重新开启视频流
+      await startCameraStream();
+      message.success("相机重新初始化成功", 3);
+    } else {
+      message.error("相机重新初始化失败", 5);
+    }
+  } catch (error) {
+    console.error("手动重新初始化相机失败:", error);
+    message.error("相机重新初始化失败", 5);
+  } finally {
+    cameraReinitLoading.value = false;
   }
 };
 </script>
